@@ -1,0 +1,10 @@
+name: pyrte-rrtmgp
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  #general packages
+  - python=3.11
+  # docs
+  - sphinx-rtd-theme=2.0.0
+  - myst-parser=2.0.0

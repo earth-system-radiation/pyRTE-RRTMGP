@@ -11,6 +11,20 @@ If possible, your issue should include a [minimal, complete, and verifiable exam
 
 Please file an issue on the [Github page](https://github.com/earth-system-radiation/pyRTE-RRTMTP/issues).
 
+## Would you like to set up a local development environment?
+
+Please use the file `environment.yml` to create a conda environment with all the necessary dependencies:
+
+```bash
+conda env create -f environment.yml
+```
+
+After creating the environment, activate it with:
+
+```bash
+conda activate pyrte-rrtmtp
+```
+
 ## Did you write a patch that fixes a bug?
 
 Please fork this repository, branch from `develop`, make your changes, and open a
