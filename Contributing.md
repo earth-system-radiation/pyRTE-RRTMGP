@@ -7,6 +7,10 @@ Thanks for considering making a contribution to pyRTE-RRTMTP!
 Please file an issue on the [Github page](https://github.com/earth-system-radiation/pyRTE-RRTMTP/issues).
 If possible, your issue should include a [minimal, complete, and verifiable example](https://stackoverflow.com/help/mcve) of the bug.
 
+## Would you like to propose a new feature?
+
+Please file an issue on the [Github page](https://github.com/earth-system-radiation/pyRTE-RRTMTP/issues).
+
 ## Did you write a patch that fixes a bug?
 
 Please fork this repository, branch from `develop`, make your changes, and open a
