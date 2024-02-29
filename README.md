@@ -1,6 +1,6 @@
-# pyRTE-RRTMTP
+# pyRTE-RRTMGP
 
-This is the repository for the pyRTE-RRTMTP project.
+This is the repository for the pyRTE-RRTMGP project.
 
 This project provides a **Python interface to the [RTE+RRTMGP](https://earth-system-radiation.github.io/rte-rrtmgp/)
 Fortran software package**.
