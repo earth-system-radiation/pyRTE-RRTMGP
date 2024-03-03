@@ -76,3 +76,17 @@ Currently, the following functions are available in the `pyRTE_RRTMGP` package:
 
 RRTMGP functions are not yet available in the `pyRTE_RRTMGP` package.
 Covering those functions is a future goal of this project.
+
+# Instructions
+
+The goal of the project is to create Python bindings for various Fortran libraries for solving radiance transmit equations.
+
+This repo explores how we can make that happen, starting with understanding how Fortran works and how we can interface it with C.  
+Later on we will use this knowledge to bind it with python
+
+## Structure:
+
+* `test.F90` - A Fortran program. This file contains a fortran main function and can be compiles as a standalone program. It also defines 2 more functions - `add` and `hello_world`. The `add` function is an example function that takes in 3 double parameter, first 2 are input parameters for the summations, and the third is an output parameter holding in the result of the summation. The `hello_world` method is even simpler, it takes no parameters, nor it returns ant, just showcases how function invocation works. The `add` and `hello_world` subroutines use BIND(C) to use the C language function call convention, so that they can be called from C functions (or python later on)
+* `fortran_interface.h` - A simple C Header file that provides C forward declarations for the fortran methods defined in `test.F90`.
+* `main.cpp` - A simple C program that invokes the fortran functions
+* `fcompile.sh` - A script to compile the code. It will use test.F90 to build a shared library (`libtest.so`). All build artifacts would be located in a `./build` folder
