@@ -3,6 +3,17 @@ implicit none
 
 contains
 
+    subroutine zero_array_1D(ni, array) bind(C, name="zero_array_1D")
+        integer,                 intent(in ) :: ni
+        real(wp), dimension(ni), intent(out) :: array
+        ! -----------------------
+        integer :: i
+        ! -----------------------
+        do i = 1, ni
+        array(i) = 0.0_wp
+        end do
+    end subroutine zero_array_1D
+
     subroutine add(a, b, result) bind(C, name="fortran_add")
     implicit none
     double precision, intent(in) :: a, b
