@@ -4,13 +4,13 @@
 
 double add(double a, double b) {
     double res = -1;
-    fortran_add(&a, &b, &res);
+    f::fortran_add(&a, &b, &res);
     return res;
 }
 
 int main() {
 
-    fortran_hello_world();
+    f::fortran_hello_world();
 
     double c = add(2, 3);
 
