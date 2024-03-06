@@ -24,7 +24,7 @@ int main() {
         arr[i] = i;
     }
 
-    f::zero_array_1D(&ni, arr);
+    f::fortran_zero_array_1D(&ni, arr);
 
     for (int i = 0; i < ni; i++) {
         printf("%lf, ", arr[i]);

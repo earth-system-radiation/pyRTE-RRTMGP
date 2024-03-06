@@ -9,7 +9,7 @@ namespace f {
 
         void fortran_hello_world();
 
-        void zero_array_1D(const int* ni, Float* array);
+        void fortran_zero_array_1D(const int* ni, Float* array);
     }
 }
 
