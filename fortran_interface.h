@@ -2,8 +2,10 @@
 #define FORTRAN_INTERFACE
 
 
-extern "C" double fortran_add(double *a, double *b, double *c);
+namespace f {
+    extern "C" void fortran_add(const double *a, const double *b, double *result);
 
-extern "C" void fortran_hello_world();
+    extern "C" void fortran_hello_world();
+}
 
 #endif //FORTRAN_INTERFACE
