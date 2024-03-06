@@ -1,10 +1,41 @@
 import pybind_interface as py
 import numpy as np
 
-arr = np.array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0], dtype=np.double)
+def dimension_test():
+    try:
+        arr = np.ones((3, 3))
+        py.zero_array_1D(arr)
+        print("TEST FAILED")
+    except Exception as e:
+        if "Number of dimensions must be one" == str(e):
+            print("TEST PASSED")
+        else:
+            print("TEST FAILED")
 
-py.zero_array_1D(10, arr)
+def size_test():
+    try:
+        arr = np.empty((0, ))
+        py.zero_array_1D(arr)
+        print("TEST FAILED")
+    except Exception as e:
+        if "Array size cannot be 0 or negative" == str(e):
+            print("TEST PASSED")
+        else:
+            print("TEST FAILED")
 
-print(py.add(10, 5))
 
-py.hello_world()
+dimension_test()
+size_test()
+
+# arr = np.empty((0, 3))
+
+# print(arr)
+
+# py.zero_array_1D(arr)
+
+# print(arr)
+
+
+# print(py.add(10, 5))
+
+# py.hello_world()

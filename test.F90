@@ -11,7 +11,7 @@ contains
         integer :: i
         ! -----------------------
         do i = 1, ni
-        array(i) = 0.0_wp
+            array(i) = 0.0
         end do
     end subroutine zero_array_1D
 
