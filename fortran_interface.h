@@ -1,7 +1,7 @@
 #ifndef FORTRAN_INTERFACE
 #define FORTRAN_INTERFACE
 
-using Float = double;
+typedef double Float;
 
 namespace f {
     extern "C" {
