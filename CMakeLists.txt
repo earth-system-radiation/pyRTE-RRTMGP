@@ -10,13 +10,26 @@ add_subdirectory(pybind11)
 
 pybind11_add_module(${TARGET_NAME} ${SOURCES} ${HEADERS})
 
-target_compile_definitions(${TARGET_NAME} PRIVATE VERSION_INFO=${VERSION_INFO})
+target_compile_definitions(${TARGET_NAME} PRIVATE 
+    VERSION_INFO=${VERSION_INFO}
+    DBL_EPSILON=${DBL_EPSILON}
+)
 
-# While we don't have a decent SO file, use the hacky one
+message("====== ${DBL_EPSILON}")
+
+target_include_directories(${TARGET_NAME} PUBLIC 
+    ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rte-kernels/api/
+)
+
+
 target_link_directories(${TARGET_NAME} PUBLIC 
-    ${CMAKE_SOURCE_DIR}/rte-rrtmgp/tests
+    ${CMAKE_SOURCE_DIR}/rte-rrtmgp/build
 )
 
 target_link_libraries(${TARGET_NAME} PUBLIC 
-    rte_lw_solver_unit_tests
+    gfortran
+    rrtmgp
+    rte
+    netcdff
+    netcdf
 )

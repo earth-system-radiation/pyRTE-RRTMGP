@@ -1,6 +1,9 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
-#include "fortran_interface.h"
+
+namespace fortran {
+#include "rte-rrtmgp/rte-kernels/api/rte_kernels.h"
+}
 
 namespace py = pybind11;
 
