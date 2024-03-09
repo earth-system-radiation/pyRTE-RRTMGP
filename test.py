@@ -1,4 +1,4 @@
-import pybind_interface as py
+import rttpy as py
 import numpy as np
 
 def dimension_test():
@@ -26,16 +26,3 @@ def size_test():
 
 dimension_test()
 size_test()
-
-# arr = np.empty((0, 3))
-
-# print(arr)
-
-# py.zero_array_1D(arr)
-
-# print(arr)
-
-
-# print(py.add(10, 5))
-
-# py.hello_world()
