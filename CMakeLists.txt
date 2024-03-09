@@ -12,9 +12,11 @@ pybind11_add_module(${TARGET_NAME} ${SOURCES} ${HEADERS})
 
 target_compile_definitions(${TARGET_NAME} PRIVATE VERSION_INFO=${VERSION_INFO})
 
-# This is a temporary hack while fortran is built manually so we can find libtest.so
+# While we don't have a decent SO file, use the hacky one
 target_link_directories(${TARGET_NAME} PUBLIC 
-    ${CMAKE_BINARY_DIR} 
-    ${CMAKE_BINARY_DIR}/..
+    ${CMAKE_SOURCE_DIR}/rte-rrtmgp/tests
 )
-target_link_libraries(${TARGET_NAME} PUBLIC test)
+
+target_link_libraries(${TARGET_NAME} PUBLIC 
+    rte_lw_solver_unit_tests
+)

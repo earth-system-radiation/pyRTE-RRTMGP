@@ -3,13 +3,13 @@
 
 typedef double Float;
 
-namespace f {
+namespace fortran {
     extern "C" {
-        void fortran_add(const double *a, const double *b, double *result);
+        void add(const double *a, const double *b, double *result);
 
-        void fortran_hello_world();
+        void hello_world();
 
-        void fortran_zero_array_1D(const int* ni, Float* array);
+        void zero_array_1D(const int* ni, Float* array);
     }
 }
 
