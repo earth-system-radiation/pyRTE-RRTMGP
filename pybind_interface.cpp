@@ -4,8 +4,7 @@
 
 namespace py = pybind11;
 
-
-PYBIND11_MODULE(pybind_interface, m) {
+PYBIND11_MODULE(rttpy, m) {
 
     m.def("zero_array_1D", [](py::array_t<double> arr){
         py::buffer_info buf_info = arr.request();
