@@ -1,0 +1,51 @@
+From 65ce4e94c2a7806db0d6b4e8af4972209aa329b8 Mon Sep 17 00:00:00 2001
+From: Alexander Soklev <alex@makepath.com>
+Date: Sat, 9 Mar 2024 23:31:08 +0200
+Subject: [PATCH] Update tests/Makefile to generate an .so file that we can use
+ from python
+
+---
+ tests/Makefile | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+
+diff --git a/tests/Makefile b/tests/Makefile
+index 1b90ed2..18c4513 100644
+--- a/tests/Makefile
++++ b/tests/Makefile
+@@ -26,7 +26,8 @@ VPATH += $(RRTMGP_ROOT)/rrtmgp-frontend:$(RRTMGP_ROOT)/extensions:$(RRTMGP_ROOT)
+ 	$(FC) $(FCFLAGS) $(FCINCLUDE) -c $<
+ %: %.o
+ 	$(FC) $(FCFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+-
++%.so: %.o
++	$(FC) -shared $(FCFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+ 
+ #
+ # Extra sources -- extensions to RRTMGP classes, shared infrastructure, local sources
+@@ -46,7 +47,7 @@ ADDITIONS += mo_solar_variability.o
+ #
+ # Targets
+ #
+-all: check_variants check_equivalence test_zenith_angle_spherical_correction rte_sw_solver_unit_tests rte_optic_prop_unit_tests rte_lw_solver_unit_tests
++all: check_variants check_equivalence test_zenith_angle_spherical_correction rte_sw_solver_unit_tests rte_optic_prop_unit_tests rte_lw_solver_unit_tests librte_lw_solver_unit_tests.so
+ 
+ check_equivalence:   $(ADDITIONS) $(LIB_DEPS) check_equivalence.o
+ check_equivalence.o: $(ADDITIONS) $(LIB_DEPS) check_equivalence.F90
+@@ -74,6 +75,8 @@ rte_optic_prop_unit_tests  : $(LIB_DEPS) mo_testing_utils.o rte_optic_prop_unit_
+ 
+ rte_lw_solver_unit_tests.o: $(LIB_DEPS) mo_testing_utils.o rte_lw_solver_unit_tests.F90
+ rte_lw_solver_unit_tests  : $(LIB_DEPS) mo_testing_utils.o rte_lw_solver_unit_tests.o
++librte_lw_solver_unit_tests.so  : $(LIB_DEPS) mo_testing_utils.o rte_lw_solver_unit_tests.o 
++	$(FC) -shared $(FCFLAGS) -o $@ $^ $(LDFLAGS) $(LIBS)
+ 
+ rte_sw_solver_unit_tests.o: $(LIB_DEPS) mo_testing_utils.o rte_sw_solver_unit_tests.F90
+ rte_sw_solver_unit_tests  : $(LIB_DEPS) mo_testing_utils.o rte_sw_solver_unit_tests.o
+@@ -89,4 +92,4 @@ check:
+ 	echo "Nothing to check in tests/"
+ 
+ clean:
+-	-rm clear_sky_regression *.o *.optrpt *.mod
++	-rm clear_sky_regression *.o *.optrpt *.mod *.so
+-- 
+2.34.1
+
