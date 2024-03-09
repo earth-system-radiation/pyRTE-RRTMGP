@@ -90,3 +90,7 @@ Later on we will use this knowledge to bind it with python
 * `fortran_interface.h` - A simple C Header file that provides C forward declarations for the fortran methods defined in `test.F90`.
 * `main.cpp` - A simple C program that invokes the fortran functions
 * `fcompile.sh` - A script to compile the code. It will use test.F90 to build a shared library (`libtest.so`). All build artifacts would be located in a `./build` folder
+
+## 
+sudo apt install python-dev
+brew install python
