@@ -23,16 +23,6 @@ PYBIND11_MODULE(rttpy, m) {
 
         int ni = int(buf_info.size);
         double *ptr = static_cast<double *>(buf_info.ptr);
-        f::fortran_zero_array_1D(&ni, ptr);
-    });
-
-    m.def("add", [](double a, double b) {
-        double res = -1;
-        f::fortran_add(&a, &b, &res);
-        return res;
-    });
-
-    m.def("hello_world", []() {
-        f::fortran_hello_world();
+        fortran::zero_array_1D(&ni, ptr);
     });
 }
