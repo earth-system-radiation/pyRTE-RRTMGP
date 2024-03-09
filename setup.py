@@ -41,6 +41,7 @@ class CMakeBuild(build_ext):
             extdir = extdir.replace("/","\\")
 
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir]
+        cmake_args += ['-DDBL_EPSILON=5.8e-2']
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
         conda_build = os.environ.get("CONDA_BUILD", 0)
