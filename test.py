@@ -1,4 +1,4 @@
-import rttpy as py
+import rrtmgppy as py
 import numpy as np
 
 def dimension_exception_test():

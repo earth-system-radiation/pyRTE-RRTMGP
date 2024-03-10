@@ -7,7 +7,7 @@ namespace fortran {
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(rttpy, m) {
+PYBIND11_MODULE(rrtmgppy, m) {
 
     m.def("zero_array_1D", [](py::array_t<double> arr){
         py::buffer_info buf_info = arr.request();
