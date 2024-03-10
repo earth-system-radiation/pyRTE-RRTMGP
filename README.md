@@ -21,7 +21,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 The goal of this project is to provide a Python interface to the most important
 Fortran functions in the RTE+RRTMGP package.
 
-Currently, the following functions are available in the `pyRTE_RRTMGP` package:
+Currently, the following functions are available in the `pyrterrtmgp` package:
 
 ### RTE Functions (WIP)
 
@@ -74,48 +74,52 @@ Currently, the following functions are available in the `pyRTE_RRTMGP` package:
 
 ### RRTMGP Functions
 
-RRTMGP functions are not yet available in the `pyRTE_RRTMGP` package.
+RRTMGP functions are not yet available in the `pyrterrtmgp` package.
 Covering those functions is a future goal of this project.
 
-# Instructions
+## Setup Instructions
 
-The goal of the project is to create Python bindings for various Fortran libraries for solving radiance transmit equations.
+The current code in this repo are early experiments with the goal of exploring details fo the Fortran works and testing different options for creating an interface with C.
+Later on, we will use this knowledge to bind it with Python
 
-This repo explores how we can make that happen, starting with understanding how Fortran works and how we can interface it with C.  
-Later on we will use this knowledge to bind it with python
+### Usage
 
-## Usage:
+* Make sure you have all the sources:
 
-* Make sure you have all the sources: 
-```
+``` bash
 git submodule update --init --recursive
 ```
 
 * Install dependencies:
-```
+
+``` bash
 sudo apt install -y \
     libnetcdff-dev \
     gfortran-10 \
     python-dev \
     cmake
 ```
+
 * Compile the `rte` and `rrtmgp` libraries from source
-```
+
+``` bash
 ./compile_fortran.sh
 ```
+
 * Build the python module
-```
+
+``` bash
 python3 setup.py build_ext --inplace
 ```
-Once built, the module will be located in a folder called `rrtmgppy`  
+
+Once built, the module will be located in a folder called `rrtmgppy`
+
 * Run `./test.py` to verify code works correctly. Expected output is:
-```
+
+``` bash
 [dimension_exception_test] TEST PASSED
 [size_exception_test] TEST PASSED
 Random array of size (10,) : [0.14849177 0.79354843 0.49071273 0.95947495 0.48878241 0.58449538
  0.282724   0.83500315 0.11668561 0.33491972]
 Array after zero_array_1D : [0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
-``` 
-## 
-sudo apt install python-dev
-brew install python
+```
