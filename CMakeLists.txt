@@ -4,7 +4,7 @@ project(FORTRAN_C)
 set(HEADERS fortran_interface.h)
 set(SOURCES pybind_interface.cpp)
 
-set(TARGET_NAME rttpy)
+set(TARGET_NAME rrtmgppy)
 
 add_subdirectory(pybind11)
 
@@ -14,8 +14,6 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
     VERSION_INFO=${VERSION_INFO}
     DBL_EPSILON=${DBL_EPSILON}
 )
-
-message("====== ${DBL_EPSILON}")
 
 target_include_directories(${TARGET_NAME} PUBLIC 
     ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rte-kernels/api/

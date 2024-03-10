@@ -6,4 +6,4 @@
 # Execute Python setup script
 python3 setup.py build_ext --inplace
 
-cp test.py rttpy/
+cp test.py rrtmgppy/

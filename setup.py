@@ -79,6 +79,6 @@ class CMakeBuild(build_ext):
 
 setup(
     version='0.0.1',
-    ext_modules=[CMakeExtension('rttpy')],
+    ext_modules=[CMakeExtension('rrtmgppy')],
     cmdclass=dict(build_ext=CMakeBuild),
 )
