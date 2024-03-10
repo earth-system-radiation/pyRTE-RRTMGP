@@ -10,7 +10,7 @@
 #conda activate rte_rrtmgp_test
 #export FCFLAGS="-ffree-line-length-none -m64 -std=f2008 -march=native -fbounds-check -fmodule-private -fimplicit-none -finit-real=nan -g -DRTE_USE_CBOOL -DRTE_USE_DP"
 
-export FC=gfortran-13
+export FC=gfortran-10
 export FCFLAGS="-ffree-line-length-none -m64 -std=f2008 -march=native -fbounds-check -fPIC -fimplicit-none -finit-real=nan -g -DRTE_USE_CBOOL -DRTE_USE_DP"
 export FCINCLUDE=-I/usr/include
 export RRTMGP_ROOT=$(pwd)/rte-rrtmgp
