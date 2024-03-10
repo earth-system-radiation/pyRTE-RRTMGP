@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import rrtmgppy as py
 import numpy as np
 
