@@ -79,6 +79,6 @@ class CMakeBuild(build_ext):
 
 setup(
     version='0.0.1',
-    ext_modules=[CMakeExtension('rrtmgppy')],
+    ext_modules=[CMakeExtension('pyrte')],
     cmdclass=dict(build_ext=CMakeBuild),
 )

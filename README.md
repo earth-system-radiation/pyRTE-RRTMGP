@@ -21,7 +21,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 The goal of this project is to provide a Python interface to the most important
 Fortran functions in the RTE+RRTMGP package.
 
-Currently, the following functions are available in the `pyrterrtmgp` package:
+Currently, the following functions are available in the `pyrte` package:
 
 ### RTE Functions (WIP)
 
@@ -74,7 +74,7 @@ Currently, the following functions are available in the `pyrterrtmgp` package:
 
 ### RRTMGP Functions
 
-RRTMGP functions are not yet available in the `pyrterrtmgp` package.
+RRTMGP functions are not yet available in the `pyrte` package.
 Covering those functions is a future goal of this project.
 
 ## Setup Instructions
@@ -96,7 +96,7 @@ git submodule update --init --recursive
 sudo apt install -y \
     libnetcdff-dev \
     gfortran-10 \
-    python-dev \
+    python3-dev \
     cmake
 ```
 
@@ -112,7 +112,7 @@ sudo apt install -y \
 python3 setup.py build_ext --inplace
 ```
 
-Once built, the module will be located in a folder called `rrtmgppy`
+Once built, the module will be located in a folder called `pyrte`
 
 * Run `./test.py` to verify code works correctly. Expected output is:
 

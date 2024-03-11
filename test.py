@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import rrtmgppy.rrtmgppy as py
+import pyrte.pyrte as py
 import numpy as np
 
 
