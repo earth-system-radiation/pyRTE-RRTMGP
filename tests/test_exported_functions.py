@@ -9,8 +9,20 @@ import pyrte.pyrte as py
 ## test_zero_array_1D ##
 ########################
 
+def test_invalid_array_dimension():
+    with pytest.raises(RuntimeError) as excinfo:
+        arr = np.ones((3, 3))
+        py.zero_array_1D(arr)
+    assert str(excinfo.value) == "Number of dimensions must be one"
+
+def test_empty_array_exception():
+    with pytest.raises(RuntimeError) as excinfo:
+        arr = np.empty((0, ))
+        py.zero_array_1D(arr)
+    assert str(excinfo.value) == "Array size cannot be 0 or negative"
+
 def test_zero_array_1D():
-    
+
     shape = (4)
     arr = np.random.rand(shape)
 
