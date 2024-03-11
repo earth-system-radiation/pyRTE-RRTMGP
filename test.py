@@ -41,7 +41,7 @@ def zero_nparray_1D_test():
 
 def zero_nparray_2D_test():
     try:
-        
+
         shape = (4, 4)
         arr = np.random.rand(*shape)
 
@@ -51,8 +51,20 @@ def zero_nparray_2D_test():
     except Exception as e:
         print(f"TEST FAILED | {e}")
 
+def zero_nparray_3D_test():
+    try:
+
+        shape = (4, 4, 4)
+        arr = np.random.rand(*shape)
+
+        print(f"Random array of size {arr.shape} : \n{arr}")
+        py.zero_array_3D(arr)
+        print(f"Array after zero_array_3D : \n{arr}")
+    except Exception as e:
+        print(f"TEST FAILED | {e}")
 
 dimension_exception_test()
 size_exception_test()
 zero_nparray_1D_test()
 zero_nparray_2D_test()
+zero_nparray_3D_test()
