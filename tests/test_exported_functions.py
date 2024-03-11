@@ -5,63 +5,39 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pyrte.pyrte as py
 
-########################
-## test_zero_array_1D ##
-########################
+#####################
+## test_zero_array ##
+#####################
 
-def test_invalid_array_dimension():
+@pytest.mark.parametrize("array,method,error", [
+    (np.ones((3, 3)), py.zero_array_1D, "Number of dimensions must be one"),
+    (np.ones((3, 3, 3)), py.zero_array_2D, "Number of dimensions must be 2"),
+    (np.ones((3, 3)), py.zero_array_3D, "Number of dimensions must be 3"),
+    (np.ones((3, 3)), py.zero_array_4D, "Number of dimensions must be 4"),
+])
+def test_invalid_array_dimension(array, method, error):
     with pytest.raises(RuntimeError) as excinfo:
-        arr = np.ones((3, 3))
-        py.zero_array_1D(arr)
-    assert str(excinfo.value) == "Number of dimensions must be one"
+        method(array)
+    assert str(excinfo.value) == error
 
-def test_empty_array_exception():
+@pytest.mark.parametrize("array,method", [
+    (np.ones((0, )), py.zero_array_1D),
+    (np.ones((0, 0)), py.zero_array_2D),
+    (np.ones((0, 0, 0)), py.zero_array_3D),
+    (np.ones((0, 0, 0, 0)), py.zero_array_4D),
+])
+def test_empty_array_exception(array, method):
     with pytest.raises(RuntimeError) as excinfo:
-        arr = np.empty((0, ))
-        py.zero_array_1D(arr)
+        method(array)
     assert str(excinfo.value) == "Array size cannot be 0 or negative"
 
-def test_zero_array_1D():
-
-    shape = (4)
-    arr = np.random.rand(shape)
-
-    py.zero_array_1D(arr)
-    assert np.all(arr == 0)
-
-########################
-## test_zero_array_2D ##
-########################
-
-def test_zero_array_2D():
-
-    shape = (4, 4)
+@pytest.mark.parametrize("shape, fortran_zero_array", [
+    ((4, ), py.zero_array_1D),
+    ((4, 4), py.zero_array_2D),
+    ((4, 4, 4), py.zero_array_3D),
+    ((4, 4, 4, 4), py.zero_array_4D),
+])
+def test_zero_array(shape, fortran_zero_array):
     arr = np.random.rand(*shape)
-
-    py.zero_array_2D(arr)
-    assert np.all(arr == 0)
-
-########################
-## test_zero_array_3D ##
-########################
-
-def test_zero_array_3D():
-
-    shape = (4, 4, 4)
-    arr = np.random.rand(*shape)
-
-    py.zero_array_3D(arr)
-
-    assert np.all(arr == 0)
-
-########################
-## test_zero_array_4D ##
-########################
-
-def test_zero_array_4D():
-
-    shape = (4, 4, 4, 4)
-    arr = np.random.rand(*shape)
-
-    py.zero_array_4D(arr)
+    fortran_zero_array(arr)
     assert np.all(arr == 0)
