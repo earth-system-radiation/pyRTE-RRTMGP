@@ -1,10 +1,10 @@
 cmake_minimum_required (VERSION 3.18)
 project(FORTRAN_C)
 
-set(HEADERS fortran_interface.h)
+set(HEADERS rte-rrtmgp/rte-kernels/api/rte_kernels.h)
 set(SOURCES pybind_interface.cpp)
 
-set(TARGET_NAME rrtmgppy)
+set(TARGET_NAME pyrte)
 
 add_subdirectory(pybind11)
 

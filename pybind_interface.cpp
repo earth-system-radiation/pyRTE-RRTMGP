@@ -2,12 +2,12 @@
 #include <pybind11/numpy.h>
 
 namespace fortran {
-#include "rte-rrtmgp/rte-kernels/api/rte_kernels.h"
+#include "rte_kernels.h"
 }
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(rrtmgppy, m) {
+PYBIND11_MODULE(pyrte, m) {
 
     m.def("zero_array_1D", [](py::array_t<double> arr){
         py::buffer_info buf_info = arr.request();
