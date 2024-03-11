@@ -120,4 +120,5 @@ Once built, the module will be located in a folder called `pyrte`
 
 ### Pytest Usage
 * Run `cd test/`
+* Create/update env (if you haven't already) by running `pip3 install -r requirements-test.txt`
 * Run `pytest`
