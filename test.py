@@ -29,7 +29,10 @@ def size_exception_test():
 
 def zero_nparray_1D_test():
     try:
-        arr = np.random.rand(10)
+
+        shape = (4)
+        arr = np.random.rand(shape)
+
         print(f"Random array of size {arr.shape} : {arr}")
         py.zero_array_1D(arr)
         print(f"Array after zero_array_1D : {arr}")
@@ -38,8 +41,9 @@ def zero_nparray_1D_test():
 
 def zero_nparray_2D_test():
     try:
-        arr = np.random.rand(16)
-        arr = arr.reshape((4,4))
+        
+        shape = (4, 4)
+        arr = np.random.rand(*shape)
 
         print(f"Random array of size {arr.shape} : {arr}")
         py.zero_array_2D(arr)
