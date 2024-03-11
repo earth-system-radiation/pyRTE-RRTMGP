@@ -69,8 +69,8 @@ Currently, the following functions are available in the `pyrte` package:
 | **Array Utilities**                     |         |
 | `zero_array_1D`                         |   ✅   |
 | `zero_array_2D`                         |   ✅   |
-| `zero_array_3D`                         |   🔲   |
-| `zero_array_4D`                         |   🔲   |
+| `zero_array_3D`                         |   ✅   |
+| `zero_array_4D`                         |   ✅   |
 
 ### RRTMGP Functions
 
@@ -114,12 +114,10 @@ python3 setup.py build_ext --inplace
 
 Once built, the module will be located in a folder called `pyrte`
 
-* Run `./test.py` to verify code works correctly. Expected output is:
+## Pytest Setup Instructions
 
-``` bash
-[dimension_exception_test] TEST PASSED
-[size_exception_test] TEST PASSED
-Random array of size (10,) : [0.14849177 0.79354843 0.49071273 0.95947495 0.48878241 0.58449538
- 0.282724   0.83500315 0.11668561 0.33491972]
-Array after zero_array_1D : [0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
-```
+* Run `pip3 install pytest`
+
+### Pytest Usage
+* Run `cd test/`
+* Run `pytest`
