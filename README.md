@@ -68,7 +68,7 @@ Currently, the following functions are available in the `pyrte` package:
 | `rte_net_byband_full`                   |   🔲   |
 | **Array Utilities**                     |         |
 | `zero_array_1D`                         |   ✅   |
-| `zero_array_2D`                         |   🔲   |
+| `zero_array_2D`                         |   ✅   |
 | `zero_array_3D`                         |   🔲   |
 | `zero_array_4D`                         |   🔲   |
 

@@ -28,4 +28,27 @@ PYBIND11_MODULE(pyrte, m) {
         double *ptr = static_cast<double *>(buf_info.ptr);
         fortran::zero_array_1D(&ni, ptr);
     });
+
+
+    m.def("zero_array_2D", [](py::array_t<double> arr){
+        py::buffer_info buf_info = arr.request();
+
+        if (buf_info.ndim != 2) {
+            throw std::runtime_error("Number of dimensions must be 2");
+        }
+
+        if (buf_info.size <= 0) {
+            throw std::runtime_error("Array size cannot be 0 or negative");
+        }
+
+        if (buf_info.shape[0] >= INT_MAX || buf_info.shape[1] >= INT_MAX) {
+            throw std::runtime_error("Array dim bigger than INT_MAX");
+        }
+
+        int ni = int(buf_info.shape[0]);
+        int nj = int(buf_info.shape[1]);
+
+        double *ptr = static_cast<double *>(buf_info.ptr);
+        fortran::zero_array_2D(&ni, &nj, ptr);
+    });
 }

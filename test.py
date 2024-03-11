@@ -27,7 +27,7 @@ def size_exception_test():
             print(f"[size_exception_test] TEST FAILED | {e}")
 
 
-def zero_nparray_test():
+def zero_nparray_1D_test():
     try:
         arr = np.random.rand(10)
         print(f"Random array of size {arr.shape} : {arr}")
@@ -36,7 +36,19 @@ def zero_nparray_test():
     except Exception as e:
         print(f"TEST FAILED | {e}")
 
+def zero_nparray_2D_test():
+    try:
+        arr = np.random.rand(16)
+        arr = arr.reshape((4,4))
+
+        print(f"Random array of size {arr.shape} : {arr}")
+        py.zero_array_2D(arr)
+        print(f"Array after zero_array_1D : {arr}")
+    except Exception as e:
+        print(f"TEST FAILED | {e}")
+
 
 dimension_exception_test()
 size_exception_test()
-zero_nparray_test()
+zero_nparray_1D_test()
+zero_nparray_2D_test()
