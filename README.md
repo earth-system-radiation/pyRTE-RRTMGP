@@ -123,3 +123,35 @@ Random array of size (10,) : [0.14849177 0.79354843 0.49071273 0.95947495 0.4887
  0.282724   0.83500315 0.11668561 0.33491972]
 Array after zero_array_1D : [0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
 ```
+
+## Pytest Setup Instructions
+
+* Run `pip3 install pytest`
+* Run `pip3 show pytest`
+* Example output:
+``` bash  
+Name: pytest
+Version: 8.1.1
+Summary: pytest: simple powerful testing with Python
+Home-page: 
+Author: Holger Krekel, Bruno Oliveira, Ronny Pfannschmidt, Floris Bruynooghe, Brianna Laugher, Florian Bruhin, Others (See AUTHORS)
+Author-email: 
+License: MIT
+Location: /home/vihren/miniconda3/lib/python3.11/site-packages
+Requires: iniconfig, packaging, pluggy
+Required-by: 
+```
+### Pytest Usage
+* Run `cd test/`
+* Run `pytest`
+* Example output
+``` bash
+==================================================================== test session starts =====================================================================
+platform linux -- Python 3.11.5, pytest-8.1.1, pluggy-1.4.0
+rootdir: /path/to/project/columbia
+collected 4 items                                                                                                                                            
+
+test_exported_functions.py ....                                                                                                                        [100%]
+
+===================================================================== 4 passed in 0.17s ======================================================================
+```
