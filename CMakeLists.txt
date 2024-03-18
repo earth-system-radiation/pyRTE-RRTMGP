@@ -40,6 +40,7 @@ target_link_directories(${TARGET_NAME} PUBLIC
 )
 
 target_link_libraries(${TARGET_NAME} PUBLIC 
+    gfortran
     rrtmgp
     rte
 )
