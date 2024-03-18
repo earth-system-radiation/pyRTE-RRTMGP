@@ -49,7 +49,7 @@ target_link_libraries(${TARGET_NAME} PUBLIC
     rte
 )
 
-if ($LINUX)
+if (${LINUX})
     target_link_libraries(${TARGET_NAME} PUBLIC gfortran)
 endif()
 
