@@ -100,16 +100,12 @@ sudo apt install -y \
     cmake
 ```
 
-* Compile the `rte` and `rrtmgp` libraries from source
+* The building of the sources and installation of the packages are handle by `CMakeLists.txt` and automatically called by pip.
+* It builds both `rte` and `rrtmgp` and install the python package.
+
 
 ``` bash
-./compile_fortran.sh
-```
-
-* Build the python module
-
-``` bash
-python3 setup.py build_ext --inplace
+pip install -e .
 ```
 
 Once built, the module will be located in a folder called `pyrte`

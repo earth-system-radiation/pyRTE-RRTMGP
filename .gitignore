@@ -3,8 +3,16 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# Conda-forge CI
+.ci_support/
+
 # C extensions
 *.so
+
+# CMake
+CMakeFiles/
+CMakeCache.txt
+*.cmake
 
 # Distribution / packaging
 .Python
