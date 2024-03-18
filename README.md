@@ -28,14 +28,14 @@ Currently, the following functions are available in the `pyrte` package:
 | Function name                           | Covered |
 |-----------------------------------------|:-------:|
 | **SHORTWAVE SOLVERS**                   |         |
-| `rte_sw_solver_noscat`                  |   🔲   |
-| `rte_sw_solver_2stream`                 |   🔲   |
+| `rte_sw_solver_noscat`                  |   ✅   |
+| `rte_sw_solver_2stream`                 |   ✅   |
 | **LONGWAVE SOLVERS**                    |         |
-| `rte_lw_solver_noscat`                  |   🔲   |
-| `rte_lw_solver_2stream`                 |   🔲   |
+| `rte_lw_solver_noscat`                  |   ✅   |
+| `rte_lw_solver_2stream`                 |   ✅   |
 | **OPTICAL PROPS - INCREMENT**           |         |
-| `rte_increment_1scalar_by_1scalar`      |   🔲   |
-| `rte_increment_1scalar_by_2stream`      |   🔲   |
+| `rte_increment_1scalar_by_1scalar`      |   ✅   |
+| `rte_increment_1scalar_by_2stream`      |   ✅   |
 | `rte_increment_1scalar_by_nstream`      |   🔲   |
 | `rte_increment_2stream_by_1scalar`      |   🔲   |
 | `rte_increment_2stream_by_2stream`      |   🔲   |
