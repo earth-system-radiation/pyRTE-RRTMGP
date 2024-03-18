@@ -4,6 +4,11 @@ project(rte-rrtmgp)
 # Add a custom target that always runs
 add_custom_target(compile-rte-rrtmgp ALL)
 
+set(LINUX FALSE)
+if (UNIX AND NOT APPLE)
+    set(LINUX TRUE)
+endif()
+
 # Custom command for the compile-rte-rrtmgp target
 add_custom_command(
     TARGET compile-rte-rrtmgp
@@ -40,10 +45,13 @@ target_link_directories(${TARGET_NAME} PUBLIC
 )
 
 target_link_libraries(${TARGET_NAME} PUBLIC 
-    gfortran
     rrtmgp
     rte
 )
+
+if ($LINUX)
+    target_link_libraries(${TARGET_NAME} PUBLIC gfortran)
+endif()
 
 # The install directory is the output (wheel) directory
 install(TARGETS pyrte DESTINATION pyrte)
