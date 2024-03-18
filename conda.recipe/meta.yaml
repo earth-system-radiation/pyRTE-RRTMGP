@@ -1,0 +1,55 @@
+# based on https://github.com/pybind/scikit_build_example
+# setting the requirements https://docs.conda.io/projects/conda-build/en/stable/resources/define-metadata.html#export-runtime-requirements
+package:
+  name: pyrte
+  version: 0.0.1
+
+source:
+  path: ..
+
+build:
+  number: 0
+  script: {{ PYTHON }} -m pip install . -vv
+
+
+requirements:
+  build:
+    - gcc_linux-64        # [linux]
+    - gxx_linux-64        # [linux]
+    - gfortran_linux-64   # [linux]
+    - clang_osx-64        # [osx]
+    - clangxx_osx-64      # [osx]
+    - gfortran_osx-64     # [osx]
+    - binutils            # [not win]
+    - m2w64-gcc-fortran   # [win]
+    - m2w64-gcc           # [win]
+    - m2w64-binutils      # [win]
+    - libuv==1.44.2
+    - cmake==3.26.4
+    - make
+
+  host:
+    - python
+    - pip
+    - scikit-build-core
+    - pybind11 >=2.10.0
+    - numpy >=1.21.0
+
+  run:
+    - python
+    - numpy >=1.21.0
+
+test:
+  imports:
+    - pyrte
+  requires:
+    - numpy>=1.21
+    - pytest>=7.4
+  source_files:
+    - tests
+  commands:
+    - pytest tests
+
+about:
+  summary: A Python interface to the RTE+RRTMGP Fortran software package.
+  license_file: LICENSE

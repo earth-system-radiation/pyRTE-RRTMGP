@@ -1,8 +1,5 @@
-import os
-import sys
 import pytest
 import numpy as np
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pyrte.pyrte as py
 
 #####################

@@ -1,1 +1,2 @@
-numpy
+numpy==1.21.1
+pytest>=7.4.0
