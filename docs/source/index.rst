@@ -22,13 +22,15 @@ in planetary atmospheres. RTE+RRTMGP is described in a
    :maxdepth: 2
    :caption: Contents:
 
+   user_guide/installation
 
 
-Indices and tables
-==================
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. Indices and tables
+.. ==================
+
+.. * :ref:`genindex`
+.. * :ref:`modindex`
+.. * :ref:`search`
 
 
