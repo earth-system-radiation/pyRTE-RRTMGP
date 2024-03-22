@@ -86,9 +86,9 @@ Currently, the following functions are available in the `pyrte` package:
 The current code in this repo are early experiments with the goal of exploring details fo the Fortran works and testing different options for creating an interface with C.
 Later on, we will use this knowledge to bind it with Python
 
-## Prerequisites
+### Prerequisites
 
-pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux and MacOS. The package might also work with other architectures (such as Apple Silicone or Linux ARM), but this is not tested.
+pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux and macOS.
 
 To build and install the package, you need the conda package manager. If you don't have conda installed, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
 
@@ -151,31 +151,35 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 
 ### Installation with pip
 
-You also have the option to build and install the package with pip. However, this is not recommended as it requires you to have a working Fortran compiler and other prerequisites installed on your system.
+You also have the option to build and install the package with pip. This might work on additional, untested architectures (such as macOS on M1). However, this is not recommended as it requires you to have a working Fortran compiler and other prerequisites installed on your system.
 
-To install with pip, you first need to clone the repo (``git clone git@github.com:earth-system-radiation/pyRTE-RRTMGP.git``) and update the submodules (``git submodule update --init --recursive``) as described in the conda installation instructions above.
+* To install with pip, you first need to clone the repo (``git clone git@github.com:earth-system-radiation/pyRTE-RRTMGP.git``) and update the submodules (``git submodule update --init --recursive``) as described in the conda installation instructions above.
 
-``` bash
-git submodule update --init --recursive
-```
+    ``` bash
+    git submodule update --init --recursive
+    ```
 
-* Install dependencies:
+* Install dependencies in your operating system.
 
-``` bash
-sudo apt install -y \
-    libnetcdff-dev \
-    gfortran-10 \
-    python3-dev \
-    cmake
-```
+    With Ubuntu, for example, use:
 
-* The building of the sources and installation of the packages are handle by `CMakeLists.txt` and automatically called by pip.
-* It builds both `rte` and `rrtmgp` and install the python package.
+    ``` bash
+    sudo apt install -y \
+        libnetcdff-dev \
+        gfortran-10 \
+        python3-dev \
+        cmake
+    ```
 
+    On other systems, you might be able to install the necessary dependencies with a package manager like `brew`.
 
-``` bash
-pip install -e .
-```
+* Compile the Fortran code and build and install the Python package in your current environment with:
+
+    ``` bash
+    pip install .
+    ```
+
+    For development purposes, you can install the package in editable mode: ``pip install -e .``.
 
 Once built, the module will be located in a folder called `pyrte`
 

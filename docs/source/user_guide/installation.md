@@ -6,8 +6,7 @@ To install the package, you can clone the repository and build and install the c
 
 ## Prerequisites
 
-pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux and MacOS.
-The package might also work with other architectures (such as Apple Silicone or Linux ARM), but this is not tested.
+pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux and macOS.
 
 To build and install the package, you need the conda package manager. If you don't have conda installed, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
 
@@ -70,15 +69,13 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 
 ## Installation with pip
 
-You also have the option to build and install the package with pip. However, this is not recommended as it requires you to have a working Fortran compiler and other prerequisites installed on your system.
+You also have the option to build and install the package with pip. This might work on additional, untested architectures (such as macOS on M1). However, this is not recommended as it requires you to have a working Fortran compiler and other prerequisites installed on your system.
 
 To install with pip, you first need to clone the repo (``git clone git@github.com:earth-system-radiation/pyRTE-RRTMGP.git``) and update the submodules (``git submodule update --init --recursive``) as described in the conda installation instructions (above)[#installation-with-conda-recommended].
 
-Then, make sure you have the necessary dependencies installed:
+Then, make sure you have the necessary dependencies installed.
 
-```bash
-
-Then, make sure you have the necessary dependencies installed:
+With Ubuntu, for example, use:
 
 ```bash
 sudo apt install -y \
@@ -88,10 +85,14 @@ sudo apt install -y \
     cmake
 ```
 
-Next, run pip to compile the Fortran code, build, and install the package:
+On other systems, you might be able to install the necessary dependencies with a package manager like `brew`.
+
+Compile the Fortran code and build and install the Python package in your current environment with:
 
 ``` bash
-pip install -e .
+pip install .
 ```
 
-Once built, the module will be located in a folder called `pyrte`.
+For development purposes, you can install the package in editable mode: ``pip install -e .``.
+
+Once built, the module will be located in a folder called `pyrte`
