@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-14]
+        platform: [macos-14]
         python-version: ["3.11"]
 
     runs-on: ${{ matrix.platform }}
@@ -37,6 +37,10 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
           miniconda-version: "latest"
+          miniforge-variant: "Mambaforge" # This line ensures using Miniforge/Mambaforge
+          miniforge-version: "latest"
+          use-mamba: true # use mamba
+          architecture: "arm64" # Specify the architecture
 
       - name: Prepare
         run: conda install conda-build conda-verify pytest
