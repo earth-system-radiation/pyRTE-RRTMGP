@@ -20,7 +20,10 @@ add_custom_command(
 )
 
 # Compile C bindings
-set(HEADERS ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rte-kernels/api/rte_kernels.h)
+set(HEADERS 
+    ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rte-kernels/api/rte_kernels.h
+    ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rrtmgp-kernels/api/rrtmgp_kernels.h
+)
 set(SOURCES ${CMAKE_SOURCE_DIR}/pybind_interface.cpp)
 set(TARGET_NAME pyrte)
 
@@ -38,6 +41,7 @@ add_dependencies(pyrte compile-rte-rrtmgp)
 
 target_include_directories(${TARGET_NAME} PUBLIC 
     ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rte-kernels/api/
+    ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rrtmgp-kernels/api/
 )
 
 target_link_directories(${TARGET_NAME} PUBLIC 
