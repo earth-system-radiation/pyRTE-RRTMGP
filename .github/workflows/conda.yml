@@ -36,7 +36,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
-          miniconda-version: "latest"
           miniforge-variant: "Mambaforge" # This line ensures using Miniforge/Mambaforge
           miniforge-version: "latest"
           use-mamba: true # use mamba
