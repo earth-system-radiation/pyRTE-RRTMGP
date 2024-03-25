@@ -6,7 +6,7 @@ To install the package, you can clone the repository and build and install the c
 
 ## Prerequisites
 
-pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux and macOS.
+pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux (and, to some extend, macOS on Intel processors).
 
 To build and install the package, you need the conda package manager. If you don't have conda installed, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
 
