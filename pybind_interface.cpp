@@ -2,9 +2,13 @@
 #include <pybind11/numpy.h>
 
 namespace fortran {
+#include "rte_types.h"
 #include "rte_kernels.h"
 #include "rrtmgp_kernels.h"
 }
+
+using fortran::Float;
+using fortran::Bool;
 
 namespace py = pybind11;
 
@@ -12,16 +16,30 @@ PYBIND11_MODULE(pyrte, m) {
 
     m.def("rte_lw_solver_noscat",
     [](
-        int ncol, int nlay, int ngpt, bool top_at_1, int nmus,
-        py::array_t<double> Ds, py::array_t<double> weights,
-        py::array_t<double> tau, py::array_t<double> lay_source,
-        py::array_t<double> lev_source, py::array_t<double> sfc_emis,
-        py::array_t<double> sfc_src, py::array_t<double> inc_flux,
-        py::array_t<double> flux_up, py::array_t<double> flux_dn,
-        bool do_broadband, py::array_t<double> broadband_up,
-        py::array_t<double> broadband_dn, bool do_Jacobians,
-        py::array_t<double> sfc_srcJac, py::array_t<double> flux_upJac,
-        bool do_rescaling, py::array_t<double> ssa, py::array_t<double> g
+        int ncol,
+        int nlay,
+        int ngpt,
+        bool top_at_1,
+        int nmus,
+        py::array_t<Float> Ds,
+        py::array_t<Float> weights,
+        py::array_t<Float> tau,
+        py::array_t<Float> lay_source,
+        py::array_t<Float> lev_source,
+        py::array_t<Float> sfc_emis,
+        py::array_t<Float> sfc_src,
+        py::array_t<Float> inc_flux,
+        py::array_t<Float> flux_up,
+        py::array_t<Float> flux_dn,
+        bool do_broadband,
+        py::array_t<Float> broadband_up,
+        py::array_t<Float> broadband_dn,
+        bool do_Jacobians,
+        py::array_t<Float> sfc_srcJac,
+        py::array_t<Float> flux_upJac,
+        bool do_rescaling,
+        py::array_t<Float> ssa,
+        py::array_t<Float> g
     ) {
         int top_at_1_int = int(top_at_1);
         int do_broadband_int = int(do_broadband);
@@ -51,33 +69,38 @@ PYBIND11_MODULE(pyrte, m) {
             ngpt,
             top_at_1_int,
             nmus,
-            reinterpret_cast<double *>(buf_Ds.ptr),
-            reinterpret_cast<double *>(buf_weights.ptr),
-            reinterpret_cast<double *>(buf_tau.ptr),
-            reinterpret_cast<double *>(buf_lay_source.ptr),
-            reinterpret_cast<double *>(buf_lev_source.ptr),
-            reinterpret_cast<double *>(buf_sfc_emis.ptr),
-            reinterpret_cast<double *>(buf_sfc_src.ptr),
-            reinterpret_cast<double *>(buf_inc_flux.ptr),
-            reinterpret_cast<double *>(buf_flux_up.ptr),
-            reinterpret_cast<double *>(buf_flux_dn.ptr),
+            reinterpret_cast<Float *>(buf_Ds.ptr),
+            reinterpret_cast<Float *>(buf_weights.ptr),
+            reinterpret_cast<Float *>(buf_tau.ptr),
+            reinterpret_cast<Float *>(buf_lay_source.ptr),
+            reinterpret_cast<Float *>(buf_lev_source.ptr),
+            reinterpret_cast<Float *>(buf_sfc_emis.ptr),
+            reinterpret_cast<Float *>(buf_sfc_src.ptr),
+            reinterpret_cast<Float *>(buf_inc_flux.ptr),
+            reinterpret_cast<Float *>(buf_flux_up.ptr),
+            reinterpret_cast<Float *>(buf_flux_dn.ptr),
             do_broadband_int,
-            reinterpret_cast<double *>(buf_broadband_up.ptr),
-            reinterpret_cast<double *>(buf_broadband_dn.ptr),
+            reinterpret_cast<Float *>(buf_broadband_up.ptr),
+            reinterpret_cast<Float *>(buf_broadband_dn.ptr),
             do_Jacobians_int,
-            reinterpret_cast<double *>(buf_sfc_srcJac.ptr),
-            reinterpret_cast<double *>(buf_flux_upJac.ptr),
+            reinterpret_cast<Float *>(buf_sfc_srcJac.ptr),
+            reinterpret_cast<Float *>(buf_flux_upJac.ptr),
             do_rescaling_int,
-            reinterpret_cast<double *>(buf_ssa.ptr),
-            reinterpret_cast<double *>(buf_g.ptr)
+            reinterpret_cast<Float *>(buf_ssa.ptr),
+            reinterpret_cast<Float *>(buf_g.ptr)
         );
     });
 
     m.def("rte_sw_solver_noscat",
     [](
-        int ncol, int nlay, int ngpt, bool top_at_1,
-        py::array_t<double> tau, py::array_t<double> mu0,
-        py::array_t<double> inc_flux_dir, py::array_t<double> flux_dir
+        int ncol,
+        int nlay,
+        int ngpt,
+        bool top_at_1,
+        py::array_t<Float> tau,
+        py::array_t<Float> mu0,
+        py::array_t<Float> inc_flux_dir,
+        py::array_t<Float> flux_dir
     ) {
         if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
             throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
@@ -103,24 +126,36 @@ PYBIND11_MODULE(pyrte, m) {
             nlay,
             ngpt,
             top_at_1_int,
-            reinterpret_cast<double *>(buf_tau.ptr),
-            reinterpret_cast<double *>(buf_mu0.ptr),
-            reinterpret_cast<double *>(buf_inc_flux_dir.ptr),
-            reinterpret_cast<double *>(buf_flux_dir.ptr)
+            reinterpret_cast<Float *>(buf_tau.ptr),
+            reinterpret_cast<Float *>(buf_mu0.ptr),
+            reinterpret_cast<Float *>(buf_inc_flux_dir.ptr),
+            reinterpret_cast<Float *>(buf_flux_dir.ptr)
         );
     });
 
 
     m.def("rte_sw_solver_2stream",
     [](
-        int ncol, int nlay, int ngpt, bool top_at_1,
-        py::array_t<double> tau, py::array_t<double> ssa, py::array_t<double> g,
-        py::array_t<double> mu0, py::array_t<double> sfc_alb_dir,
-        py::array_t<double> sfc_alb_dif, py::array_t<double> inc_flux_dir,
-        py::array_t<double> flux_up, py::array_t<double> flux_dn,
-        py::array_t<double> flux_dir, bool has_dif_bc, py::array_t<double> inc_flux_dif,
-        bool do_broadband, py::array_t<double> broadband_up, py::array_t<double> broadband_dn,
-        py::array_t<double> broadband_dir
+        int ncol,
+        int nlay,
+        int ngpt,
+        bool top_at_1,
+        py::array_t<Float> tau,
+        py::array_t<Float> ssa,
+        py::array_t<Float> g,
+        py::array_t<Float> mu0,
+        py::array_t<Float> sfc_alb_dir,
+        py::array_t<Float> sfc_alb_dif,
+        py::array_t<Float> inc_flux_dir,
+        py::array_t<Float> flux_up,
+        py::array_t<Float> flux_dn,
+        py::array_t<Float> flux_dir,
+        bool has_dif_bc,
+        py::array_t<Float> inc_flux_dif,
+        bool do_broadband,
+        py::array_t<Float> broadband_up,
+        py::array_t<Float> broadband_dn,
+        py::array_t<Float> broadband_dir
     ) {
         if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
             throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
@@ -169,33 +204,41 @@ PYBIND11_MODULE(pyrte, m) {
             nlay,
             ngpt,
             top_at_1_int,
-            reinterpret_cast<double *>(buf_tau.ptr),
-            reinterpret_cast<double *>(buf_ssa.ptr),
-            reinterpret_cast<double *>(buf_g.ptr),
-            reinterpret_cast<double *>(buf_mu0.ptr),
-            reinterpret_cast<double *>(buf_sfc_alb_dir.ptr),
-            reinterpret_cast<double *>(buf_sfc_alb_dif.ptr),
-            reinterpret_cast<double *>(buf_inc_flux_dir.ptr),
-            reinterpret_cast<double *>(buf_flux_up.ptr),
-            reinterpret_cast<double *>(buf_flux_dn.ptr),
-            reinterpret_cast<double *>(buf_flux_dir.ptr),
+            reinterpret_cast<Float *>(buf_tau.ptr),
+            reinterpret_cast<Float *>(buf_ssa.ptr),
+            reinterpret_cast<Float *>(buf_g.ptr),
+            reinterpret_cast<Float *>(buf_mu0.ptr),
+            reinterpret_cast<Float *>(buf_sfc_alb_dir.ptr),
+            reinterpret_cast<Float *>(buf_sfc_alb_dif.ptr),
+            reinterpret_cast<Float *>(buf_inc_flux_dir.ptr),
+            reinterpret_cast<Float *>(buf_flux_up.ptr),
+            reinterpret_cast<Float *>(buf_flux_dn.ptr),
+            reinterpret_cast<Float *>(buf_flux_dir.ptr),
             has_dif_bc_int,
-            reinterpret_cast<double *>(buf_inc_flux_dif.ptr),
+            reinterpret_cast<Float *>(buf_inc_flux_dif.ptr),
             do_broadband_int,
-            reinterpret_cast<double *>(buf_broadband_up.ptr),
-            reinterpret_cast<double *>(buf_broadband_dn.ptr),
-            reinterpret_cast<double *>(buf_broadband_dir.ptr)
+            reinterpret_cast<Float *>(buf_broadband_up.ptr),
+            reinterpret_cast<Float *>(buf_broadband_dn.ptr),
+            reinterpret_cast<Float *>(buf_broadband_dir.ptr)
         );
     });
 
     m.def("rte_lw_solver_2stream",
     [](
-        int ncol, int nlay, int ngpt, bool top_at_1,
-        py::array_t<double> tau, py::array_t<double> ssa, py::array_t<double> g,
-        py::array_t<double> lay_source, py::array_t<double> lev_source,
-        py::array_t<double> sfc_emis, py::array_t<double> sfc_src,
-        py::array_t<double> inc_flux, py::array_t<double> flux_up,
-        py::array_t<double> flux_dn
+        int ncol,
+        int nlay,
+        int ngpt,
+        bool top_at_1,
+        py::array_t<Float> tau,
+        py::array_t<Float> ssa,
+        py::array_t<Float> g,
+        py::array_t<Float> lay_source,
+        py::array_t<Float> lev_source,
+        py::array_t<Float> sfc_emis,
+        py::array_t<Float> sfc_src,
+        py::array_t<Float> inc_flux,
+        py::array_t<Float> flux_up,
+        py::array_t<Float> flux_dn
     ) {
         if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
             throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
@@ -234,16 +277,16 @@ PYBIND11_MODULE(pyrte, m) {
             nlay,
             ngpt,
             top_at_1_int,
-            reinterpret_cast<double *>(buf_tau.ptr),
-            reinterpret_cast<double *>(buf_ssa.ptr),
-            reinterpret_cast<double *>(buf_g.ptr),
-            reinterpret_cast<double *>(buf_lay_source.ptr),
-            reinterpret_cast<double *>(buf_lev_source.ptr),
-            reinterpret_cast<double *>(buf_sfc_emis.ptr),
-            reinterpret_cast<double *>(buf_sfc_src.ptr),
-            reinterpret_cast<double *>(buf_inc_flux.ptr),
-            reinterpret_cast<double *>(buf_flux_up.ptr),
-            reinterpret_cast<double *>(buf_flux_dn.ptr)
+            reinterpret_cast<Float *>(buf_tau.ptr),
+            reinterpret_cast<Float *>(buf_ssa.ptr),
+            reinterpret_cast<Float *>(buf_g.ptr),
+            reinterpret_cast<Float *>(buf_lay_source.ptr),
+            reinterpret_cast<Float *>(buf_lev_source.ptr),
+            reinterpret_cast<Float *>(buf_sfc_emis.ptr),
+            reinterpret_cast<Float *>(buf_sfc_src.ptr),
+            reinterpret_cast<Float *>(buf_inc_flux.ptr),
+            reinterpret_cast<Float *>(buf_flux_up.ptr),
+            reinterpret_cast<Float *>(buf_flux_dn.ptr)
         );
     });
 
@@ -252,8 +295,8 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> tau_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> tau_in
     ) {
         if (tau_inout.size() != ncol * nlay * ngpt ||
             tau_in.size() != ncol * nlay * ngpt
@@ -272,8 +315,8 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr));
     });
 
     m.def("rte_increment_1scalar_by_2stream",
@@ -281,9 +324,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -305,9 +348,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr));
     });
 
     m.def("rte_increment_1scalar_by_nstream",
@@ -315,9 +358,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -339,9 +382,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr));
     });
 
     m.def("rte_increment_2stream_by_1scalar",
@@ -349,9 +392,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> tau_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> tau_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -373,9 +416,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr));
     });
 
     m.def("rte_increment_2stream_by_2stream",
@@ -383,12 +426,12 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> g_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> g_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> g_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> g_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -416,12 +459,12 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_g_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_g_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_g_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_g_in.ptr));
     });
 
     m.def("rte_increment_2stream_by_nstream",
@@ -430,12 +473,12 @@ PYBIND11_MODULE(pyrte, m) {
         int nlay,
         int ngpt,
         int nmom,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> g_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> p_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> g_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> p_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -464,12 +507,12 @@ PYBIND11_MODULE(pyrte, m) {
             nlay,
             ngpt,
             nmom,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_g_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_p_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_g_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_p_in.ptr));
     });
 
     m.def("rte_increment_nstream_by_1scalar",
@@ -477,9 +520,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> tau_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> tau_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -501,9 +544,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr));
     });
 
     m.def("rte_increment_nstream_by_2stream",
@@ -512,12 +555,12 @@ PYBIND11_MODULE(pyrte, m) {
         int nlay,
         int ngpt,
         int nmom1,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> p_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> g_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> p_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> g_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -546,12 +589,12 @@ PYBIND11_MODULE(pyrte, m) {
             nlay,
             ngpt,
             nmom1,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_p_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_g_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_p_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_g_in.ptr));
     });
 
     m.def("rte_increment_nstream_by_nstream",
@@ -561,12 +604,12 @@ PYBIND11_MODULE(pyrte, m) {
         int ngpt,
         int nmom1,
         int nmom2,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> p_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> p_in
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> p_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> p_in
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -596,12 +639,12 @@ PYBIND11_MODULE(pyrte, m) {
             ngpt,
             nmom1,
             nmom2,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_p_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_p_in.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_p_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_p_in.ptr));
     });
 
     m.def("rte_inc_1scalar_by_1scalar_bybnd",
@@ -609,8 +652,8 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> tau_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> tau_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -634,8 +677,8 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -645,9 +688,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -673,9 +716,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -685,7 +728,7 @@ PYBIND11_MODULE(pyrte, m) {
     //     int ncol,
     //     int nlay,
     //     int ngpt,
-    //     py::array_t<double> tau_inout,
+    //     py::array_t<Float> tau_inout,
     //     int nbnd,
     //     py::array_t<int> band_lims_gpoint
     // ) {
@@ -707,7 +750,7 @@ PYBIND11_MODULE(pyrte, m) {
     //         ncol,
     //         nlay,
     //         ngpt,
-    //         reinterpret_cast<double *>(buf_tau_inout.ptr),
+    //         reinterpret_cast<Float *>(buf_tau_inout.ptr),
     //         nbnd,
     //         reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     // });
@@ -717,9 +760,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> tau_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> tau_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -745,9 +788,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -757,12 +800,12 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> g_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> g_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> g_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> g_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -794,12 +837,12 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_g_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_g_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_g_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_g_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -810,12 +853,12 @@ PYBIND11_MODULE(pyrte, m) {
         int nlay,
         int ngpt,
         int nmom,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> g_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> p_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> g_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> p_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -848,12 +891,12 @@ PYBIND11_MODULE(pyrte, m) {
             nlay,
             ngpt,
             nmom,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_g_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_p_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_g_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_p_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -863,9 +906,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> tau_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> tau_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -891,9 +934,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -904,12 +947,12 @@ PYBIND11_MODULE(pyrte, m) {
         int nlay,
         int ngpt,
         int nmom1,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> p_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> g_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> p_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> g_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -942,12 +985,12 @@ PYBIND11_MODULE(pyrte, m) {
             nlay,
             ngpt,
             nmom1,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_p_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_g_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_p_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_g_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -959,12 +1002,12 @@ PYBIND11_MODULE(pyrte, m) {
         int ngpt,
         int nmom1,
         int nmom2,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> p_inout,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
-        py::array_t<double> p_in,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> p_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        py::array_t<Float> p_in,
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
@@ -998,12 +1041,12 @@ PYBIND11_MODULE(pyrte, m) {
             ngpt,
             nmom1,
             nmom2,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_p_inout.ptr),
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
-            reinterpret_cast<double *>(buf_p_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_p_inout.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_p_in.ptr),
             nbnd,
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
@@ -1013,9 +1056,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> g_inout
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> g_inout
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -1037,9 +1080,9 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_g_inout.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_g_inout.ptr));
     });
 
     m.def("rte_delta_scale_2str_f_k",
@@ -1047,10 +1090,10 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_inout,
-        py::array_t<double> ssa_inout,
-        py::array_t<double> g_inout,
-        py::array_t<double> f
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> ssa_inout,
+        py::array_t<Float> g_inout,
+        py::array_t<Float> f
     ) {
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
@@ -1074,10 +1117,10 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_inout.ptr),
-            reinterpret_cast<double *>(buf_ssa_inout.ptr),
-            reinterpret_cast<double *>(buf_g_inout.ptr),
-            reinterpret_cast<double *>(buf_f.ptr));
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<Float *>(buf_ssa_inout.ptr),
+            reinterpret_cast<Float *>(buf_g_inout.ptr),
+            reinterpret_cast<Float *>(buf_f.ptr));
     });
 
     m.def("rte_extract_subset_dim1_3d",
@@ -1085,10 +1128,10 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> array_in,
+        py::array_t<Float> array_in,
         int ncol_start,
         int ncol_end,
-        py::array_t<double> array_out
+        py::array_t<Float> array_out
     ) {
         if (
             (array_in.size() != ncol * nlay * ngpt) ||
@@ -1108,10 +1151,10 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_array_in.ptr),
+            reinterpret_cast<Float *>(buf_array_in.ptr),
             ncol_start,
             ncol_end,
-            reinterpret_cast<double *>(buf_array_out.ptr));
+            reinterpret_cast<Float *>(buf_array_out.ptr));
     });
 
     m.def("rte_extract_subset_dim2_4d",
@@ -1120,10 +1163,10 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> array_in,
+        py::array_t<Float> array_in,
         int ncol_start,
         int ncol_end,
-        py::array_t<double> array_out
+        py::array_t<Float> array_out
     ) {
         if (
             (array_in.size() != nmom * ncol * nlay * ngpt) ||
@@ -1144,10 +1187,10 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_array_in.ptr),
+            reinterpret_cast<Float *>(buf_array_in.ptr),
             ncol_start,
             ncol_end,
-            reinterpret_cast<double *>(buf_array_out.ptr));
+            reinterpret_cast<Float *>(buf_array_out.ptr));
     });
 
     m.def("rte_extract_subset_absorption_tau",
@@ -1155,11 +1198,11 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlay,
         int ngpt,
-        py::array_t<double> tau_in,
-        py::array_t<double> ssa_in,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
         int ncol_start,
         int ncol_end,
-        py::array_t<double> tau_out
+        py::array_t<Float> tau_out
     ) {
         if (
             (tau_in.size() != ncol * nlay * ngpt) ||
@@ -1181,11 +1224,11 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<double *>(buf_tau_in.ptr),
-            reinterpret_cast<double *>(buf_ssa_in.ptr),
+            reinterpret_cast<Float *>(buf_tau_in.ptr),
+            reinterpret_cast<Float *>(buf_ssa_in.ptr),
             ncol_start,
             ncol_end,
-            reinterpret_cast<double *>(buf_tau_out.ptr));
+            reinterpret_cast<Float *>(buf_tau_out.ptr));
     });
 
     m.def("rte_sum_broadband",
@@ -1193,8 +1236,8 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlev,
         int ngpt,
-        py::array_t<double> gpt_flux,
-        py::array_t<double> flux
+        py::array_t<Float> gpt_flux,
+        py::array_t<Float> flux
     ) {
         if (
             (gpt_flux.size() != ncol * nlev * ngpt) ||
@@ -1214,8 +1257,8 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlev,
             ngpt,
-            reinterpret_cast<double *>(buf_gpt_flux.ptr),
-            reinterpret_cast<double *>(buf_flux.ptr));
+            reinterpret_cast<Float *>(buf_gpt_flux.ptr),
+            reinterpret_cast<Float *>(buf_flux.ptr));
     });
 
     m.def("rte_net_broadband_full",
@@ -1223,9 +1266,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ncol,
         int nlev,
         int ngpt,
-        py::array_t<double> gpt_flux_dn,
-        py::array_t<double> gpt_flux_up,
-        py::array_t<double> flux_net
+        py::array_t<Float> gpt_flux_dn,
+        py::array_t<Float> gpt_flux_up,
+        py::array_t<Float> flux_net
     ) {
         if (
             (gpt_flux_dn.size() != ncol * nlev * ngpt) ||
@@ -1247,18 +1290,18 @@ PYBIND11_MODULE(pyrte, m) {
             ncol,
             nlev,
             ngpt,
-            reinterpret_cast<double *>(buf_gpt_flux_dn.ptr),
-            reinterpret_cast<double *>(buf_gpt_flux_up.ptr),
-            reinterpret_cast<double *>(buf_flux_net.ptr));
+            reinterpret_cast<Float *>(buf_gpt_flux_dn.ptr),
+            reinterpret_cast<Float *>(buf_gpt_flux_up.ptr),
+            reinterpret_cast<Float *>(buf_flux_net.ptr));
     });
 
     m.def("rte_net_broadband_precalc",
     [](
         int ncol,
         int nlev,
-        py::array_t<double> broadband_flux_dn,
-        py::array_t<double> broadband_flux_up,
-        py::array_t<double> broadband_flux_net
+        py::array_t<Float> broadband_flux_dn,
+        py::array_t<Float> broadband_flux_up,
+        py::array_t<Float> broadband_flux_net
     ) {
         if (
             (broadband_flux_dn.size() != ncol * nlev) ||
@@ -1279,9 +1322,9 @@ PYBIND11_MODULE(pyrte, m) {
         fortran::rte_net_broadband_precalc(
             ncol,
             nlev,
-            reinterpret_cast<double *>(buf_broadband_flux_dn.ptr),
-            reinterpret_cast<double *>(buf_broadband_flux_up.ptr),
-            reinterpret_cast<double *>(buf_broadband_flux_net.ptr));
+            reinterpret_cast<Float *>(buf_broadband_flux_dn.ptr),
+            reinterpret_cast<Float *>(buf_broadband_flux_up.ptr),
+            reinterpret_cast<Float *>(buf_broadband_flux_net.ptr));
     });
 
 /// Disabled because they're not properly exported by Fortran
@@ -1294,8 +1337,8 @@ PYBIND11_MODULE(pyrte, m) {
         int ngpt,
         int nbnd,
         py::array_t<int> band_lims,
-        py::array_t<double> gpt_flux,
-        py::array_t<double> bnd_flux
+        py::array_t<Float> gpt_flux,
+        py::array_t<Float> bnd_flux
     ) {
         if (
             (band_lims.size() != 2 * nbnd) ||
@@ -1303,23 +1346,23 @@ PYBIND11_MODULE(pyrte, m) {
         ) {
             throw std::runtime_error("Invalid size for input arrays");
         }
-    
+
         if (ncol <= 0 || nlev <= 0 || ngpt <= 0 || nbnd <= 0) {
             throw std::runtime_error("ncol, nlev, ngpt and nbnd must be positive integers");
         }
-    
+
         py::buffer_info buf_band_lims = band_lims.request();
         py::buffer_info buf_gpt_flux = gpt_flux.request();
         py::buffer_info buf_bnd_flux = bnd_flux.request();
-    
+
         fortran::rte_sum_byband(
             ncol,
             nlev,
             ngpt,
             nbnd,
             reinterpret_cast<int *>(buf_band_lims.ptr),
-            reinterpret_cast<double *>(buf_gpt_flux.ptr),
-            reinterpret_cast<double *>(buf_bnd_flux.ptr));
+            reinterpret_cast<Float *>(buf_gpt_flux.ptr),
+            reinterpret_cast<Float *>(buf_bnd_flux.ptr));
     });
 
     m.def("rte_net_byband_full",
@@ -1329,9 +1372,9 @@ PYBIND11_MODULE(pyrte, m) {
         int ngpt,
         int nbnd,
         py::array_t<int> band_lims,
-        py::array_t<double> bnd_flux_dn,
-        py::array_t<double> bnd_flux_up,
-        py::array_t<double> bnd_flux_net
+        py::array_t<Float> bnd_flux_dn,
+        py::array_t<Float> bnd_flux_up,
+        py::array_t<Float> bnd_flux_net
     ) {
         if (
             (band_lims.size() != 2 * nbnd) ||
@@ -1341,29 +1384,29 @@ PYBIND11_MODULE(pyrte, m) {
         ) {
             throw std::runtime_error("Invalid size for input arrays");
         }
-    
+
         if (ncol <= 0 || nlev <= 0 || ngpt <= 0 || nbnd <= 0) {
             throw std::runtime_error("ncol, nlev, ngpt, nbnd and band_lims must be positive integers");
         }
-    
+
         py::buffer_info buf_band_lims = band_lims.request();
         py::buffer_info buf_bnd_flux_dn = bnd_flux_dn.request();
         py::buffer_info buf_bnd_flux_up = bnd_flux_up.request();
         py::buffer_info buf_bnd_flux_net = bnd_flux_net.request();
-    
+
         fortran::rte_net_byband_full(
             ncol,
             nlev,
             ngpt,
             nbnd,
             reinterpret_cast<int *>(buf_band_lims.ptr),
-            reinterpret_cast<double *>(buf_bnd_flux_dn.ptr),
-            reinterpret_cast<double *>(buf_bnd_flux_up.ptr),
-            reinterpret_cast<double *>(buf_bnd_flux_net.ptr));
+            reinterpret_cast<Float *>(buf_bnd_flux_dn.ptr),
+            reinterpret_cast<Float *>(buf_bnd_flux_up.ptr),
+            reinterpret_cast<Float *>(buf_bnd_flux_net.ptr));
     });
 #endif
 
-    m.def("zero_array_1D", [](py::array_t<double> arr){
+    m.def("zero_array_1D", [](py::array_t<Float> arr){
         py::buffer_info buf_info = arr.request();
 
         if (buf_info.ndim != 1) {
@@ -1379,12 +1422,12 @@ PYBIND11_MODULE(pyrte, m) {
         }
 
         int ni = int(buf_info.size);
-        double *ptr = reinterpret_cast<double *>(buf_info.ptr);
+        Float *ptr = reinterpret_cast<Float *>(buf_info.ptr);
         fortran::zero_array_1D(ni, ptr);
     });
 
 
-    m.def("zero_array_2D", [](py::array_t<double> arr){
+    m.def("zero_array_2D", [](py::array_t<Float> arr){
         py::buffer_info buf_info = arr.request();
 
         if (buf_info.ndim != 2) {
@@ -1402,11 +1445,11 @@ PYBIND11_MODULE(pyrte, m) {
         int ni = int(buf_info.shape[0]);
         int nj = int(buf_info.shape[1]);
 
-        double *ptr = reinterpret_cast<double *>(buf_info.ptr);
+        Float *ptr = reinterpret_cast<Float *>(buf_info.ptr);
         fortran::zero_array_2D(ni, nj, ptr);
     });
 
-    m.def("zero_array_3D", [](py::array_t<double> arr){
+    m.def("zero_array_3D", [](py::array_t<Float> arr){
         py::buffer_info buf_info = arr.request();
 
         if (buf_info.ndim != 3) {
@@ -1425,11 +1468,11 @@ PYBIND11_MODULE(pyrte, m) {
         int nj = int(buf_info.shape[1]);
         int nk = int(buf_info.shape[2]);
 
-        double *ptr = reinterpret_cast<double *>(buf_info.ptr);
+        Float *ptr = reinterpret_cast<Float *>(buf_info.ptr);
         fortran::zero_array_3D(ni, nj, nk, ptr);
     });
 
-    m.def("zero_array_4D", [](py::array_t<double> arr){
+    m.def("zero_array_4D", [](py::array_t<Float> arr){
         py::buffer_info buf_info = arr.request();
 
         if (buf_info.ndim != 4) {
@@ -1449,7 +1492,7 @@ PYBIND11_MODULE(pyrte, m) {
         int nk = int(buf_info.shape[2]);
         int nl = int(buf_info.shape[3]);
 
-        double *ptr = reinterpret_cast<double *>(buf_info.ptr);
+        Float *ptr = reinterpret_cast<Float *>(buf_info.ptr);
         fortran::zero_array_4D(ni, nj, nk, nl, ptr);
     });
 
@@ -1466,21 +1509,21 @@ PYBIND11_MODULE(pyrte, m) {
         int npres,
         int ntemp,
         py::array_t<int> flavor,
-        py::array_t<double> press_ref_log,
-        py::array_t<double> temp_ref,
-        double press_ref_log_delta,
-        double temp_ref_min,
-        double temp_ref_delta,
-        double press_ref_trop_log,
-        py::array_t<double> vmr_ref,
-        py::array_t<double> play,
-        py::array_t<double> tlay,
-        py::array_t<double> col_gas,
+        py::array_t<Float> press_ref_log,
+        py::array_t<Float> temp_ref,
+        Float press_ref_log_delta,
+        Float temp_ref_min,
+        Float temp_ref_delta,
+        Float press_ref_trop_log,
+        py::array_t<Float> vmr_ref,
+        py::array_t<Float> play,
+        py::array_t<Float> tlay,
+        py::array_t<Float> col_gas,
         py::array_t<int> jtemp,
-        py::array_t<double> fmajor,
-        py::array_t<double> fminor,
-        py::array_t<double> col_mix,
-        py::array_t<bool> tropo,
+        py::array_t<Float> fmajor,
+        py::array_t<Float> fminor,
+        py::array_t<Float> col_mix,
+        py::array_t<Bool> tropo,
         py::array_t<int> jeta,
         py::array_t<int> jpress
     ) {
@@ -1509,20 +1552,20 @@ PYBIND11_MODULE(pyrte, m) {
             npres,
             ntemp,
             reinterpret_cast<int *>(buf_flavor.ptr),
-            reinterpret_cast<double *>(buf_press_ref_log.ptr),
-            reinterpret_cast<double *>(buf_temp_ref.ptr),
+            reinterpret_cast<Float *>(buf_press_ref_log.ptr),
+            reinterpret_cast<Float *>(buf_temp_ref.ptr),
             press_ref_log_delta,
             temp_ref_min,
             temp_ref_delta,
             press_ref_trop_log,
-            reinterpret_cast<double *>(buf_vmr_ref.ptr),
-            reinterpret_cast<double *>(buf_play.ptr),
-            reinterpret_cast<double *>(buf_tlay.ptr),
-            reinterpret_cast<double *>(buf_col_gas.ptr),
+            reinterpret_cast<Float *>(buf_vmr_ref.ptr),
+            reinterpret_cast<Float *>(buf_play.ptr),
+            reinterpret_cast<Float *>(buf_tlay.ptr),
+            reinterpret_cast<Float *>(buf_col_gas.ptr),
             reinterpret_cast<int *>(buf_jtemp.ptr),
-            reinterpret_cast<double *>(buf_fmajor.ptr),
-            reinterpret_cast<double *>(buf_fminor.ptr),
-            reinterpret_cast<double *>(buf_col_mix.ptr),
+            reinterpret_cast<Float *>(buf_fmajor.ptr),
+            reinterpret_cast<Float *>(buf_fminor.ptr),
+            reinterpret_cast<Float *>(buf_col_mix.ptr),
             reinterpret_cast<int *>(buf_tropo.ptr),
             reinterpret_cast<int *>(buf_jeta.ptr),
             reinterpret_cast<int *>(buf_jpress.ptr)
@@ -1547,32 +1590,32 @@ PYBIND11_MODULE(pyrte, m) {
         int idx_h2o,
         py::array_t<int> gpoint_flavor,
         py::array_t<int> band_lims_gpt,
-        py::array_t<double> kmajor,
-        py::array_t<double> kminor_lower,
-        py::array_t<double> kminor_upper,
+        py::array_t<Float> kmajor,
+        py::array_t<Float> kminor_lower,
+        py::array_t<Float> kminor_upper,
         py::array_t<int> minor_limits_gpt_lower,
         py::array_t<int> minor_limits_gpt_upper,
-        py::array_t<bool> minor_scales_with_density_lower,
-        py::array_t<bool> minor_scales_with_density_upper,
-        py::array_t<bool> scale_by_complement_lower,
-        py::array_t<bool> scale_by_complement_upper,
+        py::array_t<Bool> minor_scales_with_density_lower,
+        py::array_t<Bool> minor_scales_with_density_upper,
+        py::array_t<Bool> scale_by_complement_lower,
+        py::array_t<Bool> scale_by_complement_upper,
         py::array_t<int> idx_minor_lower,
         py::array_t<int> idx_minor_upper,
         py::array_t<int> idx_minor_scaling_lower,
         py::array_t<int> idx_minor_scaling_upper,
         py::array_t<int> kminor_start_lower,
         py::array_t<int> kminor_start_upper,
-        py::array_t<bool> tropo,
-        py::array_t<double> col_mix,
-        py::array_t<double> fmajor,
-        py::array_t<double> fminor,
-        py::array_t<double> play,
-        py::array_t<double> tlay,
-        py::array_t<double> col_gas,
+        py::array_t<Bool> tropo,
+        py::array_t<Float> col_mix,
+        py::array_t<Float> fmajor,
+        py::array_t<Float> fminor,
+        py::array_t<Float> play,
+        py::array_t<Float> tlay,
+        py::array_t<Float> col_gas,
         py::array_t<int> jeta,
         py::array_t<int> jtemp,
         py::array_t<int> jpress,
-        py::array_t<double> tau
+        py::array_t<Float> tau
     ) {
 
         py::buffer_info buf_gpoint_flavor = gpoint_flavor.request();
@@ -1621,9 +1664,9 @@ PYBIND11_MODULE(pyrte, m) {
             idx_h2o,
             reinterpret_cast<int *>(buf_gpoint_flavor.ptr),
             reinterpret_cast<int *>(buf_band_lims_gpt.ptr),
-            reinterpret_cast<double *>(buf_kmajor.ptr),
-            reinterpret_cast<double *>(buf_kminor_lower.ptr),
-            reinterpret_cast<double *>(buf_kminor_upper.ptr),
+            reinterpret_cast<Float *>(buf_kmajor.ptr),
+            reinterpret_cast<Float *>(buf_kminor_lower.ptr),
+            reinterpret_cast<Float *>(buf_kminor_upper.ptr),
             reinterpret_cast<int *>(buf_minor_limits_gpt_lower.ptr),
             reinterpret_cast<int *>(buf_minor_limits_gpt_upper.ptr),
             reinterpret_cast<int *>(buf_minor_scales_with_density_lower.ptr),
@@ -1637,16 +1680,16 @@ PYBIND11_MODULE(pyrte, m) {
             reinterpret_cast<int *>(buf_kminor_start_lower.ptr),
             reinterpret_cast<int *>(buf_kminor_start_upper.ptr),
             reinterpret_cast<int *>(buf_tropo.ptr),
-            reinterpret_cast<double *>(buf_col_mix.ptr),
-            reinterpret_cast<double *>(buf_fmajor.ptr),
-            reinterpret_cast<double *>(buf_fminor.ptr),
-            reinterpret_cast<double *>(buf_play.ptr),
-            reinterpret_cast<double *>(buf_tlay.ptr),
-            reinterpret_cast<double *>(buf_col_gas.ptr),
+            reinterpret_cast<Float *>(buf_col_mix.ptr),
+            reinterpret_cast<Float *>(buf_fmajor.ptr),
+            reinterpret_cast<Float *>(buf_fminor.ptr),
+            reinterpret_cast<Float *>(buf_play.ptr),
+            reinterpret_cast<Float *>(buf_tlay.ptr),
+            reinterpret_cast<Float *>(buf_col_gas.ptr),
             reinterpret_cast<int *>(buf_jeta.ptr),
             reinterpret_cast<int *>(buf_jtemp.ptr),
             reinterpret_cast<int *>(buf_jpress.ptr),
-            reinterpret_cast<double *>(buf_tau.ptr)
+            reinterpret_cast<Float *>(buf_tau.ptr)
         );
     });
 
@@ -1663,15 +1706,15 @@ PYBIND11_MODULE(pyrte, m) {
         int ntemp,
         py::array_t<int> gpoint_flavor,
         py::array_t<int> band_lims_gpt,
-        py::array_t<double> krayl,
+        py::array_t<Float> krayl,
         int idx_h2o,
-        py::array_t<double> col_dry,
-        py::array_t<double> col_gas,
-        py::array_t<double> fminor,
+        py::array_t<Float> col_dry,
+        py::array_t<Float> col_gas,
+        py::array_t<Float> fminor,
         py::array_t<int> jeta,
-        py::array_t<bool> tropo,
+        py::array_t<Bool> tropo,
         py::array_t<int> jtemp,
-        py::array_t<double> tau_rayleigh
+        py::array_t<Float> tau_rayleigh
 
     ) {
 
@@ -1699,15 +1742,15 @@ PYBIND11_MODULE(pyrte, m) {
             ntemp,
             reinterpret_cast<int *> (buf_gpoint_flavor.ptr),
             reinterpret_cast<int *> (buf_band_lims_gpt.ptr),
-            reinterpret_cast<double *> (buf_krayl.ptr),
+            reinterpret_cast<Float *> (buf_krayl.ptr),
             idx_h2o,
-            reinterpret_cast<double *> (buf_col_dry.ptr),
-            reinterpret_cast<double *> (buf_col_gas.ptr),
-            reinterpret_cast<double *> (buf_fminor.ptr),
+            reinterpret_cast<Float *> (buf_col_dry.ptr),
+            reinterpret_cast<Float *> (buf_col_gas.ptr),
+            reinterpret_cast<Float *> (buf_fminor.ptr),
             reinterpret_cast<int *> (buf_jeta.ptr),
             reinterpret_cast<int *> (buf_tropo.ptr),
             reinterpret_cast<int *> (buf_jtemp.ptr),
-            reinterpret_cast<double *> (buf_tau_rayleigh.ptr)
+            reinterpret_cast<Float *> (buf_tau_rayleigh.ptr)
         );
     });
 
@@ -1722,26 +1765,26 @@ PYBIND11_MODULE(pyrte, m) {
         int npres,
         int ntemp,
         int nPlanckTemp,
-        py::array_t<double> tlay,
-        py::array_t<double> tlev,
-        py::array_t<double> tsfc,
+        py::array_t<Float> tlay,
+        py::array_t<Float> tlev,
+        py::array_t<Float> tsfc,
         int sfc_lay,
-        py::array_t<double> fmajor,
+        py::array_t<Float> fmajor,
         py::array_t<int> jeta,
-        py::array_t<bool> tropo,
+        py::array_t<Bool> tropo,
         py::array_t<int> jtemp,
         py::array_t<int> jpress,
         py::array_t<int> gpoint_bands,
         py::array_t<int> band_lims_gpt,
-        py::array_t<double> pfracin,
-        double temp_ref_min,
-        double totplnk_delta,
-        py::array_t<double> totplnk,
+        py::array_t<Float> pfracin,
+        Float temp_ref_min,
+        Float totplnk_delta,
+        py::array_t<Float> totplnk,
         py::array_t<int> gpoint_flavor,
-        py::array_t<double> sfc_src,
-        py::array_t<double> lay_src,
-        py::array_t<double> lev_src,
-        py::array_t<double> sfc_src_jac
+        py::array_t<Float> sfc_src,
+        py::array_t<Float> lay_src,
+        py::array_t<Float> lev_src,
+        py::array_t<Float> sfc_src_jac
     ) {
 
         py::buffer_info buf_tlay = tlay.request();
@@ -1772,26 +1815,26 @@ PYBIND11_MODULE(pyrte, m) {
             npres,
             ntemp,
             nPlanckTemp,
-            reinterpret_cast<double *>(buf_tlay.ptr),
-            reinterpret_cast<double *>(buf_tlev.ptr),
-            reinterpret_cast<double *>(buf_tsfc.ptr),
+            reinterpret_cast<Float *>(buf_tlay.ptr),
+            reinterpret_cast<Float *>(buf_tlev.ptr),
+            reinterpret_cast<Float *>(buf_tsfc.ptr),
             sfc_lay,
-            reinterpret_cast<double *>(buf_fmajor.ptr),
+            reinterpret_cast<Float *>(buf_fmajor.ptr),
             reinterpret_cast<int *>(buf_jeta.ptr),
             reinterpret_cast<int *>(buf_tropo.ptr),
             reinterpret_cast<int *>(buf_jtemp.ptr),
             reinterpret_cast<int *>(buf_jpress.ptr),
             reinterpret_cast<int *>(buf_gpoint_bands.ptr),
             reinterpret_cast<int *>(buf_band_lims_gpt.ptr),
-            reinterpret_cast<double *>(buf_pfracin.ptr),
+            reinterpret_cast<Float *>(buf_pfracin.ptr),
             temp_ref_min,
             totplnk_delta,
-            reinterpret_cast<double *>(buf_totplnk.ptr),
+            reinterpret_cast<Float *>(buf_totplnk.ptr),
             reinterpret_cast<int *>(buf_gpoint_flavor.ptr),
-            reinterpret_cast<double *>(buf_sfc_src.ptr),
-            reinterpret_cast<double *>(buf_lay_src.ptr),
-            reinterpret_cast<double *>(buf_lev_src.ptr),
-            reinterpret_cast<double *>(buf_sfc_src_jac.ptr)
+            reinterpret_cast<Float *>(buf_sfc_src.ptr),
+            reinterpret_cast<Float *>(buf_lay_src.ptr),
+            reinterpret_cast<Float *>(buf_lev_src.ptr),
+            reinterpret_cast<Float *>(buf_sfc_src_jac.ptr)
         );
     });
 }
