@@ -62,7 +62,7 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 6. **Install the package** in your current conda environment:
 
     ```bash
-    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte
+    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
     ```
 
     Note: This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
