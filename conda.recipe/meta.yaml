@@ -1,8 +1,8 @@
 # based on https://github.com/pybind/scikit_build_example
 # setting the requirements https://docs.conda.io/projects/conda-build/en/stable/resources/define-metadata.html#export-runtime-requirements
 package:
-  name: pyrte
-  version: 0.0.1
+  name: pyrte_rrtmgp 
+  version: 0.0.2
 
 source:
   path: ..
@@ -41,7 +41,7 @@ requirements:
 
 test:
   imports:
-    - pyrte
+    - pyrte_rrtmgp
   requires:
     - numpy>=1.21
     - pytest>=7.4

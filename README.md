@@ -21,7 +21,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 The goal of this project is to provide a Python interface to the most important
 Fortran functions in the RTE+RRTMGP package.
 
-Currently, the following functions are available in the `pyrte` package:
+Currently, the following functions are available in the `pyrte_rrtmgp` package:
 
 ### RTE Functions (WIP)
 
@@ -142,7 +142,7 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 6. **Install the package** in your current conda environment:
 
     ```bash
-    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte
+    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
     ```
 
     Note: This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.

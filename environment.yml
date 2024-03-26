@@ -1,4 +1,4 @@
-name: pyrte
+name: pyrte_rrtmgp
 channels:
   - conda-forge
   - defaults
