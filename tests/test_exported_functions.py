@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-import pyrte.pyrte as py
+import pyrte_rrtmgp.pyrte_rrtmgp as py
 
 #####################
 ## test_zero_array ##

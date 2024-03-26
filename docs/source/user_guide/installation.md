@@ -94,5 +94,3 @@ You also have the option to build and install the package with pip. This might w
     ```
 
     For development purposes, you can install the package in editable mode: ``pip install -e .``.
-
-Once built, the module will be located in a folder called `pyrte`

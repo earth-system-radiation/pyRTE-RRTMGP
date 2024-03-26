@@ -12,7 +12,7 @@ using fortran::Bool;
 
 namespace py = pybind11;
 
-PYBIND11_MODULE(pyrte, m) {
+PYBIND11_MODULE(pyrte_rrtmgp, m) {
 
     m.def("rte_lw_solver_noscat",
     [](
