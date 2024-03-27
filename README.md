@@ -1,3 +1,6 @@
+[![CI passing](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/conda.yml/badge.svg)](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/conda.yml)
+[![Documentation Status](https://readthedocs.org/projects/pyrte-rrtmgp/badge/?version=latest)](https://pyrte-rrtmgp.readthedocs.io/en/latest/?badge=latest)
+
 # pyRTE-RRTMGP
 
 This is the repository for the pyRTE-RRTMGP project.
@@ -10,9 +13,13 @@ planetary atmospheres. RTE+RRTMGP is described in a
 [paper](https://doi.org/10.1029/2019MS001621) in
 [Journal of Advances in Modeling Earth Systems](http://james.agu.org/).
 
+## Documentation
+
+Documentation for the pyRTE-RRTMGP package is available on [Read the Docs](https://pyrte-rrtmgp.readthedocs.io/en/latest/).
+
 ## Project Status
 
-This project is currently in an early stage of development.
+This project is currently in an **early stage of development**.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to this project!
 
@@ -24,6 +31,8 @@ Fortran functions in the RTE+RRTMGP package.
 Currently, the following functions are available in the `pyrte_rrtmgp` package:
 
 ### RTE Functions (WIP)
+
+<!-- start-rte-functions-section -->
 
 | Function name                           | Covered |
 |-----------------------------------------|:-------:|
@@ -72,7 +81,11 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 | `zero_array_3D`                         |   ✅   |
 | `zero_array_4D`                         |   ✅   |
 
+<!-- end-rte-functions-section -->
+
 ### RRTMGP Functions
+
+<!-- start-rrtmgp-functions-section -->
 
 | Function name                           | Covered |
 |-----------------------------------------|:-------:|
@@ -81,10 +94,14 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 | `rrtmgp_compute_tau_rayleigh`           |   ✅   |
 | `rrtmgp_compute_Planck_source`          |   ✅   |
 
+<!-- end-rrtmgp-functions-section -->
+
 ## Setup Instructions
 
-The current code in this repo are early experiments with the goal of exploring details fo the Fortran works and testing different options for creating an interface with C.
-Later on, we will use this knowledge to bind it with Python
+> **Note**:
+> The code in this repository is a work in progress. The Python API is not yet stable and is subject to change.
+
+<!-- start-setup-section -->
 
 ### Prerequisites
 
@@ -151,7 +168,7 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 
 You also have the option to build and install the package with pip. This might work on additional, untested architectures (such as macOS on M1). However, this is not recommended as it requires you to have a working Fortran compiler and other prerequisites installed on your system.
 
-1. **Clone the repository** (``git clone git@github.com:earth-system-radiation/pyRTE-RRTMGP.git``) and update the submodules (``git submodule update --init --recursive``) as described in the conda installation instructions [above](#installation-with-conda-recommended).
+1. **Clone the repository** (``git clone git@github.com:earth-system-radiation/pyRTE-RRTMGP.git``) and update the submodules (``git submodule update --init --recursive``) as described in the conda installation instructions above.
 
 2. **Install the necessary dependencies** for your operating system.
 
@@ -175,10 +192,12 @@ You also have the option to build and install the package with pip. This might w
 
     For development purposes, you can install the package in editable mode: ``pip install -e .``.
 
-Once built, the module will be located in a folder called `pyrte`
+Once built, the module will be located in a folder called `pyrte_rrtmgp`
+
+<!-- end-setup-section -->
 
 ## Pytest Setup Instructions
 
 * Go to the 'tests' folder: `cd tests/`
 * Install the test prerequisites (if you haven't already) by running `pip3 install -r requirements-test.txt`
-* Run `pytest`
+* Run `pytest tests`

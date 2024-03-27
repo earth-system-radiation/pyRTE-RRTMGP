@@ -1,0 +1,63 @@
+# Contributing to pyRTE-RRTMGP
+
+Thanks for considering making a contribution to pyRTE-RRTMGP!
+
+## How to Report a Bug?
+
+Please file a bug report on the [Github page](https://github.com/earth-system-radiation/pyRTE-RRTMGP/issues/new/choose).
+If possible, your issue should include a [minimal, complete, and verifiable example](https://stackoverflow.com/help/mcve) of the bug.
+
+## How to Propose a New Feature?
+
+Please file a feature request on the [Github page](https://github.com/earth-system-radiation/pyRTE-RRTMGP/issues/new/choose).
+
+## How to Set up a Local Development Environment?
+
+Please follow the instructions for [installing pyRTE-RRTMTP with pip in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html).
+
+## How to Contribute to the Documentation?
+
+The documentation uses [Sphinx](https://www.sphinx-doc.org/en/master/) and is located in the `docs` directory.
+
+To build the documentation locally, first install the required documentation dependencies (optimally in a dedicated virtual environment):
+
+```bash
+pip install -r docs/requirements-doc.txt
+```
+
+Then, build the documentation:
+
+```bash
+cd docs
+make html
+```
+
+The built documentation will be located in `docs/build/html`.
+
+## How to Run and Update Tests?
+
+pyRTE-RRTMTP uses [pytest](https://docs.pytest.org/en/stable/) for testing. To run the tests, first install the required testing dependencies (optimally in a dedicated virtual environment):
+
+```bash
+pip install -r tests/requirements-test.txt
+```
+
+Then, run the tests:
+
+```bash
+pytest tests
+```
+
+## How to Contribute a Patch That Fixes a Bug?
+
+Please fork this repository, branch from `main`, make your changes, and open a
+Github [pull request](https://github.com/earth-system-radiation/pyRTE-RRTMTP/pulls)
+against the `main` branch.
+
+## How to Contribute New Features?
+
+Please fork this repository, branch from `main`, make your changes, and open a
+Github [pull request](https://github.com/earth-system-radiation/pyRTE-RRTMTP/pulls)
+against the `main` branch.
+
+Pull Requests for new features should include tests and documentation.

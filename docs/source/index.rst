@@ -23,6 +23,8 @@ in planetary atmospheres. RTE+RRTMGP is described in a
    :caption: Contents:
 
    user_guide/installation
+   user_guide/usage
+   contributor_guide/contribute
 
 
 
