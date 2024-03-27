@@ -2,13 +2,20 @@
 
 This section provides a brief overview of how to use `pyrte_rrtmgp` with Python.
 
+## Python Package Structure
+
+The `pyrte_rrtmgp` package contains the following submodules:
+
+- `pyrte_rrtmgp.pyrte_rrtmgp`: The main module that provides access to a subset of RTE-RRTMGP's Fortran functions in Python. The functions available in this module mirror the Fortran functions (see below). You can think of this as the low-level implementation that allows you to access the respective Fortran functions directly in Python.
+- `pyrte_rrtmgp.rrtmgp`: A high-level module that provides a more user-friendly Python interface for select RRTMGP functions. This module is still under development and will be expanded in future releases.
+- `pyrte_rrtmgp.rtm`: A high-level module that provides a more user-friendly Python interface for select RTE functions. This module is still under development and will be expanded in future releases.
+- `pyrte_rrtmgp.utils`: A module that provides utility functions for working with RTE-RRTMGP data. This module is still under development and will be expanded in future releases.
+
 ## Importing the Package
 
-To use any of the RTE-RRTMGP functions in Python, you must first import the `pyrte_rrtmgp` package:
+To use any of the RTE-RRTMGP functions in Python, you must first import `pyrte_rrtmgp`.
 
-```python
-import pyrte_rrtmgp.pyrte_rrtmgp
-```
+For example ``import pyrte_rrtmgp.pyrte_rrtmgp`` or ``import pyrte_rrtmgp.rrtmgp as rrtmgp``.
 
 This gives you access to [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP)'s Fortran functions directly in Python.
 
@@ -22,18 +29,16 @@ args = list_of_arguments
 py.rte_lw_solver_noscat(*args)
 ```
 
-## RTE Functions
+## Available RTE and RRTMGP Functions
 
-The following RTE functions from [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP) are currently available in the `pyrte_rrtmgp` package:
+The following RTE functions from [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP) are currently available in the `pyrte_rrtmgp.pyrte_rrtmgp` module:
 
 ```{include} ../../../README.md
 :start-after: <!-- start-rte-functions-section -->
 :end-before: <!-- end-rte-functions-section -->
 ```
 
-## RRTMGP Functions
-
-The following RRTMGP functions from [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP) are currently available in the `pyrte_rrtmgp` package:
+The following RRTMGP functions from [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP) are currently available in the `pyrte_rrtmgp.pyrte_rrtmgp` module:
 
 ```{include} ../../../README.md
 :start-after: <!-- start-rrtmgp-functions-section -->
