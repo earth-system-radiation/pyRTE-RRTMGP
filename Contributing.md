@@ -13,17 +13,26 @@ Please file an issue on the [Github page](https://github.com/earth-system-radiat
 
 ## Would you like to set up a local development environment?
 
-Please use the file `environment.yml` to create a conda environment with all the necessary dependencies:
+Please follow the instructions for installing pyRTE-RRTMTP with pip in the [README](README.md).
+
+## Would you like to contribute to the documentation?
+
+The documentation uses [Sphinx](https://www.sphinx-doc.org/en/master/) and is located in the `docs` directory.
+
+To build the documentation locally, first install the required documentation dependencies (optimally in a dedicated virtual environment):
 
 ```bash
-conda env create -f environment.yml
+pip install -r docs/requirements-doc.txt
 ```
 
-After creating the environment, activate it with:
+Then, build the documentation:
 
 ```bash
-conda activate pyrte-rrtmtp
+cd docs
+make html
 ```
+
+The built documentation will be located in `docs/build/html`.
 
 ## Did you write a patch that fixes a bug?
 
