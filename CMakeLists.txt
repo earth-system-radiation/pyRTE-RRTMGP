@@ -25,7 +25,7 @@ set(HEADERS
     ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rrtmgp-kernels/api/rrtmgp_kernels.h
 )
 set(SOURCES ${CMAKE_SOURCE_DIR}/pybind_interface.cpp)
-set(TARGET_NAME pyrte)
+set(TARGET_NAME pyrte_rrtmgp)
 
 find_package(pybind11 REQUIRED)
 
@@ -34,10 +34,10 @@ pybind11_add_module(${TARGET_NAME} ${SOURCES} ${HEADERS})
 target_compile_definitions(${TARGET_NAME} PRIVATE 
     VERSION_INFO=${VERSION_INFO}
     DBL_EPSILON=5.8e-2
-    DCMAKE_LIBRARY_OUTPUT_DIRECTORY=pyrte
+    DCMAKE_LIBRARY_OUTPUT_DIRECTORY=pyrte_rrtmgp
 )
 
-add_dependencies(pyrte compile-rte-rrtmgp)
+add_dependencies(${TARGET_NAME} compile-rte-rrtmgp)
 
 target_include_directories(${TARGET_NAME} PUBLIC 
     ${CMAKE_SOURCE_DIR}/rte-rrtmgp/rte-kernels/api/
@@ -58,4 +58,4 @@ if (${LINUX})
 endif()
 
 # The install directory is the output (wheel) directory
-install(TARGETS pyrte DESTINATION pyrte)
+install(TARGETS pyrte_rrtmgp DESTINATION pyrte_rrtmgp)

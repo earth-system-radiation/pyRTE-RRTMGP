@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-latest]
         python-version: ["3.11"]
 
     runs-on: ${{ matrix.platform }}
@@ -44,7 +44,7 @@ jobs:
         run: conda build conda.recipe
 
       - name: Install
-        run: conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte
+        run: conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
 
       - name: Test
         run: pytest tests

@@ -6,7 +6,7 @@ To install the package, you can clone the repository and build and install the c
 
 ## Prerequisites
 
-pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux and macOS.
+pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux (and, to some extend, macOS on Intel processors).
 
 To build and install the package, you need the conda package manager. If you don't have conda installed, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
 
@@ -62,7 +62,7 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 6. **Install the package** in your current conda environment:
 
     ```bash
-    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte
+    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
     ```
 
     Note: This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
@@ -94,5 +94,3 @@ You also have the option to build and install the package with pip. This might w
     ```
 
     For development purposes, you can install the package in editable mode: ``pip install -e .``.
-
-Once built, the module will be located in a folder called `pyrte`

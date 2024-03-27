@@ -21,7 +21,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 The goal of this project is to provide a Python interface to the most important
 Fortran functions in the RTE+RRTMGP package.
 
-Currently, the following functions are available in the `pyrte` package:
+Currently, the following functions are available in the `pyrte_rrtmgp` package:
 
 ### RTE Functions (WIP)
 
@@ -88,9 +88,7 @@ Later on, we will use this knowledge to bind it with Python
 
 ### Prerequisites
 
-pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux and macOS.
-
-To build and install the package, you need the conda package manager. If you don't have conda installed, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
+pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux (and, to some extend, macOS on Intel processors).
 
 The package source code is hosted [on GitHub](https://github.com/earth-system-radiation/pyRTE-RRTMGP) and uses git submodules to include the [RTE+RRTMGP Fortran software](https://earth-system-radiation.github.io/rte-rrtmgp/). The easiest way to install pyRTE-RRTMGP is to use `git`. You can install git from [here](https://git-scm.com/downloads).
 
@@ -144,7 +142,7 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 6. **Install the package** in your current conda environment:
 
     ```bash
-    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte
+    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
     ```
 
     Note: This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
@@ -153,7 +151,7 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 
 You also have the option to build and install the package with pip. This might work on additional, untested architectures (such as macOS on M1). However, this is not recommended as it requires you to have a working Fortran compiler and other prerequisites installed on your system.
 
-1. **Clone the repository** (``git clone git@github.com:earth-system-radiation/pyRTE-RRTMGP.git``) and update the submodules (``git submodule update --init --recursive``) as described in the conda installation instructions (above)[#installation-with-conda-recommended].
+1. **Clone the repository** (``git clone git@github.com:earth-system-radiation/pyRTE-RRTMGP.git``) and update the submodules (``git submodule update --init --recursive``) as described in the conda installation instructions [above](#installation-with-conda-recommended).
 
 2. **Install the necessary dependencies** for your operating system.
 
