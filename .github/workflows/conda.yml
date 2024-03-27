@@ -1,4 +1,4 @@
-name: Conda
+name: Conda Build
 
 on:
   workflow_dispatch:
