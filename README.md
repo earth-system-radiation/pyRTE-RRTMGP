@@ -1,3 +1,4 @@
+![CI passing](https://github.com/github/docs/actions/workflows/conda.yml/badge.svg)
 [![Documentation Status](https://readthedocs.org/projects/pyrte-rrtmgp/badge/?version=latest)](https://pyrte-rrtmgp.readthedocs.io/en/latest/?badge=latest)
 
 # pyRTE-RRTMGP
@@ -191,7 +192,7 @@ You also have the option to build and install the package with pip. This might w
 
     For development purposes, you can install the package in editable mode: ``pip install -e .``.
 
-Once built, the module will be located in a folder called `pyrte`
+Once built, the module will be located in a folder called `pyrte_rrtmgp`
 
 <!-- end-setup-section -->
 
@@ -199,4 +200,4 @@ Once built, the module will be located in a folder called `pyrte`
 
 * Go to the 'tests' folder: `cd tests/`
 * Install the test prerequisites (if you haven't already) by running `pip3 install -r requirements-test.txt`
-* Run `pytest`
+* Run `pytest tests`
