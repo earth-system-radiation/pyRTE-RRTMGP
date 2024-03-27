@@ -1,6 +1,8 @@
-# /bin/bash
+#!/bin/sh
 
-if [ -n "$CONDA_PREFIX" ] && [ "$OS" == *"Windows"* ] || [ -z "$CONDA_PREFIX" ]; then
+if [ -n "$CONDA_PREFIX" ] && [ "$OS" = *"Windows"* ]; then
+    export FC=gfortran
+elif [ -z "$CONDA_PREFIX" ]; then
     export FC=gfortran
 fi
 
