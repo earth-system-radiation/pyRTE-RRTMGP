@@ -1,6 +1,6 @@
-# Contributing to pyRTE-RRTMTP
+# Contributing to pyRTE-RRTMGP
 
-Thanks for considering making a contribution to pyRTE-RRTMTP!
+Thanks for considering making a contribution to pyRTE-RRTMGP!
 
 ## Did you find a bug?
 
@@ -13,7 +13,7 @@ Please file an issue on the [Github page](https://github.com/earth-system-radiat
 
 ## Would you like to set up a local development environment?
 
-Please follow the instructions for installing pyRTE-RRTMTP with pip in the [README](README.md).
+Please follow the instructions for [installing pyRTE-RRTMTP with pip in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html).
 
 ## Would you like to contribute to the documentation?
 
