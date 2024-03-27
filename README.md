@@ -18,7 +18,7 @@ Documentation for the pyRTE-RRTMGP package is available on [Read the Docs](https
 
 ## Project Status
 
-This project is currently in an early stage of development.
+This project is currently in an **early stage of development**.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to this project!
 
@@ -97,11 +97,10 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 
 ## Setup Instructions
 
-<!-- start-setup-section -->
+> **Note**:
+> The code in this repository is a work in progress. The Python API is not yet stable and is subject to change.
 
-```{note}
-The code in this repository is a work in progress. The Python API is not yet stable and is subject to change.
-```
+<!-- start-setup-section -->
 
 ### Prerequisites
 
