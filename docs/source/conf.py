@@ -30,7 +30,11 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = []
 
-autodoc_mock_imports = ["pyrte_rrtmgp.pyrte_rrtmgp"]
+autodoc_mock_imports = [
+    "pyrte_rrtmgp.pyrte_rrtmgp",
+    "numpy",
+    "xarray",
+]
 
 
 # -- Options for HTML output -------------------------------------------------
