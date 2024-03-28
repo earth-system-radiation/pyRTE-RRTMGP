@@ -3,7 +3,11 @@ from typing import Tuple
 import numpy as np
 import numpy.typing as npt
 
-from pyrte_rrtmgp.pyrte_rrtmgp import rrtmgp_interpolation
+from pyrte_rrtmgp.pyrte_rrtmgp import (
+    rrtmgp_compute_Planck_source,
+    rrtmgp_compute_tau_absorption,
+    rrtmgp_interpolation,
+)
 
 
 def interpolation(
@@ -70,7 +74,7 @@ def interpolation(
     jeta = np.ndarray([2, ncol, nlay, nflav], dtype=np.int32)
     jpress = np.ndarray([ncol, nlay], dtype=np.int32)
 
-    arg_list = [
+    args = [
         ncol,
         nlay,
         ngas,
@@ -98,6 +102,173 @@ def interpolation(
         jpress,
     ]
 
-    rrtmgp_interpolation(*arg_list)
+    rrtmgp_interpolation(*args)
 
+    tropo = tropo != 0  # Convert to boolean
     return jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress
+
+
+def compute_planck_source(
+    tlay,
+    tlev,
+    tsfc,
+    top_at_1,
+    fmajor,
+    jeta,
+    tropo,
+    jtemp,
+    jpress,
+    band_lims_gpt,
+    pfracin,
+    temp_ref_min,
+    temp_ref_max,
+    totplnk,
+    gpoint_flavor,
+):
+    _, ncol, nlay, nflav = jeta.shape
+    nPlanckTemp, nbnd = totplnk.shape
+    ntemp, neta, npres_e, ngpt = pfracin.shape
+    npres = npres_e - 1
+
+    sfc_lay = nlay if top_at_1 else 1
+
+    band_ranges = [[i] * (r[1] - r[0] + 1) for i, r in enumerate(band_lims_gpt, 1)]
+    gpoint_bands = np.concatenate(band_ranges)
+
+    totplnk_delta = (temp_ref_max - temp_ref_min) / (nPlanckTemp - 1)
+
+    # outputs
+    sfc_src = np.ndarray([ncol, ngpt], dtype=np.float64)
+    lay_src = np.ndarray([ncol, nlay, ngpt], dtype=np.float64)
+    lev_src = np.ndarray([ncol, nlay + 1, ngpt], dtype=np.float64)
+    sfc_src_jac = np.ndarray([ncol, ngpt], dtype=np.float64)
+
+    args = [
+        ncol,
+        nlay,
+        nbnd,
+        ngpt,
+        nflav,
+        neta,
+        npres,
+        ntemp,
+        nPlanckTemp,
+        tlay,
+        tlev,
+        tsfc,
+        sfc_lay,
+        fmajor,
+        jeta,
+        tropo,
+        jtemp,
+        jpress,
+        gpoint_bands,
+        band_lims_gpt,
+        pfracin,
+        temp_ref_min,
+        totplnk_delta,
+        totplnk,
+        gpoint_flavor,
+        sfc_src,
+        lay_src,
+        lev_src,
+        sfc_src_jac,
+    ]
+
+    rrtmgp_compute_Planck_source(*args)
+
+    return sfc_src, lay_src, lev_src, sfc_src_jac
+
+
+def compute_tau_absorption(
+    idx_h2o,
+    gpoint_flavor,
+    band_lims_gpt,
+    kmajor,
+    kminor_lower,
+    kminor_upper,
+    minor_limits_gpt_lower,
+    minor_limits_gpt_upper,
+    minor_scales_with_density_lower,
+    minor_scales_with_density_upper,
+    scale_by_complement_lower,
+    scale_by_complement_upper,
+    idx_minor_lower,
+    idx_minor_upper,
+    idx_minor_scaling_lower,
+    idx_minor_scaling_upper,
+    kminor_start_lower,
+    kminor_start_upper,
+    tropo,
+    col_mix,
+    fmajor,
+    fminor,
+    play,
+    tlay,
+    col_gas,
+    jeta,
+    jtemp,
+    jpress,
+):
+    ntemp, neta, npres_e, ngpt = kmajor.shape
+    npres = npres_e - 1
+    nbnd = band_lims_gpt.shape[0]
+    _, ncol, nlay, nflav = jeta.shape
+    ngas = col_gas.shape[2]
+    nminorlower = minor_scales_with_density_lower.shape[0]
+    nminorupper = minor_scales_with_density_upper.shape[0]
+    nminorklower = kminor_lower.shape[2]
+    nminorkupper = kminor_upper.shape[2]
+    
+    
+    # outputs
+    tau = np.ndarray([ncol, nlay, nbnd], dtype=np.float64)
+
+    args = [
+        ncol,
+        nlay,
+        nbnd,
+        ngpt,
+        ngas,
+        nflav,
+        neta,
+        npres,
+        ntemp,
+        nminorlower,
+        nminorklower,
+        nminorupper,
+        nminorkupper,
+        idx_h2o,
+        gpoint_flavor,
+        band_lims_gpt,
+        kmajor,
+        kminor_lower,
+        kminor_upper,
+        minor_limits_gpt_lower,
+        minor_limits_gpt_upper,
+        minor_scales_with_density_lower,
+        minor_scales_with_density_upper,
+        scale_by_complement_lower,
+        scale_by_complement_upper,
+        idx_minor_lower,
+        idx_minor_upper,
+        idx_minor_scaling_lower,
+        idx_minor_scaling_upper,
+        kminor_start_lower,
+        kminor_start_upper,
+        tropo,
+        col_mix,
+        fmajor,
+        fminor,
+        play,
+        tlay,
+        col_gas,
+        jeta,
+        jtemp,
+        jpress,
+        tau,
+    ]
+
+    rrtmgp_compute_tau_absorption(*args)
+
+    return tau
