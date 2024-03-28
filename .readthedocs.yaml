@@ -23,6 +23,9 @@ build:
       - echo "conda build conda.recipe"
       - echo "conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp"
 
+conda:
+  environment: docs/environment-docs.yml
+
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
   configuration: docs/source/conf.py
