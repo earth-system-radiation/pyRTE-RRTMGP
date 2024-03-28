@@ -4,6 +4,27 @@ channels:
   - defaults
 dependencies:
   - python=3.11
+  - conda-build
+  - conda-verify
+  - gcc_linux-64        # [linux]
+  - gxx_linux-64        # [linux]
+  - gfortran_linux-64   # [linux]
+  # - clang_osx-64        # [osx]
+  # - clangxx_osx-64      # [osx]
+  # - gfortran_osx-64     # [osx]
+  - binutils            # [not win]
+  # - m2w64-gcc-fortran   # [win]
+  # - m2w64-gcc           # [win]
+  # - m2w64-binutils      # [win]
+  - libuv==1.44.2
+  - cmake==3.26.4
+  - make
+  - scikit-build-core
+  - pybind11 >=2.10.0
+  - numpy >=1.21.0
+  - numpy>=1.21
+  - pytest>=7.4
   - pip:
     - sphinx-rtd-theme==2.0.0
     - myst-parser==2.0.0
+
