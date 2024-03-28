@@ -34,7 +34,36 @@ def lw_solver_noscat(
     ssa: Optional[npt.NDArray] = None,
     g: Optional[np.ndarray] = None
 ) -> Tuple:
-    
+    """
+    Perform longwave radiation transfer calculations without scattering.
+
+    Args:
+        top_at_1 (bool): Flag indicating whether the top of the atmosphere is at level 1.
+        nmus (int): Number of quadrature points.
+        tau (npt.NDArray): Array of optical depths.
+        lay_source (npt.NDArray): Array of layer sources.
+        lev_source (npt.NDArray): Array of level sources.
+        sfc_emis (npt.NDArray): Array of surface emissivities.
+        sfc_src (npt.NDArray): Array of surface sources.
+        inc_flux (npt.NDArray): Array of incoming fluxes.
+        ds (Optional[npt.NDArray], optional): Array of integration weights. Defaults to None.
+        weights (Optional[npt.NDArray], optional): Array of Gaussian quadrature weights. Defaults to None.
+        do_broadband (Optional[bool], optional): Flag indicating whether to compute broadband fluxes. Defaults to None.
+        do_Jacobians (Optional[bool], optional): Flag indicating whether to compute Jacobians. Defaults to None.
+        sfc_src_jac (Optional[npt.NDArray], optional): Array of surface source Jacobians. Defaults to None.
+        do_rescaling (Optional[bool], optional): Flag indicating whether to perform flux rescaling. Defaults to None.
+        ssa (Optional[npt.NDArray], optional): Array of single scattering albedos. Defaults to None.
+        g (Optional[np.ndarray], optional): Array of asymmetry parameters. Defaults to None.
+
+    Returns:
+        Tuple: A tuple containing the following arrays:
+            - flux_up_jac (np.ndarray): Array of upward flux Jacobians.
+            - broadband_up (np.ndarray): Array of upward broadband fluxes.
+            - broadband_dn (np.ndarray): Array of downward broadband fluxes.
+            - flux_up (np.ndarray): Array of upward fluxes.
+            - flux_dn (np.ndarray): Array of downward fluxes.
+    """
+
     ncol, nlay, ngpt = tau.shape
 
     # default values

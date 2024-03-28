@@ -26,6 +26,7 @@ in planetary atmospheres. RTE+RRTMGP is described in a
 
    user_guide/installation
    user_guide/usage
+   reference_guide/pyrte_rrtmgp
 
 .. toctree::
    :maxdepth: 2
