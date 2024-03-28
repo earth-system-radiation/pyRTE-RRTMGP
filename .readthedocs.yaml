@@ -19,6 +19,7 @@ build:
   jobs:
     pre_create_environment:
       - git submodule update --init --recursive
+      - conda activate pyrte_rrtmgp_docs
       - conda install conda-build conda-verify pytest
       - conda build conda.recipe
       - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
