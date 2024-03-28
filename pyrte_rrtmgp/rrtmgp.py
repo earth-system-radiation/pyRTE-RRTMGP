@@ -7,6 +7,7 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
     rrtmgp_compute_Planck_source,
     rrtmgp_compute_tau_absorption,
     rrtmgp_interpolation,
+    rrtmgp_compute_tau_rayleigh,
 )
 
 
@@ -272,3 +273,55 @@ def compute_tau_absorption(
     rrtmgp_compute_tau_absorption(*args)
 
     return tau
+
+
+def compute_tau_rayleigh(
+    npres,
+    gpoint_flavor,
+    band_lims_gpt,
+    krayl,
+    idx_h2o,
+    col_dry,
+    col_gas,
+    fminor,
+    jeta,
+    tropo,
+    jtemp,
+):
+
+    ncol, nlay, ngas = col_gas.shape
+    ntemp, neta, ngpt = krayl.shape
+    nflav = jeta.shape[3]
+    nbnd = band_lims_gpt.shape[1]
+
+    # outputs
+    tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64)
+
+    args = [
+        ncol,
+        nlay,
+        nbnd,
+        ngpt,
+        ngas,
+        nflav,
+        neta,
+        npres,
+        ntemp,
+        gpoint_flavor,
+        band_lims_gpt,
+        krayl,
+        idx_h2o,
+        col_dry,
+        col_gas,
+        fminor,
+        jeta,
+        tropo,
+        jtemp,
+        tau_rayleigh,
+    ]
+
+    rrtmgp_compute_tau_rayleigh(*args)
+
+    return tau
+
+

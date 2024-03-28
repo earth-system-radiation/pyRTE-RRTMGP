@@ -4,16 +4,24 @@ import numpy.typing as npt
 from typing import Tuple, Optional
 
 
-GAUSS_DS = np.array([1.66, 0., 0., 0.],  # Diffusivity angle, not Gaussian angle
-                    [1.18350343, 2.81649655, 0., 0.],
-                    [1.09719858, 1.69338507, 4.70941630, 0.],
-                    [1.06056257, 1.38282560, 2.40148179, 7.15513024])
+GAUSS_DS = np.array(
+    [
+        [1.66, 0.0, 0.0, 0.0],  # Diffusivity angle, not Gaussian angle
+        [1.18350343, 2.81649655, 0.0, 0.0],
+        [1.09719858, 1.69338507, 4.70941630, 0.0],
+        [1.06056257, 1.38282560, 2.40148179, 7.15513024],
+    ]
+)
 
 
-GAUSS_WTS = np.array([0.5, 0., 0., 0.],
-                    [0.3180413817, 0.1819586183, 0., 0.],
-                    [0.2009319137, 0.2292411064, 0.0698269799, 0.],
-                    [0.1355069134, 0.2034645680, 0.1298475476, 0.0311809710])
+GAUSS_WTS = np.array(
+    [
+        [0.5, 0.0, 0.0, 0.0],
+        [0.3180413817, 0.1819586183, 0.0, 0.0],
+        [0.2009319137, 0.2292411064, 0.0698269799, 0.0],
+        [0.1355069134, 0.2034645680, 0.1298475476, 0.0311809710],
+    ]
+)
 
 
 def lw_solver_noscat(
@@ -32,7 +40,7 @@ def lw_solver_noscat(
     sfc_src_jac: Optional[npt.NDArray] = None,
     do_rescaling: Optional[bool] = None,
     ssa: Optional[npt.NDArray] = None,
-    g: Optional[np.ndarray] = None
+    g: Optional[np.ndarray] = None,
 ) -> Tuple:
     """
     Perform longwave radiation transfer calculations without scattering.
@@ -77,14 +85,14 @@ def lw_solver_noscat(
                     ds[icol, igpt, imu] = GAUSS_DS[imu, n_quad_angs]
 
     if weights is None:
-        weights = GAUSS_WTS[1:n_quad_angs,n_quad_angs]
+        weights = GAUSS_WTS[1:n_quad_angs, n_quad_angs]
 
     # outputs
-    flux_up_jac = np.ndarray([ncol, nlay+1], dtype=np.float64)
-    broadband_up = np.ndarray([ncol, nlay+1], dtype=np.float64)
-    broadband_dn = np.ndarray([ncol, nlay+1], dtype=np.float64)
-    flux_up = np.ndarray([ncol, nlay+1, ngpt], dtype=np.float64)
-    flux_dn = np.ndarray([ncol, nlay+1, ngpt], dtype=np.float64)
+    flux_up_jac = np.ndarray([ncol, nlay + 1], dtype=np.float64)
+    broadband_up = np.ndarray([ncol, nlay + 1], dtype=np.float64)
+    broadband_dn = np.ndarray([ncol, nlay + 1], dtype=np.float64)
+    flux_up = np.ndarray([ncol, nlay + 1, ngpt], dtype=np.float64)
+    flux_dn = np.ndarray([ncol, nlay + 1, ngpt], dtype=np.float64)
 
     args = [
         ncol,
@@ -110,7 +118,7 @@ def lw_solver_noscat(
         flux_up_jac,
         do_rescaling,
         ssa,
-        g
+        g,
     ]
 
     rte_lw_solver_noscat(*args)
