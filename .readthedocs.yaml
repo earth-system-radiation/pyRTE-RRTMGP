@@ -7,14 +7,21 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  # os: ubuntu-22.04
-  os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
+  os: ubuntu-22.04
+  # os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
   tools:
-    python: "3.11"
+    # python: "3.11"
+    python: "mambaforge-22.9"
     # You can also specify other tool versions:
     # nodejs: "19"
     # rust: "1.64"
     # golang: "1.19"
+  jobs:
+    pre_create_environment:
+      - echo "git submodule update --init --recursive"
+      - echo "conda install conda-build conda-verify pytest"
+      - echo "conda build conda.recipe"
+      - echo "conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp"
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
