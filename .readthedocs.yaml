@@ -18,10 +18,10 @@ build:
     # golang: "1.19"
   jobs:
     pre_create_environment:
-      - echo "git submodule update --init --recursive"
-      - echo "conda install conda-build conda-verify pytest"
-      - echo "conda build conda.recipe"
-      - echo "conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp"
+      - git submodule update --init --recursive
+      - conda install conda-build conda-verify pytest
+      - conda build conda.recipe
+      - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
 
 conda:
   environment: docs/environment-docs.yml
