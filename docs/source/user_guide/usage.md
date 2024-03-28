@@ -7,9 +7,13 @@ This section provides a brief overview of how to use `pyrte_rrtmgp` with Python.
 The `pyrte_rrtmgp` package contains the following submodules:
 
 - `pyrte_rrtmgp.pyrte_rrtmgp`: The main module that provides access to a subset of RTE-RRTMGP's Fortran functions in Python. The functions available in this module mirror the Fortran functions (see below). You can think of this as the low-level implementation that allows you to access the respective Fortran functions directly in Python.
+- `pyrte_rrtmgp.rte`: A high-level module that provides a more user-friendly Python interface for select RTE functions. This module is still under development and will be expanded in future releases.
 - `pyrte_rrtmgp.rrtmgp`: A high-level module that provides a more user-friendly Python interface for select RRTMGP functions. This module is still under development and will be expanded in future releases.
-- `pyrte_rrtmgp.rtm`: A high-level module that provides a more user-friendly Python interface for select RTE functions. This module is still under development and will be expanded in future releases.
 - `pyrte_rrtmgp.utils`: A module that provides utility functions for working with RTE-RRTMGP data. This module is still under development and will be expanded in future releases.
+
+```{seealso}
+The folder `examples` in the repository contains a Jupyter notebook example that demonstrates how to use the package.
+```
 
 ## Importing the Package
 
