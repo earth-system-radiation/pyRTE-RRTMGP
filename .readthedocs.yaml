@@ -19,10 +19,14 @@ build:
   jobs:
     post_create_environment:
       - git submodule update --init --recursive
-      # - conda activate pyrte_rrtmgp_docs
-      - conda install conda-build conda-verify pytest
-      - conda build conda.recipe
-      - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
+      # - conda install conda-build conda-verify pytest
+      # - conda build conda.recipe
+      # - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
+      - apt install libnetcdff-dev
+      - apt install gfortran-10
+      - apt install python3-dev
+      - apt install cmake
+      - pip install .
 
 conda:
   environment: docs/environment-docs.yml
