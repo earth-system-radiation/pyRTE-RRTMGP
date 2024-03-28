@@ -1,8 +1,9 @@
-from pyrte_rrtmgp.pyrte_rrtmgp import rte_lw_solver_noscat
+from typing import Optional, Tuple
+
 import numpy as np
 import numpy.typing as npt
-from typing import Tuple, Optional
 
+from pyrte_rrtmgp.pyrte_rrtmgp import rte_lw_solver_noscat, rte_sw_solver_noscat
 
 GAUSS_DS = np.array(
     [
@@ -124,3 +125,34 @@ def lw_solver_noscat(
     rte_lw_solver_noscat(*args)
 
     return flux_up_jac, broadband_up, broadband_dn, flux_up, flux_dn
+
+
+def sw_solver_noscat(
+    top_at_1,
+    tau,
+    mu0,
+    nc_flux_dir,
+):
+    """
+    Computes the direct-beam flux for a shortwave radiative transfer problem without scattering.
+
+    Args:
+        top_at_1 (bool): Logical flag indicating if the top layer is at index 1.
+        tau (numpy.ndarray): Absorption optical thickness of size (ncol, nlay, ngpt).
+        mu0 (numpy.ndarray): Cosine of solar zenith angle of size (ncol, nlay).
+        inc_flux_dir (numpy.ndarray): Direct beam incident flux of size (ncol, ngpt).
+
+    Returns:
+        numpy.ndarray: Direct-beam flux of size (ncol, nlay+1, ngpt).
+    """
+
+    ncol, nlay, ngpt = tau.shape
+
+    # outputs
+    flux_dir = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64)
+
+    args = [ncol, nlay, ngpt, top_at_1, tau, mu0, nc_flux_dir, flux_dir]
+
+    rte_lw_solver_noscat(*args)
+
+    return flux_dir

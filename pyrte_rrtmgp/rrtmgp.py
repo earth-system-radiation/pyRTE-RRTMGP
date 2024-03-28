@@ -6,8 +6,8 @@ import numpy.typing as npt
 from pyrte_rrtmgp.pyrte_rrtmgp import (
     rrtmgp_compute_Planck_source,
     rrtmgp_compute_tau_absorption,
-    rrtmgp_interpolation,
     rrtmgp_compute_tau_rayleigh,
+    rrtmgp_interpolation,
 )
 
 
@@ -127,6 +127,32 @@ def compute_planck_source(
     totplnk,
     gpoint_flavor,
 ):
+    """Compute the Planck source function for a radiative transfer calculation.
+
+    Args:
+        tlay (numpy.ndarray): Temperature at layer centers (K), shape (ncol, nlay).
+        tlev (numpy.ndarray): Temperature at layer interfaces (K), shape (ncol, nlay+1).
+        tsfc (numpy.ndarray): Surface temperature, shape (ncol,).
+        top_at_1 (bool): Flag indicating if the top layer is at index 0.
+        sfc_lay (int): Index of the surface layer.
+        fmajor (numpy.ndarray): Interpolation weights for major gases, shape (2, 2, 2, ncol, nlay, nflav).
+        jeta (numpy.ndarray): Interpolation indexes in eta, shape (2, ncol, nlay, nflav).
+        tropo (numpy.ndarray): Use upper- or lower-atmospheric tables, shape (ncol, nlay).
+        jtemp (numpy.ndarray): Interpolation indexes in temperature, shape (ncol, nlay).
+        jpress (numpy.ndarray): Interpolation indexes in pressure, shape (ncol, nlay).
+        band_lims_gpt (numpy.ndarray): Start and end g-point for each band, shape (2, nbnd).
+        pfracin (numpy.ndarray): Fraction of the Planck function in each g-point, shape (ntemp, neta, npres+1, ngpt).
+        temp_ref_min (float): Minimum reference temperature for Planck function interpolation.
+        totplnk (numpy.ndarray): Total Planck function by band at each temperature, shape (nPlanckTemp, nbnd).
+        gpoint_flavor (numpy.ndarray): Major gas flavor (pair) by upper/lower, g-point, shape (2, ngpt).
+
+    Returns:
+        sfc_src (numpy.ndarray): Planck emission from the surface, shape (ncol, ngpt).
+        lay_src (numpy.ndarray): Planck emission from layer centers, shape (ncol, nlay, ngpt).
+        lev_src (numpy.ndarray): Planck emission from layer boundaries, shape (ncol, nlay+1, ngpt).
+        sfc_source_Jac (numpy.ndarray): Jacobian (derivative) of the surface Planck source with respect to surface temperature, shape (ncol, ngpt).
+    """
+
     _, ncol, nlay, nflav = jeta.shape
     nPlanckTemp, nbnd = totplnk.shape
     ntemp, neta, npres_e, ngpt = pfracin.shape
@@ -212,6 +238,42 @@ def compute_tau_absorption(
     jtemp,
     jpress,
 ):
+    """Compute the absorption optical depth for a set of atmospheric profiles.
+
+    Args:
+        idx_h2o (int): Index of the water vapor gas species.
+        gpoint_flavor (np.ndarray): Spectral g-point flavor indices.
+        band_lims_gpt (np.ndarray): Spectral band limits in g-point space.
+        kmajor (np.ndarray): Major gas absorption coefficients.
+        kminor_lower (np.ndarray): Minor gas absorption coefficients for the lower atmosphere.
+        kminor_upper (np.ndarray): Minor gas absorption coefficients for the upper atmosphere.
+        minor_limits_gpt_lower (np.ndarray): Spectral g-point limits for minor contributors in the lower atmosphere.
+        minor_limits_gpt_upper (np.ndarray): Spectral g-point limits for minor contributors in the upper atmosphere.
+        minor_scales_with_density_lower (np.ndarray): Flags indicating if minor contributors in the lower atmosphere scale with density.
+        minor_scales_with_density_upper (np.ndarray): Flags indicating if minor contributors in the upper atmosphere scale with density.
+        scale_by_complement_lower (np.ndarray): Flags indicating if minor contributors in the lower atmosphere should be scaled by the complement.
+        scale_by_complement_upper (np.ndarray): Flags indicating if minor contributors in the upper atmosphere should be scaled by the complement.
+        idx_minor_lower (np.ndarray): Indices of minor contributors in the lower atmosphere.
+        idx_minor_upper (np.ndarray): Indices of minor contributors in the upper atmosphere.
+        idx_minor_scaling_lower (np.ndarray): Indices of minor contributors in the lower atmosphere that require scaling.
+        idx_minor_scaling_upper (np.ndarray): Indices of minor contributors in the upper atmosphere that require scaling.
+        kminor_start_lower (np.ndarray): Starting indices of minor absorption coefficients in the lower atmosphere.
+        kminor_start_upper (np.ndarray): Starting indices of minor absorption coefficients in the upper atmosphere.
+        tropo (np.ndarray): Flags indicating if a layer is in the troposphere.
+        col_mix (np.ndarray): Column-dependent gas mixing ratios.
+        fmajor (np.ndarray): Major gas absorption coefficient scaling factors.
+        fminor (np.ndarray): Minor gas absorption coefficient scaling factors.
+        play (np.ndarray): Pressure in each layer.
+        tlay (np.ndarray): Temperature in each layer.
+        col_gas (np.ndarray): Column-dependent gas concentrations.
+        jeta (np.ndarray): Indices of temperature/pressure levels.
+        jtemp (np.ndarray): Indices of temperature levels.
+        jpress (np.ndarray): Indices of pressure levels.
+
+    Returns:
+        np.ndarray): tau Absorption optical depth.
+    """
+
     ntemp, neta, npres_e, ngpt = kmajor.shape
     npres = npres_e - 1
     nbnd = band_lims_gpt.shape[0]
@@ -221,8 +283,7 @@ def compute_tau_absorption(
     nminorupper = minor_scales_with_density_upper.shape[0]
     nminorklower = kminor_lower.shape[2]
     nminorkupper = kminor_upper.shape[2]
-    
-    
+
     # outputs
     tau = np.ndarray([ncol, nlay, nbnd], dtype=np.float64)
 
@@ -289,9 +350,27 @@ def compute_tau_rayleigh(
     tropo,
     jtemp,
 ):
+    """Compute Rayleigh optical depth.
+
+    Args:
+        npres (int): Number of pressure values.
+        gpoint_flavor (numpy.ndarray): Major gas flavor (pair) by upper/lower, g-point (shape: (2, ngpt)).
+        band_lims_gpt (numpy.ndarray): Start and end g-point for each band (shape: (2, nbnd)).
+        krayl (numpy.ndarray): Rayleigh scattering coefficients (shape: (ntemp, neta, ngpt, 2)).
+        idx_h2o (int): Index of water vapor in col_gas.
+        col_dry (numpy.ndarray): Column amount of dry air (shape: (ncol, nlay)).
+        col_gas (numpy.ndarray): Input column gas amount (molecules/cm^2) (shape: (ncol, nlay, 0:ngas)).
+        fminor (numpy.ndarray): Interpolation weights for major gases - computed in interpolation() (shape: (2, 2, ncol, nlay, nflav)).
+        jeta (numpy.ndarray): Interpolation indexes in eta - computed in interpolation() (shape: (2, ncol, nlay, nflav)).
+        tropo (numpy.ndarray): Use upper- or lower-atmospheric tables? (shape: (ncol, nlay)).
+        jtemp (numpy.ndarray): Interpolation indexes in temperature - computed in interpolation() (shape: (ncol, nlay)).
+
+    Returns:
+        numpy.ndarray: Rayleigh optical depth (shape: (ncol, nlay, ngpt)).
+    """
 
     ncol, nlay, ngas = col_gas.shape
-    ntemp, neta, ngpt = krayl.shape
+    ntemp, neta, ngpt, _ = krayl.shape
     nflav = jeta.shape[3]
     nbnd = band_lims_gpt.shape[1]
 
@@ -323,6 +402,4 @@ def compute_tau_rayleigh(
 
     rrtmgp_compute_tau_rayleigh(*args)
 
-    return tau
-
-
+    return tau_rayleigh
