@@ -44,13 +44,14 @@ def interpolation(
         col_gas (np.ndarray): Gas concentrations.
 
     Returns:
-        jtemp (np.ndarray): Temperature interpolation index.
-        fmajor (np.ndarray): Major gas interpolation fraction.
-        fminor (np.ndarray): Minor gas interpolation fraction.
-        col_mix (np.ndarray): Mixing fractions.
-        tropo (np.ndarray): Use lower (or upper) atmosphere tables.
-        jeta (np.ndarray): Index for binary species interpolation.
-        jpress (np.ndarray): Pressure interpolation index.
+        Tuple: A tuple containing the following arrays:
+            - jtemp (np.ndarray): Temperature interpolation index.
+            - fmajor (np.ndarray): Major gas interpolation fraction.
+            - fminor (np.ndarray): Minor gas interpolation fraction.
+            - col_mix (np.ndarray): Mixing fractions.
+            - tropo (np.ndarray): Use lower (or upper) atmosphere tables.
+            - jeta (np.ndarray): Index for binary species interpolation.
+            - jpress (np.ndarray): Pressure interpolation index.
     """
     npres = press_ref.shape[0]
     ntemp = temp_ref.shape[0]
