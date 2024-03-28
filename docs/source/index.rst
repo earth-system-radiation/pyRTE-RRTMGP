@@ -26,8 +26,7 @@ in planetary atmospheres. RTE+RRTMGP is described in a
 
    user_guide/installation
    user_guide/usage
-   .. reference_guide/pyrte_rrtmgp
-   .. The reference guide is temporarily disabled because it requires readthedocs to be able to install the package during their build process. This will work once the package is available via conda forge or pypi.
+   reference_guide/pyrte_rrtmgp
 
 .. toctree::
    :maxdepth: 2
