@@ -55,7 +55,7 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 | **OPTICAL PROPS - INCREMENT BYBND**     |         |
 | `rte_inc_1scalar_by_1scalar_bybnd`      |   ✅   |
 | `rte_inc_1scalar_by_2stream_bybnd`      |   ✅   |
-| `rte_inc_1scalar_by_nstream_bybnd`      |   🔲   |
+| `rte_inc_1scalar_by_nstream_bybnd`      |   ✅   |
 | `rte_inc_2stream_by_1scalar_bybnd`      |   ✅   |
 | `rte_inc_2stream_by_2stream_bybnd`      |   ✅   |
 | `rte_inc_2stream_by_nstream_bybnd`      |   ✅   |

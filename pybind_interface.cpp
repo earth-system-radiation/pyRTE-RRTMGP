@@ -723,37 +723,45 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
     });
 
-    // m.def("rte_inc_1scalar_by_nstream_bybnd",
-    // [](
-    //     int ncol,
-    //     int nlay,
-    //     int ngpt,
-    //     py::array_t<Float> tau_inout,
-    //     int nbnd,
-    //     py::array_t<int> band_lims_gpoint
-    // ) {
-    //     if (
-    //         (tau_inout.size() != ncol * nlay * ngpt) ||
-    //         (band_lims_gpoint.size() != 2 * nbnd)
-    //     ) {
-    //         throw std::runtime_error("Invalid size for input arrays");
-    //     }
+    m.def("rte_inc_1scalar_by_nstream_bybnd",
+    [](
+        int ncol,
+        int nlay,
+        int ngpt,
+        py::array_t<Float> tau_inout,
+        py::array_t<Float> tau_in,
+        py::array_t<Float> ssa_in,
+        int nbnd,
+        py::array_t<int> band_lims_gpoint
+    ) {
+        if (
+            (tau_inout.size() != ncol * nlay * ngpt) ||
+            (tau_in.size() != ncol * nlay * ngpt) ||
+            (ssa_in.size() != ncol * nlay * ngpt) ||
+            (band_lims_gpoint.size() != 2 * nbnd)
+        ) {
+            throw std::runtime_error("Invalid size for input arrays");
+        }
 
-    //     if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
-    //         throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
-    //     }
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
+        }
 
-    //     py::buffer_info buf_tau_inout = tau_inout.request();
-    //     py::buffer_info buf_band_lims_gpoint = band_lims_gpoint.request();
+        py::buffer_info buf_tau_inout = tau_inout.request();
+        py::buffer_info buf_tau_in = tau_in.request();
+        py::buffer_info buf_ssa_in = ssa_in.request();
+        py::buffer_info buf_band_lims_gpoint = band_lims_gpoint.request();
 
-    //     fortran::rte_inc_1scalar_by_nstream_bybnd(
-    //         ncol,
-    //         nlay,
-    //         ngpt,
-    //         reinterpret_cast<Float *>(buf_tau_inout.ptr),
-    //         nbnd,
-    //         reinterpret_cast<int *>(buf_band_lims_gpoint.ptr));
-    // });
+        fortran::rte_inc_1scalar_by_nstream_bybnd(
+            ncol,
+            nlay,
+            ngpt,
+            reinterpret_cast<Float *>(buf_tau_inout.ptr),
+            reinterpret_cast<const Float *>(buf_tau_in.ptr),
+            reinterpret_cast<const Float *>(buf_ssa_in.ptr),
+            nbnd,
+            reinterpret_cast<const int *>(buf_band_lims_gpoint.ptr));
+    });
 
     m.def("rte_inc_2stream_by_1scalar_bybnd",
     [](
