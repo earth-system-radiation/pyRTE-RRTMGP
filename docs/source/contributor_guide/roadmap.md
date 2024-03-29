@@ -11,6 +11,6 @@ It fits into the broader scientific Python ecosystem and is designed to be intui
 - Documentation for all functions, multiple usage examples
 - Comprehensive test suite
 - Continuous integration and deployment
-- Support for Windows, macOS ARM and other platforms
+- Support for Windows, macOS ARM, and other platforms
 - Package installable via PyPI
 - Support for vertical (GPU) and horizontal (parallelization, e.g. with Dask) scaling

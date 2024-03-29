@@ -105,7 +105,7 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 
 ### Prerequisites
 
-pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux (and, to some extend, macOS on Intel processors).
+pyRTE-RRTMGP is currently only tested on x86_64 architecture with Linux (and, to some extent, macOS on Intel processors).
 
 The package source code is hosted [on GitHub](https://github.com/earth-system-radiation/pyRTE-RRTMGP) and uses git submodules to include the [RTE+RRTMGP Fortran software](https://earth-system-radiation.github.io/rte-rrtmgp/). The easiest way to install pyRTE-RRTMGP is to use `git`. You can install git from [here](https://git-scm.com/downloads).
 

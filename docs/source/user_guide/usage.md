@@ -20,9 +20,9 @@ The functions in `pyrte_rrtmgp.rte`, `pyrte_rrtmgp.rrtmgp`, and `pyrte_rrtmgp.ut
 ## Importing the Package
 
 To use any of the RTE-RRTMGP functions in Python, you first need to import `pyrte_rrtmgp` and the respective submodule you want to use.
-For example ``import pyrte_rrtmgp.pyrte_rrtmgp`` or ``import pyrte_rrtmgp.rrtmgp as rrtmgp``.
+For example: ``import pyrte_rrtmgp.pyrte_rrtmgp`` or ``import pyrte_rrtmgp.rrtmgp as rrtmgp``.
 
-The example below uses the `pyrte_rrtmgp.pyrte_rrtmgp` submodule which gives you low-level access to [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP)'s Fortran functions in Python:
+The example below uses the `pyrte_rrtmgp.pyrte_rrtmgp` submodule, which gives you low-level access to [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP)'s Fortran functions in Python:
 
 ```python
 import pyrte_rrtmgp.pyrte_rrtmgp as py
