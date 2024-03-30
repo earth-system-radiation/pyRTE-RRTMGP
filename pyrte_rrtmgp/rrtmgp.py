@@ -56,11 +56,12 @@ def interpolation(
     npres = press_ref.shape[0]
     ntemp = temp_ref.shape[0]
     ncol, nlay, ngas = col_gas.shape
+    ngas = ngas - 1  # Fortran uses index 0 here
     nflav = flavor.shape[1]
 
     press_ref_log = np.log(press_ref)
-    press_ref_log_delta = round(
-        (press_ref_log.min() - press_ref_log.max()) / (len(press_ref_log) - 1), 9
+    press_ref_log_delta = (press_ref_log.min() - press_ref_log.max()) / (
+        len(press_ref_log) - 1
     )
     press_ref_trop_log = np.log(press_ref_trop)
 
@@ -68,13 +69,13 @@ def interpolation(
     temp_ref_delta = (temp_ref.max() - temp_ref.min()) / (len(temp_ref) - 1)
 
     # outputs
-    jtemp = np.ndarray([ncol, nlay], dtype=np.int32)
-    fmajor = np.ndarray([2, 2, 2, ncol, nlay, nflav], dtype=np.float64)
-    fminor = np.ndarray([2, 2, ncol, nlay, nflav], dtype=np.float64)
-    col_mix = np.ndarray([2, ncol, nlay, nflav], dtype=np.float64)
-    tropo = np.ndarray([ncol, nlay], dtype=np.int32)
-    jeta = np.ndarray([2, ncol, nlay, nflav], dtype=np.int32)
-    jpress = np.ndarray([ncol, nlay], dtype=np.int32)
+    jtemp = np.ndarray([nlay, ncol], dtype=np.int32)
+    fmajor = np.ndarray([nflav, nlay, ncol, 2, 2, 2], dtype=np.float64)
+    fminor = np.ndarray([nflav, nlay, ncol, 2, 2], dtype=np.float64)
+    col_mix = np.ndarray([nflav, nlay, ncol, 2], dtype=np.float64)
+    tropo = np.ndarray([nlay, ncol], dtype=np.int32)
+    jeta = np.ndarray([nflav, nlay, ncol, 2], dtype=np.int32)
+    jpress = np.ndarray([nlay, ncol], dtype=np.int32)
 
     args = [
         ncol,
@@ -84,17 +85,17 @@ def interpolation(
         neta,
         npres,
         ntemp,
-        flavor,
-        press_ref_log,
-        temp_ref,
+        flavor.flatten("F"),
+        press_ref_log.flatten("F"),
+        temp_ref.flatten("F"),
         press_ref_log_delta,
         temp_ref_min,
         temp_ref_delta,
         press_ref_trop_log,
-        vmr_ref,
-        play,
-        tlay,
-        col_gas,
+        vmr_ref.flatten("F"),
+        play.flatten("F"),
+        tlay.flatten("F"),
+        col_gas.flatten("F"),
         jtemp,
         fmajor,
         fminor,
@@ -107,7 +108,7 @@ def interpolation(
     rrtmgp_interpolation(*args)
 
     tropo = tropo != 0  # Convert to boolean
-    return jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress
+    return jtemp.T, fmajor.T, fminor.T, col_mix.T, tropo.T, jeta.T, jpress.T
 
 
 def compute_planck_source(
@@ -160,16 +161,15 @@ def compute_planck_source(
 
     sfc_lay = nlay if top_at_1 else 1
 
-    band_ranges = [[i] * (r[1] - r[0] + 1) for i, r in enumerate(band_lims_gpt, 1)]
-    gpoint_bands = np.concatenate(band_ranges)
+    gpoint_bands = []
 
     totplnk_delta = (temp_ref_max - temp_ref_min) / (nPlanckTemp - 1)
 
     # outputs
-    sfc_src = np.ndarray([ncol, ngpt], dtype=np.float64)
-    lay_src = np.ndarray([ncol, nlay, ngpt], dtype=np.float64)
-    lev_src = np.ndarray([ncol, nlay + 1, ngpt], dtype=np.float64)
-    sfc_src_jac = np.ndarray([ncol, ngpt], dtype=np.float64)
+    sfc_src = np.ndarray([ngpt, ncol], dtype=np.float64)
+    lay_src = np.ndarray([ngpt, nlay, ncol], dtype=np.float64)
+    lev_src = np.ndarray([ngpt, nlay + 1, ncol], dtype=np.float64)
+    sfc_src_jac = np.ndarray([ngpt, ncol], dtype=np.float64)
 
     args = [
         ncol,
@@ -181,22 +181,22 @@ def compute_planck_source(
         npres,
         ntemp,
         nPlanckTemp,
-        tlay,
-        tlev,
-        tsfc,
+        tlay.flatten("F"),
+        tlev.flatten("F"),
+        tsfc.flatten("F"),
         sfc_lay,
-        fmajor,
-        jeta,
-        tropo,
-        jtemp,
-        jpress,
+        fmajor.flatten("F"),
+        jeta.flatten("F"),
+        tropo.flatten("F"),
+        jtemp.flatten("F"),
+        jpress.flatten("F"),
         gpoint_bands,
-        band_lims_gpt,
-        pfracin,
+        band_lims_gpt.flatten("F"),
+        pfracin.flatten("F"),
         temp_ref_min,
         totplnk_delta,
-        totplnk,
-        gpoint_flavor,
+        totplnk.flatten("F"),
+        gpoint_flavor.flatten("F"),
         sfc_src,
         lay_src,
         lev_src,
@@ -205,7 +205,7 @@ def compute_planck_source(
 
     rrtmgp_compute_Planck_source(*args)
 
-    return sfc_src, lay_src, lev_src, sfc_src_jac
+    return sfc_src.T, lay_src.T, lev_src.T, sfc_src_jac.T
 
 
 def compute_tau_absorption(
@@ -274,18 +274,18 @@ def compute_tau_absorption(
         np.ndarray): tau Absorption optical depth.
     """
 
-    ntemp, neta, npres_e, ngpt = kmajor.shape
+    ntemp, npres_e, neta, ngpt = kmajor.shape
     npres = npres_e - 1
-    nbnd = band_lims_gpt.shape[0]
+    nbnd = band_lims_gpt.shape[1]
     _, ncol, nlay, nflav = jeta.shape
-    ngas = col_gas.shape[2]
+    ngas = col_gas.shape[2] - 1
     nminorlower = minor_scales_with_density_lower.shape[0]
     nminorupper = minor_scales_with_density_upper.shape[0]
     nminorklower = kminor_lower.shape[2]
     nminorkupper = kminor_upper.shape[2]
 
     # outputs
-    tau = np.ndarray([ncol, nlay, nbnd], dtype=np.float64)
+    tau = np.zeros([ngpt, nlay, ncol], dtype=np.float64)
 
     args = [
         ncol,
@@ -302,39 +302,39 @@ def compute_tau_absorption(
         nminorupper,
         nminorkupper,
         idx_h2o,
-        gpoint_flavor,
-        band_lims_gpt,
-        kmajor,
-        kminor_lower,
-        kminor_upper,
-        minor_limits_gpt_lower,
-        minor_limits_gpt_upper,
-        minor_scales_with_density_lower,
-        minor_scales_with_density_upper,
-        scale_by_complement_lower,
-        scale_by_complement_upper,
-        idx_minor_lower,
-        idx_minor_upper,
-        idx_minor_scaling_lower,
-        idx_minor_scaling_upper,
-        kminor_start_lower,
-        kminor_start_upper,
-        tropo,
-        col_mix,
-        fmajor,
-        fminor,
-        play,
-        tlay,
-        col_gas,
-        jeta,
-        jtemp,
-        jpress,
+        gpoint_flavor.flatten("F"),  # correct
+        band_lims_gpt.flatten("F"),
+        kmajor.transpose(0, 2, 1, 3).flatten("F"),
+        kminor_lower.flatten("F"),
+        kminor_upper.flatten("F"),
+        minor_limits_gpt_lower.flatten("F"),
+        minor_limits_gpt_upper.flatten("F"),
+        minor_scales_with_density_lower.flatten("F"),
+        minor_scales_with_density_upper.flatten("F"),
+        scale_by_complement_lower.flatten("F"),
+        scale_by_complement_upper.flatten("F"),
+        idx_minor_lower.flatten("F"),
+        idx_minor_upper.flatten("F"),
+        idx_minor_scaling_lower.flatten("F"),
+        idx_minor_scaling_upper.flatten("F"),
+        kminor_start_lower.flatten("F"),
+        kminor_start_upper.flatten("F"),
+        tropo.flatten("F"),
+        col_mix.flatten("F"),
+        fmajor.flatten("F"),
+        fminor.flatten("F"),
+        play.flatten("F"),
+        tlay.flatten("F"),
+        col_gas.flatten("F"),
+        jeta.flatten("F"),
+        jtemp.flatten("F"),
+        jpress.flatten("F"),
         tau,
     ]
 
     rrtmgp_compute_tau_absorption(*args)
 
-    return tau
+    return tau.T
 
 
 def compute_tau_rayleigh(

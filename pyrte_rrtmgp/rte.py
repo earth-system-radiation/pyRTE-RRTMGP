@@ -26,20 +26,20 @@ GAUSS_WTS = np.array(
 
 
 def lw_solver_noscat(
-    top_at_1: bool,
-    nmus: int,
     tau: npt.NDArray,
     lay_source: npt.NDArray,
     lev_source: npt.NDArray,
     sfc_emis: npt.NDArray,
     sfc_src: npt.NDArray,
-    inc_flux: npt.NDArray,
+    top_at_1: bool = True,
+    nmus: int = 1,
+    inc_flux: Optional[npt.NDArray] = None,
     ds: Optional[npt.NDArray] = None,
     weights: Optional[npt.NDArray] = None,
-    do_broadband: Optional[bool] = None,
-    do_Jacobians: Optional[bool] = None,
-    sfc_src_jac: Optional[npt.NDArray] = None,
-    do_rescaling: Optional[bool] = None,
+    do_broadband: Optional[bool] = True,
+    do_Jacobians: Optional[bool] = False,
+    sfc_src_jac: Optional[npt.NDArray] = [],
+    do_rescaling: Optional[bool] = False,
     ssa: Optional[npt.NDArray] = None,
     g: Optional[np.ndarray] = None,
 ) -> Tuple:
@@ -78,22 +78,28 @@ def lw_solver_noscat(
     # default values
     n_quad_angs = nmus
 
+    if inc_flux is None:
+        inc_flux = np.zeros(sfc_src.shape)
+
     if ds is None:
         ds = np.empty((ncol, ngpt, n_quad_angs))
         for imu in range(n_quad_angs):
             for igpt in range(ngpt):
                 for icol in range(ncol):
-                    ds[icol, igpt, imu] = GAUSS_DS[imu, n_quad_angs]
+                    ds[icol, igpt, imu] = GAUSS_DS[imu, n_quad_angs - 1]
 
     if weights is None:
-        weights = GAUSS_WTS[1:n_quad_angs, n_quad_angs]
+        weights = GAUSS_WTS[0:n_quad_angs, n_quad_angs - 1]
+
+    ssa = ssa or tau
+    g = g or tau
 
     # outputs
-    flux_up_jac = np.ndarray([ncol, nlay + 1], dtype=np.float64)
-    broadband_up = np.ndarray([ncol, nlay + 1], dtype=np.float64)
-    broadband_dn = np.ndarray([ncol, nlay + 1], dtype=np.float64)
-    flux_up = np.ndarray([ncol, nlay + 1, ngpt], dtype=np.float64)
-    flux_dn = np.ndarray([ncol, nlay + 1, ngpt], dtype=np.float64)
+    flux_up_jac = np.full([nlay + 1, ncol], np.nan, dtype=np.float64)
+    broadband_up = np.full([nlay + 1, ncol], np.nan, dtype=np.float64)
+    broadband_dn = np.full([nlay + 1, ncol], np.nan, dtype=np.float64)
+    flux_up = np.full([ngpt, nlay + 1, ncol], np.nan, dtype=np.float64)
+    flux_dn = np.full([ngpt, nlay + 1, ncol], np.nan, dtype=np.float64)
 
     args = [
         ncol,
@@ -101,37 +107,37 @@ def lw_solver_noscat(
         ngpt,
         top_at_1,
         nmus,
-        ds,
-        weights,
-        tau,
-        lay_source,
-        lev_source,
-        sfc_emis,
-        sfc_src,
-        inc_flux,
+        ds.flatten("F"),
+        weights.flatten("F"),
+        tau.flatten("F"),
+        lay_source.flatten("F"),
+        lev_source.flatten("F"),
+        sfc_emis.flatten("F"),
+        sfc_src.flatten("F"),
+        inc_flux.flatten("F"),
         flux_up,
         flux_dn,
         do_broadband,
         broadband_up,
         broadband_dn,
         do_Jacobians,
-        sfc_src_jac,
+        sfc_src_jac.flatten("F"),
         flux_up_jac,
         do_rescaling,
-        ssa,
-        g,
+        ssa.flatten("F"),
+        g.flatten("F"),
     ]
 
     rte_lw_solver_noscat(*args)
 
-    return flux_up_jac, broadband_up, broadband_dn, flux_up, flux_dn
+    return flux_up_jac.T, broadband_up.T, broadband_dn.T, flux_up.T, flux_dn.T
 
 
 def sw_solver_noscat(
     top_at_1,
     tau,
     mu0,
-    nc_flux_dir,
+    inc_flux_dir,
 ):
     """
     Computes the direct-beam flux for a shortwave radiative transfer problem without scattering.
@@ -151,7 +157,7 @@ def sw_solver_noscat(
     # outputs
     flux_dir = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64)
 
-    args = [ncol, nlay, ngpt, top_at_1, tau, mu0, nc_flux_dir, flux_dir]
+    args = [ncol, nlay, ngpt, top_at_1, tau, mu0, inc_flux_dir, flux_dir]
 
     rte_lw_solver_noscat(*args)
 
