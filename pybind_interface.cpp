@@ -525,7 +525,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> tau_in
     ) {
         if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
+            throw std::runtime_error("ncol, nlay and ngpt must be positive integers");
         }
 
         if (
@@ -1387,7 +1387,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         if (ncol <= 0 || nlev <= 0 || ngpt <= 0 || nbnd <= 0) {
             throw std::runtime_error("ncol, nlev, ngpt, nbnd and band_lims must be positive integers");
         }
-        
+
         if (
             (band_lims.size() != 2 * nbnd) ||
             (bnd_flux_dn.size() != ncol * nlev * nbnd) ||
