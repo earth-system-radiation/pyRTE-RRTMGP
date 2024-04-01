@@ -298,14 +298,14 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> tau_inout,
         py::array_t<Float> tau_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
+        }
+
         if (tau_inout.size() != ncol * nlay * ngpt ||
             tau_in.size() != ncol * nlay * ngpt
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -328,16 +328,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> tau_in,
         py::array_t<Float> ssa_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (tau_in.size() != ncol * nlay * ngpt) ||
             (ssa_in.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -362,16 +362,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> tau_in,
         py::array_t<Float> ssa_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (tau_in.size() != ncol * nlay * ngpt) ||
             (ssa_in.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -396,16 +396,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> ssa_inout,
         py::array_t<Float> tau_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
             (tau_in.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -433,6 +433,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> ssa_in,
         py::array_t<Float> g_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -442,10 +446,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (g_in.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -480,6 +480,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> ssa_in,
         py::array_t<Float> p_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom <= 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nmom must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -489,10 +493,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (p_in.size() != nmom * ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom <= 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nmom must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -524,16 +524,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> ssa_inout,
         py::array_t<Float> tau_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
             (tau_in.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay, and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -562,6 +562,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> ssa_in,
         py::array_t<Float> g_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nmom1 must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -571,10 +575,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (g_in.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nmom1 must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -611,6 +611,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> ssa_in,
         py::array_t<Float> p_in
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0 || nmom2 <= 0) {
+            throw std::runtime_error("ncol, nlay, ngpt, nmom1 and nmom2 must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -620,10 +624,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (p_in.size() != nmom2 * ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0 || nmom2 <= 0) {
-            throw std::runtime_error("ncol, nlay, ngpt, nmom1 and nmom2 must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -657,16 +657,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (tau_in.size() != ncol * nlay * nbnd) ||
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -694,6 +694,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (tau_in.size() != ncol * nlay * nbnd) ||
@@ -701,10 +705,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -734,6 +734,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (tau_in.size() != ncol * nlay * ngpt) ||
@@ -741,10 +745,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -774,6 +774,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -781,10 +785,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -817,6 +817,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -827,10 +831,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -870,6 +870,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom < 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt, nmom and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -880,10 +884,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom < 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt, nmom and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -920,6 +920,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -927,10 +931,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -964,6 +964,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt, nmom1 and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -974,10 +978,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt, nmom1 and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -1019,6 +1019,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nbnd,
         py::array_t<int> band_lims_gpoint
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0 || nmom2 < 0 || nbnd < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt, nmom1, nmom2 and nbnd must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -1029,10 +1033,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (band_lims_gpoint.size() != 2 * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom1 <= 0 || nmom2 < 0 || nbnd < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt, nmom1, nmom2 and nbnd must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -1068,16 +1068,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> ssa_inout,
         py::array_t<Float> g_inout
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay and ngpt must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
             (g_inout.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -1103,6 +1103,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> g_inout,
         py::array_t<Float> f
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlay and ngpt must be positive integers");
+        }
+
         if (
             (tau_inout.size() != ncol * nlay * ngpt) ||
             (ssa_inout.size() != ncol * nlay * ngpt) ||
@@ -1110,10 +1114,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (f.size() != ncol * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlay and ngpt must be positive integers");
         }
 
         py::buffer_info buf_tau_inout = tau_inout.request();
@@ -1141,15 +1141,15 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int ncol_end,
         py::array_t<Float> array_out
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || ncol_start < 0 || ncol_end < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt, ncol_start and ncol_end must be positive integers");
+        }
+
         if (
             (array_in.size() != ncol * nlay * ngpt) ||
             (array_out.size() != (ncol_end - ncol_start + 1) * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || ncol_start < 0 || ncol_end < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt, ncol_start and ncol_end must be positive integers");
         }
 
         py::buffer_info buf_array_in = array_in.request();
@@ -1176,15 +1176,15 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int ncol_end,
         py::array_t<Float> array_out
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom <= 0 || ncol_start < 0 || ncol_end < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt, nmom, ncol_start and ncol_end must be positive integers");
+        }
+
         if (
             (array_in.size() != nmom * ncol * nlay * ngpt) ||
             (array_out.size() != nmom * (ncol_end - ncol_start + 1) * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nmom <= 0 || ncol_start < 0 || ncol_end < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt, nmom, ncol_start and ncol_end must be positive integers");
         }
 
         py::buffer_info buf_array_in = array_in.request();
@@ -1212,16 +1212,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int ncol_end,
         py::array_t<Float> tau_out
     ) {
+        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || ncol_start < 0 || ncol_end < 0) {
+            throw std::runtime_error("ncol, nlay, ngpt, ncol_start and ncol_end must be positive integers");
+        }
+
         if (
             (tau_in.size() != ncol * nlay * ngpt) ||
             (ssa_in.size() != ncol * nlay * ngpt) ||
             (tau_out.size() != (ncol_end - ncol_start + 1) * nlay * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || ncol_start < 0 || ncol_end < 0) {
-            throw std::runtime_error("ncol, nlay, ngpt, ncol_start and ncol_end must be positive integers");
         }
 
         py::buffer_info buf_tau_in = tau_in.request();
@@ -1247,15 +1247,15 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> gpt_flux,
         py::array_t<Float> flux
     ) {
+        if (ncol <= 0 || nlev <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlev and ngpt must be positive integers");
+        }
+
         if (
             (gpt_flux.size() != ncol * nlev * ngpt) ||
             (flux.size() != ncol * nlev)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlev <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlev and ngpt must be positive integers");
         }
 
         py::buffer_info buf_gpt_flux = gpt_flux.request();
@@ -1278,16 +1278,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> gpt_flux_up,
         py::array_t<Float> flux_net
     ) {
+        if (ncol <= 0 || nlev <= 0 || ngpt <= 0) {
+            throw std::runtime_error("ncol, nlev and ngpt must be positive integers");
+        }
+
         if (
             (gpt_flux_dn.size() != ncol * nlev * ngpt) ||
             (gpt_flux_up.size() != ncol * nlev * ngpt) ||
             (flux_net.size() != ncol * nlev)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlev <= 0 || ngpt <= 0) {
-            throw std::runtime_error("ncol, nlev and ngpt must be positive integers");
         }
 
         py::buffer_info buf_gpt_flux_dn = gpt_flux_dn.request();
@@ -1311,16 +1311,16 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> broadband_flux_up,
         py::array_t<Float> broadband_flux_net
     ) {
+        if (ncol <= 0 || nlev <= 0) {
+            throw std::runtime_error("ncol and nlev must be positive integers");
+        }
+
         if (
             (broadband_flux_dn.size() != ncol * nlev) ||
             (broadband_flux_up.size() != ncol * nlev) ||
             (broadband_flux_net.size() != ncol * nlev)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlev <= 0) {
-            throw std::runtime_error("ncol and nlev must be positive integers");
         }
 
         py::buffer_info buf_broadband_flux_dn = broadband_flux_dn.request();
@@ -1348,15 +1348,15 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> gpt_flux,
         py::array_t<Float> bnd_flux
     ) {
+        if (ncol <= 0 || nlev <= 0 || ngpt <= 0 || nbnd <= 0) {
+            throw std::runtime_error("ncol, nlev, ngpt and nbnd must be positive integers");
+        }
+
         if (
             (band_lims.size() != 2 * nbnd) ||
             (gpt_flux.size() != ncol * nlev * ngpt)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlev <= 0 || ngpt <= 0 || nbnd <= 0) {
-            throw std::runtime_error("ncol, nlev, ngpt and nbnd must be positive integers");
         }
 
         py::buffer_info buf_band_lims = band_lims.request();
@@ -1384,6 +1384,10 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> bnd_flux_up,
         py::array_t<Float> bnd_flux_net
     ) {
+        if (ncol <= 0 || nlev <= 0 || ngpt <= 0 || nbnd <= 0) {
+            throw std::runtime_error("ncol, nlev, ngpt, nbnd and band_lims must be positive integers");
+        }
+        
         if (
             (band_lims.size() != 2 * nbnd) ||
             (bnd_flux_dn.size() != ncol * nlev * nbnd) ||
@@ -1391,10 +1395,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             (bnd_flux_net.size() != ncol * nlev * nbnd)
         ) {
             throw std::runtime_error("Invalid size for input arrays");
-        }
-
-        if (ncol <= 0 || nlev <= 0 || ngpt <= 0 || nbnd <= 0) {
-            throw std::runtime_error("ncol, nlev, ngpt, nbnd and band_lims must be positive integers");
         }
 
         py::buffer_info buf_band_lims = band_lims.request();
