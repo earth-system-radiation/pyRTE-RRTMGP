@@ -185,11 +185,57 @@ def get_idx_minor(gas_names, minor_gases):
     return np.array(idx_minor_gas, dtype=np.int32)
 
 
-def calculate_mu0(solar_zenith_angle):
+def get_usecols(solar_zenith_angle):
+    """Get the usecols values
+
+    Args:
+        solar_zenith_angle (np.ndarray): Solar zenith angle in degrees
+
+    Returns:
+        np.ndarray: Usecols values
+    """
+    return solar_zenith_angle < 90.0 - 2.0 * np.spacing(90.0)
+
+
+def compute_mu0(solar_zenith_angle, nlayer=None):
     """Calculate the cosine of the solar zenith angle
 
     Args:
         solar_zenith_angle (np.ndarray): Solar zenith angle in degrees
+        nlayer (int, optional): Number of layers. Defaults to None.
     """
-    usecol_values = solar_zenith_angle < 90.0 - 2.0 * np.spacing(90.0)
-    return np.where(usecol_values, np.cos(np.radians(solar_zenith_angle)), 1.0)
+    usecol_values = get_usecols(solar_zenith_angle)
+    mu0 = np.where(usecol_values, np.cos(np.radians(solar_zenith_angle)), 1.0)
+    if nlayer is not None:
+        mu0 = np.stack([mu0] * nlayer).T
+    return mu0
+
+
+def krayl_from_kdist(kdist: xr.Dataset) -> npt.NDArray:
+    """Get the Rayleigh scattering coefficients from the k-distribution file.
+
+    Args:
+        kdist (xr.Dataset): K-distribution file.
+
+    Returns:
+        np.ndarray: Rayleigh scattering coefficients.
+    """
+    return np.stack([kdist["rayl_lower"].values, kdist["rayl_upper"].values], axis=-1)
+
+
+def combine_abs_and_rayleigh(tau_absorption, tau_rayleigh):
+    """Combine absorption and Rayleigh scattering optical depths.
+
+    Args:
+        tau_absorption (np.ndarray): Absorption optical depth.
+        tau_rayleigh (np.ndarray): Rayleigh scattering optical depth.
+
+    Returns:
+        np.ndarray: Combined optical depth.
+    """
+
+    tau = tau_absorption + tau_rayleigh
+    ssa = np.where(tau > 2.0 * np.finfo(float).tiny, tau_rayleigh / tau, 0.0)
+    g = np.zeros(tau.shape)
+
+    return tau, ssa, g

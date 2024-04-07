@@ -3,7 +3,11 @@ from typing import Optional, Tuple
 import numpy as np
 import numpy.typing as npt
 
-from pyrte_rrtmgp.pyrte_rrtmgp import rte_lw_solver_noscat, rte_sw_solver_noscat
+from pyrte_rrtmgp.pyrte_rrtmgp import (
+    rte_lw_solver_noscat,
+    rte_sw_solver_2stream,
+    rte_sw_solver_noscat,
+)
 
 GAUSS_DS = np.array(
     [
@@ -159,6 +163,67 @@ def sw_solver_noscat(
 
     args = [ncol, nlay, ngpt, top_at_1, tau, mu0, inc_flux_dir, flux_dir]
 
-    rte_lw_solver_noscat(*args)
+    rte_sw_solver_noscat(*args)
 
     return flux_dir
+
+
+def sw_solver_2stream(
+    top_at_1,
+    tau,
+    ssa,
+    g,
+    mu0,
+    sfc_alb_dir,
+    sfc_alb_dif,
+    inc_flux_dir,
+    inc_flux_dif=None,
+    has_dif_bc=False,
+    do_broadband=False,
+):
+    ncol, nlay, ngpt = tau.shape
+
+    if inc_flux_dif is None:
+        inc_flux_dif = np.zeros((ncol, ngpt), dtype=np.float64)
+
+    # outputs
+    flux_up = np.zeros((ngpt, nlay + 1, ncol), dtype=np.float64)
+    flux_dn = np.zeros((ngpt, nlay + 1, ncol), dtype=np.float64)
+    flux_dir = np.zeros((ngpt, nlay + 1, ncol), dtype=np.float64)
+    broadband_up = np.zeros((nlay + 1, ncol), dtype=np.float64)
+    broadband_dn = np.zeros((nlay + 1, ncol), dtype=np.float64)
+    broadband_dir = np.zeros((nlay + 1, ncol), dtype=np.float64)
+
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        top_at_1,
+        tau.flatten("F"),
+        ssa.flatten("F"),
+        g.flatten("F"),
+        mu0.flatten("F"),
+        sfc_alb_dir.flatten("F"),
+        sfc_alb_dif.flatten("F"),
+        inc_flux_dir.flatten("F"),
+        flux_up,
+        flux_dn,
+        flux_dir,
+        has_dif_bc,
+        inc_flux_dif.flatten("F"),
+        do_broadband,
+        broadband_up,
+        broadband_dn,
+        broadband_dir,
+    ]
+
+    rte_sw_solver_2stream(*args)
+
+    return (
+        flux_up.T,
+        flux_dn.T,
+        flux_dir.T,
+        broadband_up.T,
+        broadband_dn.T,
+        broadband_dir.T,
+    )

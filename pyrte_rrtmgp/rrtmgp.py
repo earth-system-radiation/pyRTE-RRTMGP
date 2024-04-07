@@ -338,7 +338,6 @@ def compute_tau_absorption(
 
 
 def compute_tau_rayleigh(
-    npres,
     gpoint_flavor,
     band_lims_gpt,
     krayl,
@@ -353,7 +352,6 @@ def compute_tau_rayleigh(
     """Compute Rayleigh optical depth.
 
     Args:
-        npres (int): Number of pressure values.
         gpoint_flavor (numpy.ndarray): Major gas flavor (pair) by upper/lower, g-point (shape: (2, ngpt)).
         band_lims_gpt (numpy.ndarray): Start and end g-point for each band (shape: (2, nbnd)).
         krayl (numpy.ndarray): Rayleigh scattering coefficients (shape: (ntemp, neta, ngpt, 2)).
@@ -375,7 +373,7 @@ def compute_tau_rayleigh(
     nbnd = band_lims_gpt.shape[1]
 
     # outputs
-    tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64)
+    tau_rayleigh = np.ndarray((ngpt, nlay, ncol), dtype=np.float64)
 
     args = [
         ncol,
@@ -385,21 +383,21 @@ def compute_tau_rayleigh(
         ngas,
         nflav,
         neta,
-        npres,
+        0,  # not used in fortran
         ntemp,
-        gpoint_flavor,
-        band_lims_gpt,
-        krayl,
+        gpoint_flavor.flatten("F"),
+        band_lims_gpt.flatten("F"),
+        krayl.flatten("F"),
         idx_h2o,
-        col_dry,
-        col_gas,
-        fminor,
-        jeta,
-        tropo,
-        jtemp,
+        col_dry.flatten("F"),
+        col_gas.flatten("F"),
+        fminor.flatten("F"),
+        jeta.flatten("F"),
+        tropo.flatten("F"),
+        jtemp.flatten("F"),
         tau_rayleigh,
     ]
 
     rrtmgp_compute_tau_rayleigh(*args)
 
-    return tau_rayleigh
+    return tau_rayleigh.T
