@@ -23,6 +23,9 @@ jobs:
 
     runs-on: ${{ matrix.platform }}
 
+    env:  # We need to add the path to the rrtmgp-data directory
+      RRTMGP_DATA: /home/runner/work/pyRTE-RRTMGP/pyRTE-RRTMGP/rrtmgp-data
+
     # The setup-miniconda action needs this to activate miniconda
     defaults:
       run:

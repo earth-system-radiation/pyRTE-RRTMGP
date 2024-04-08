@@ -12,9 +12,7 @@ The `pyrte_rrtmgp` package contains the following submodules:
 - `pyrte_rrtmgp.utils`: A module that provides utility functions for working with RTE-RRTMGP data. This module is still under development and will be expanded in future releases. See [](module_ref) for details.
 
 ```{seealso}
-The folder `examples` in the repository contains a Jupyter notebook example that demonstrates how to use the package.
-
-The functions in `pyrte_rrtmgp.rte`, `pyrte_rrtmgp.rrtmgp`, and `pyrte_rrtmgp.utils` contain docstrings that are available in IDEs with features such as IntelliSense (in VSCode).
+The folder `/examples` in the repository contains Jupyter notebook examples that demonstrate how to use the package.
 ```
 
 ## Importing the Package
