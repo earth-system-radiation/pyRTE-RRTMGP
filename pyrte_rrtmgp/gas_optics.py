@@ -1,13 +1,18 @@
+import numpy as np
+
 from pyrte_rrtmgp.rrtmgp import (
     compute_planck_source,
     compute_tau_absorption,
+    compute_tau_rayleigh,
     interpolation,
 )
 from pyrte_rrtmgp.utils import (
+    combine_abs_and_rayleigh,
     extract_gas_names,
     flavors_from_kdist,
     get_idx_minor,
     gpoint_flavor_from_kdist,
+    krayl_from_kdist,
     rfmip_2_col_gas,
 )
 
@@ -59,12 +64,26 @@ class GasOptics:
         return "totplnk" in variables and "plank_fraction" in variables
 
     def gas_optics(self):
-        self.gas_optics_int()
-        self.compute_planck()
-        self.compute_gas_taus()
-        return self.tau, self.lay_src, self.lev_src, self.sfc_src, self.sfc_src_jac
+        if self.source_is_internal:
+            self.interpolate()
+            self.compute_planck()
+            self.compute_gas_taus()
+            return (
+                self.tau,
+                self.g,
+                self.ssa,
+                self.lay_src,
+                self.lev_src,
+                self.sfc_src,
+                self.sfc_src_jac,
+            )
+        else:
+            self.interpolate()
+            self.compute_gas_taus()
+            self.compute_solar_variability()
+            return self.tau, self.g, self.ssa, self.solar_source
 
-    def gas_optics_int(self):
+    def interpolate(self):
         neta = len(self.kdist["mixing_fraction"])
         press_ref = self.kdist["press_ref"].values
         temp_ref = self.kdist["temp_ref"].values
@@ -184,7 +203,7 @@ class GasOptics:
         kminor_start_lower = self.kdist["kminor_start_lower"].values
         kminor_start_upper = self.kdist["kminor_start_upper"].values
 
-        self.tau = compute_tau_absorption(
+        tau_absorption = compute_tau_absorption(
             idx_h2o,
             gpoint_flavor,
             band_lims_gpt,
@@ -213,4 +232,49 @@ class GasOptics:
             self.jeta,
             self.jtemp,
             self.jpress,
+        )
+
+        if self.source_is_internal:
+            self.tau = tau_absorption
+            self.ssa = np.full_like(tau_absorption, np.nan)
+            self.g = np.full_like(tau_absorption, np.nan)
+        else:
+            krayl = krayl_from_kdist(self.kdist)
+            tau_rayleigh = compute_tau_rayleigh(
+                gpoint_flavor,
+                band_lims_gpt,
+                krayl,
+                idx_h2o,
+                self.col_gas[:, :, 0],
+                self.col_gas,
+                self.fminor,
+                self.jeta,
+                self.tropo,
+                self.jtemp,
+            )
+            self.tau, self.ssa, self.g = combine_abs_and_rayleigh(
+                tau_absorption, tau_rayleigh
+            )
+
+    def compute_solar_variability(self):
+        """Calculate the solar variability
+
+        Returns:
+            np.ndarray: Solar source
+        """
+
+        a_offset = 0.1495954
+        b_offset = 0.00066696
+
+        solar_source_quiet = self.kdist["solar_source_quiet"]
+        solar_source_facular = self.kdist["solar_source_facular"]
+        solar_source_sunspot = self.kdist["solar_source_sunspot"]
+
+        mg_index = self.kdist["mg_default"]
+        sb_index = self.kdist["sb_default"]
+
+        self.solar_source = (
+            solar_source_quiet
+            + (mg_index - a_offset) * solar_source_facular
+            + (sb_index - b_offset) * solar_source_sunspot
         )
