@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import xarray as xr
 from pyrte_rrtmgp.gas_optics import GasOptics
@@ -6,7 +7,7 @@ from pyrte_rrtmgp.utils import compute_mu0, get_usecols
 
 ERROR_TOLERANCE = 1e-4
 
-rte_rrtmgp_dir = "rrtmgp-data"
+rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data") 
 clear_sky_example_files = f"{rte_rrtmgp_dir}/examples/rfmip-clear-sky/inputs"
 
 rfmip = xr.load_dataset(
