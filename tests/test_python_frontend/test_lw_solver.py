@@ -1,6 +1,5 @@
 import os
 import numpy as np
-import pytest
 import xarray as xr
 from pyrte_rrtmgp.gas_optics import GasOptics
 from pyrte_rrtmgp.rte import lw_solver_noscat
