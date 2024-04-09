@@ -1,12 +1,14 @@
 import os
+import sys
+
 import numpy as np
 import xarray as xr
-from pyrte_rrtmgp.gas_optics import GasOptics
-from pyrte_rrtmgp.rte import lw_solver_noscat
+from pyrte_rrtmgp.rrtmgp_gas_optics import GasOptics
+from pyrte_rrtmgp.kernels.rte import lw_solver_noscat
 
 ERROR_TOLERANCE = 1e-4
 
-rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data") 
+rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data")
 clear_sky_example_files = f"{rte_rrtmgp_dir}/examples/rfmip-clear-sky/inputs"
 
 rfmip = xr.load_dataset(
@@ -27,8 +29,9 @@ ref_flux_down = rld.isel(expt=0)["rld"].values
 
 
 def test_lw_solver_noscat():
-    min_index = np.argmin(rfmip["pres_level"].values)
-    rfmip["pres_level"][:, min_index] = 1.0051835744630002
+    min_index = np.argmin(rfmip["pres_level"].data)
+    min_press = kdist["press_ref"].min().item() + sys.float_info.epsilon
+    rfmip["pres_level"][:, min_index] = min_press
 
     gas_optics = GasOptics(kdist, rfmip)
     tau, _, _, layer_src, level_src, sfc_src, sfc_src_jac = gas_optics.gas_optics()
