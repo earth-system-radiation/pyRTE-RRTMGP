@@ -9,8 +9,10 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
     rrtmgp_compute_tau_rayleigh,
     rrtmgp_interpolation,
 )
+from pyrte_rrtmgp.utils import convert_xarray_args
 
 
+@convert_xarray_args
 def interpolation(
     neta: int,
     flavor: npt.NDArray,
@@ -111,6 +113,7 @@ def interpolation(
     return jtemp.T, fmajor.T, fminor.T, col_mix.T, tropo.T, jeta.T, jpress.T
 
 
+@convert_xarray_args
 def compute_planck_source(
     tlay,
     tlev,
@@ -208,6 +211,7 @@ def compute_planck_source(
     return sfc_src.T, lay_src.T, lev_src.T, sfc_src_jac.T
 
 
+@convert_xarray_args
 def compute_tau_absorption(
     idx_h2o,
     gpoint_flavor,
@@ -337,6 +341,7 @@ def compute_tau_absorption(
     return tau.T
 
 
+@convert_xarray_args
 def compute_tau_rayleigh(
     gpoint_flavor,
     band_lims_gpt,

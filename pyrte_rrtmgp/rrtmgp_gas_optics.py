@@ -23,6 +23,8 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
 @dataclass
 class GasOptics:
     tau: Optional[np.ndarray] = None
+    tau_rayleigh: Optional[np.ndarray] = None
+    tau_absorption: Optional[np.ndarray] = None
     g: Optional[np.ndarray] = None
     ssa: Optional[np.ndarray] = None
     lay_src: Optional[np.ndarray] = None
@@ -310,6 +312,7 @@ class GasOpticsAccessor:
             self._interpolated.jpress,
         )
 
+        self.gas_optics.tau_absorption = tau_absorption
         if self.source_is_internal:
             self.gas_optics.tau = tau_absorption
             self.gas_optics.ssa = np.full_like(tau_absorption, np.nan)
@@ -332,6 +335,7 @@ class GasOpticsAccessor:
                 self._interpolated.jtemp,
             )
 
+            self.gas_optics.tau_rayleigh = tau_rayleigh
             self.gas_optics.tau = tau_absorption + tau_rayleigh
             self.gas_optics.ssa = np.where(
                 self.gas_optics.tau > 2.0 * np.finfo(float).tiny,

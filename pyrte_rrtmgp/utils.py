@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 
 
 def get_usecols(solar_zenith_angle):
@@ -41,3 +42,21 @@ def compute_toa_flux(total_solar_irradiance, solar_source):
     toa_flux = np.stack([solar_source] * ncol)
     def_tsi = toa_flux.sum(axis=1)
     return (toa_flux.T * (total_solar_irradiance / def_tsi)).T
+
+
+def convert_xarray_args(func):
+    def wrapper(*args, **kwargs):
+        output_args = []
+        for x in args:
+            if isinstance(x, xr.DataArray):
+                output_args.append(x.data)
+            else:
+                output_args.append(x)
+        for k, v in kwargs.items():
+            if isinstance(v, xr.DataArray):
+                kwargs[k] = v.data
+            else:
+                kwargs[k] = v
+        return func(*output_args, **kwargs)
+
+    return wrapper
