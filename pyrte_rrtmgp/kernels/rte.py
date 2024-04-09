@@ -181,6 +181,34 @@ def sw_solver_2stream(
     has_dif_bc=False,
     do_broadband=False,
 ):
+    """
+    Solve the shortwave radiative transfer equation using the 2-stream approximation.
+
+    Args:
+        top_at_1 (bool): Flag indicating whether the top of the atmosphere is at level 1.
+        tau (ndarray): Array of optical depths with shape (ncol, nlay, ngpt).
+        ssa (ndarray): Array of single scattering albedos with shape (ncol, nlay, ngpt).
+        g (ndarray): Array of asymmetry parameters with shape (ncol, nlay, ngpt).
+        mu0 (ndarray): Array of cosine of solar zenith angles with shape (ncol, ngpt).
+        sfc_alb_dir (ndarray): Array of direct surface albedos with shape (ncol, ngpt).
+        sfc_alb_dif (ndarray): Array of diffuse surface albedos with shape (ncol, ngpt).
+        inc_flux_dir (ndarray): Array of direct incident fluxes with shape (ncol, ngpt).
+        inc_flux_dif (ndarray, optional): Array of diffuse incident fluxes with shape (ncol, ngpt).
+            Defaults to None.
+        has_dif_bc (bool, optional): Flag indicating whether the boundary condition includes diffuse fluxes.
+            Defaults to False.
+        do_broadband (bool, optional): Flag indicating whether to compute broadband fluxes.
+            Defaults to False.
+
+    Returns:
+        Tuple of ndarrays: Tuple containing the following arrays:
+            - flux_up: Array of upward fluxes with shape (ngpt, nlay + 1, ncol).
+            - flux_dn: Array of downward fluxes with shape (ngpt, nlay + 1, ncol).
+            - flux_dir: Array of direct fluxes with shape (ngpt, nlay + 1, ncol).
+            - broadband_up: Array of broadband upward fluxes with shape (nlay + 1, ncol).
+            - broadband_dn: Array of broadband downward fluxes with shape (nlay + 1, ncol).
+            - broadband_dir: Array of broadband direct fluxes with shape (nlay + 1, ncol).
+    """
     ncol, nlay, ngpt = tau.shape
 
     if inc_flux_dif is None:
