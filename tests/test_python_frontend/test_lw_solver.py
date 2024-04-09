@@ -1,12 +1,13 @@
 import os
+
 import numpy as np
 import xarray as xr
-from pyrte_rrtmgp.gas_optics import GasOptics
-from pyrte_rrtmgp.rte import lw_solver_noscat
+from pyrte_rrtmgp import rrtmgp_gas_optics
+from pyrte_rrtmgp.kernels.rte import lw_solver_noscat
 
 ERROR_TOLERANCE = 1e-4
 
-rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data") 
+rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data")
 clear_sky_example_files = f"{rte_rrtmgp_dir}/examples/rfmip-clear-sky/inputs"
 
 rfmip = xr.load_dataset(
@@ -27,22 +28,15 @@ ref_flux_down = rld.isel(expt=0)["rld"].values
 
 
 def test_lw_solver_noscat():
-    min_index = np.argmin(rfmip["pres_level"].values)
-    rfmip["pres_level"][:, min_index] = 1.0051835744630002
-
-    gas_optics = GasOptics(kdist, rfmip)
-    tau, _, _, layer_src, level_src, sfc_src, sfc_src_jac = gas_optics.gas_optics()
-
-    sfc_emis = rfmip["surface_emissivity"].values
-    sfc_emis = np.stack([sfc_emis] * tau.shape[2]).T
+    rrtmgp_gas_optics = kdist.gas_optics.load_atmosferic_conditions(rfmip)
 
     _, solver_flux_up, solver_flux_down, _, _ = lw_solver_noscat(
-        tau=tau,
-        lay_source=layer_src,
-        lev_source=level_src,
-        sfc_emis=sfc_emis,
-        sfc_src=sfc_src,
-        sfc_src_jac=sfc_src_jac,
+        tau=rrtmgp_gas_optics.tau,
+        lay_source=rrtmgp_gas_optics.lay_src,
+        lev_source=rrtmgp_gas_optics.lev_src,
+        sfc_emis=rfmip["surface_emissivity"].data,
+        sfc_src=rrtmgp_gas_optics.sfc_src,
+        sfc_src_jac=rrtmgp_gas_optics.sfc_src_jac,
     )
 
     assert np.isclose(solver_flux_up, ref_flux_up, atol=ERROR_TOLERANCE).all()

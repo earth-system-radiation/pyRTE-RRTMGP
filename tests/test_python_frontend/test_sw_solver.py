@@ -1,13 +1,15 @@
 import os
+
 import numpy as np
+import pytest
 import xarray as xr
-from pyrte_rrtmgp.gas_optics import GasOptics
-from pyrte_rrtmgp.rte import sw_solver_2stream
-from pyrte_rrtmgp.utils import compute_mu0, get_usecols
+from pyrte_rrtmgp import rrtmgp_gas_optics
+from pyrte_rrtmgp.kernels.rte import sw_solver_2stream
+from pyrte_rrtmgp.utils import compute_mu0, compute_toa_flux, get_usecols
 
 ERROR_TOLERANCE = 1e-4
 
-rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data") 
+rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data")
 clear_sky_example_files = f"{rte_rrtmgp_dir}/examples/rfmip-clear-sky/inputs"
 
 rfmip = xr.load_dataset(
@@ -28,39 +30,24 @@ ref_flux_down = rsd.isel(expt=0)["rsd"].values
 
 
 def test_lw_solver_noscat():
-    min_index = np.argmin(rfmip["pres_level"].values)
-    rfmip["pres_level"][:, min_index] = 1.0051835744630002
+    gas_optics = kdist.gas_optics.load_atmosferic_conditions(rfmip)
 
-    gas_optics = GasOptics(kdist, rfmip)
-    gas_optics.source_is_internal
-    tau, g, ssa, toa_flux = gas_optics.gas_optics()
-
-    pres_layers = rfmip["pres_layer"]["layer"]
-    top_at_1 = (pres_layers[0] < pres_layers[-1]).values.item()
-
-    # Expand the surface albedo to ngpt
-    ngpt = len(kdist["gpt"])
-    surface_albedo = rfmip["surface_albedo"].values
-    surface_albedo = np.stack([surface_albedo] * ngpt)
-    sfc_alb_dir = surface_albedo.T.copy()
-    sfc_alb_dif = surface_albedo.T.copy()
+    surface_albedo = rfmip["surface_albedo"].data
+    total_solar_irradiance = rfmip["total_solar_irradiance"].data
 
     nlayer = len(rfmip["layer"])
     mu0 = compute_mu0(rfmip["solar_zenith_angle"].values, nlayer=nlayer)
 
-    total_solar_irradiance = rfmip["total_solar_irradiance"].values
-    toa_flux = np.stack([toa_flux] * mu0.shape[0])
-    def_tsi = toa_flux.sum(axis=1)
-    toa_flux = (toa_flux.T * (total_solar_irradiance / def_tsi)).T
+    toa_flux = compute_toa_flux(total_solar_irradiance, gas_optics.solar_source)
 
     _, _, _, solver_flux_up, solver_flux_down, _ = sw_solver_2stream(
-        top_at_1,
-        tau,
-        ssa,
-        g,
+        kdist.gas_optics.top_at_1,
+        gas_optics.tau,
+        gas_optics.ssa,
+        gas_optics.g,
         mu0,
-        sfc_alb_dir,
-        sfc_alb_dif,
+        sfc_alb_dir=surface_albedo,
+        sfc_alb_dif=surface_albedo,
         inc_flux_dir=toa_flux,
         inc_flux_dif=None,
         has_dif_bc=False,
