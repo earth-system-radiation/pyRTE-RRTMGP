@@ -1,16 +1,17 @@
 import sys
-import xarray as xr
+from dataclasses import dataclass
+from typing import Optional
+
 import numpy as np
 import numpy.typing as npt
-from typing import Optional
-from dataclasses import dataclass
+import xarray as xr
 
+from pyrte_rrtmgp.constants import AVOGAD, HELMERT1, HELMERT2, M_DRY, M_H2O
 from pyrte_rrtmgp.exceptions import (
-    NotInternalSourceError,
-    NotExternalSourceError,
     MissingAtmosfericConditionsError,
+    NotExternalSourceError,
+    NotInternalSourceError,
 )
-from pyrte_rrtmgp.constants import HELMERT1, HELMERT2, M_DRY, M_H2O, AVOGAD
 from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_planck_source,
     compute_tau_absorption,
@@ -124,7 +125,6 @@ class GasOpticsAccessor:
         return self.gas_optics
 
     def get_col_gas(self):
-
         if self._atm_cond is None:
             raise MissingAtmosfericConditionsError()
 
@@ -203,7 +203,6 @@ class GasOpticsAccessor:
     @property
     def top_at_1(self):
         if self._top_at_1 is None:
-
             if self._atm_cond is None:
                 raise MissingAtmosfericConditionsError()
 
@@ -268,7 +267,6 @@ class GasOpticsAccessor:
         )
 
     def compute_gas_taus(self):
-
         minor_gases_lower = self.extract_names(self._obj["minor_gases_lower"].data)
         minor_gases_upper = self.extract_names(self._obj["minor_gases_upper"].data)
         # check if the index is correct

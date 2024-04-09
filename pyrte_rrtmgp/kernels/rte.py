@@ -79,6 +79,9 @@ def lw_solver_noscat(
 
     ncol, nlay, ngpt = tau.shape
 
+    if len(sfc_emis.shape) == 1:
+        sfc_emis = np.stack([sfc_emis] * ngpt).T
+
     # default values
     n_quad_angs = nmus
 
@@ -210,6 +213,11 @@ def sw_solver_2stream(
             - broadband_dir: Array of broadband direct fluxes with shape (nlay + 1, ncol).
     """
     ncol, nlay, ngpt = tau.shape
+
+    if len(sfc_alb_dir.shape) == 1:
+        sfc_alb_dir = np.stack([sfc_alb_dir] * ngpt).T
+    if len(sfc_alb_dif.shape) == 1:
+        sfc_alb_dif = np.stack([sfc_alb_dif] * ngpt).T
 
     if inc_flux_dif is None:
         inc_flux_dif = np.zeros((ncol, ngpt), dtype=np.float64)

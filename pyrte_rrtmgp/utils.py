@@ -25,3 +25,19 @@ def compute_mu0(solar_zenith_angle, nlayer=None):
     if nlayer is not None:
         mu0 = np.stack([mu0] * nlayer).T
     return mu0
+
+
+def compute_toa_flux(total_solar_irradiance, solar_source):
+    """Compute the top of atmosphere flux
+
+    Args:
+        total_solar_irradiance (np.ndarray): Total solar irradiance
+        solar_source (np.ndarray): Solar source
+
+    Returns:
+        np.ndarray: Top of atmosphere flux
+    """
+    ncol = total_solar_irradiance.shape[0]
+    toa_flux = np.stack([solar_source] * ncol)
+    def_tsi = toa_flux.sum(axis=1)
+    return (toa_flux.T * (total_solar_irradiance / def_tsi)).T
