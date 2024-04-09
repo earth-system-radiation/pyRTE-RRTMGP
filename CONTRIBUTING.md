@@ -64,9 +64,11 @@ Pull Requests for new features should include tests and documentation.
 
 ## How to Make a New Release?
 
-For maintainers: To make a new release, update the version number in `pyproject.toml` and `conda.recipe/meta.yaml`.
-Then, create a new release off the `main` branch on GitHub, using the "Draft a new release" button in https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases.
-Create a new tag with the version number, and use the "Generate release notes" button to create the release notes.
-Review and update the the release notes as necessary, and publish the release and set it as the latest release.
+For maintainers:
 
-The documentation on https://pyrte-rrtmgp.readthedocs.io/ will update automatically.
+1. To make a new release, update the version number in `pyproject.toml` and `conda.recipe/meta.yaml`.
+2. Then, create a new release off the `main` branch on GitHub, using the "Draft a new release" button in [https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases](https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases).
+3. Create a new tag with the version number, and use the "Generate release notes" button to create the release notes.
+4. Review and update the the release notes as necessary, and publish the release and set it as the latest release.
+
+The documentation on [https://pyrte-rrtmgp.readthedocs.io/](https://pyrte-rrtmgp.readthedocs.io/) will update automatically.
