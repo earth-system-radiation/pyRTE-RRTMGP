@@ -2,7 +2,7 @@
 # setting the requirements https://docs.conda.io/projects/conda-build/en/stable/resources/define-metadata.html#export-runtime-requirements
 package:
   name: pyrte_rrtmgp
-  version: 0.0.4
+  version: 0.0.5
 
 source:
   path: ..
