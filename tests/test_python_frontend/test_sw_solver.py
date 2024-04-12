@@ -4,12 +4,13 @@ import numpy as np
 import pytest
 import xarray as xr
 from pyrte_rrtmgp import rrtmgp_gas_optics
+from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 from pyrte_rrtmgp.kernels.rte import sw_solver_2stream
 from pyrte_rrtmgp.utils import compute_mu0, compute_toa_flux, get_usecols
 
 ERROR_TOLERANCE = 1e-4
 
-rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data")
+rte_rrtmgp_dir = download_rrtmgp_data()
 clear_sky_example_files = f"{rte_rrtmgp_dir}/examples/rfmip-clear-sky/inputs"
 
 rfmip = xr.load_dataset(
@@ -29,7 +30,7 @@ rsd = xr.load_dataset(
 ref_flux_down = rsd.isel(expt=0)["rsd"].values
 
 
-def test_lw_solver_noscat():
+def test_sw_solver_noscat():
     gas_optics = kdist.gas_optics.load_atmosferic_conditions(rfmip)
 
     surface_albedo = rfmip["surface_albedo"].data
