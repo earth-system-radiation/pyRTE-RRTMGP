@@ -6,6 +6,9 @@ authors:
     orcid: "https://orcid.org/0000-0002-0016-3470"
   - name: makepath LLC
     website: 'https://makepath.com/'
+  - given-names: Josué Miguel
+    family-names: Sehnem
+    orcid: "https://orcid.org/0009-0004-9403-1509"
 type: software
 repository-code: "https://github.com/earth-system-radiation/pyRTE-RRTMGP"
 url: "https://pyrte-rrtmgp.readthedocs.io/"
