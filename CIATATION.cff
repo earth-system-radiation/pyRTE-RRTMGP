@@ -10,6 +10,9 @@ authors:
     family-names: Sehnem
     orcid: "https://orcid.org/0009-0004-9403-1509"
 type: software
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10982460
 repository-code: "https://github.com/earth-system-radiation/pyRTE-RRTMGP"
 url: "https://pyrte-rrtmgp.readthedocs.io/"
 license: BSD-3-Clause
