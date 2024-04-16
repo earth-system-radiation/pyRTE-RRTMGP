@@ -1,6 +1,6 @@
 [project]
 name = "pyrte_rrtmgp"
-version = "0.0.5"
+version = "0.0.6"
 description = "A Python interface to the RTE+RRTMGP Fortran software package."
 readme = "README.md"
 requires-python = ">=3.7"
