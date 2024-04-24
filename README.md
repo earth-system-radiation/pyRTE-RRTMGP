@@ -106,11 +106,13 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 
 ### Prerequisites
 
-As pyRTE-RRTMGP is built in install time it will require a compatible Fortran compiler, a C++ compiler and CMake to be installed on your system. The package is compatible with posix systems and is tested on Linux and macOS using the GNU Fortran compiler (gfortran) and the GNU C++ compiler (g++). The package should also work with the Intel Fortran compiler (ifort) but it was not tested with it.
+pyRTE-RRTMGP is built on install time. Building the package requires a compatible Fortran compiler, a C++ compiler and CMake to be installed on your system. The package is compatible with POSIX systems and is tested on Linux and macOS using the GNU Fortran compiler (gfortran) and the GNU C++ compiler (g++). The package should also work with the Intel Fortran compiler (ifort) but was not tested with it. If you use ``conda``, the system packages are installed automatically. If you use ``pip``, you need to install those packages yourself (see below).
 
 The package source code is hosted [on GitHub](https://github.com/earth-system-radiation/pyRTE-RRTMGP). The easiest way to install pyRTE-RRTMGP is to use `git`. You can install git from [here](https://git-scm.com/downloads).
 
 ### Installation with conda (recommended)
+
+Using conda is the recommended method because conda will take care of the system dependencies for you.
 
 1. **Clone the repository**:
 
@@ -167,7 +169,7 @@ The package source code is hosted [on GitHub](https://github.com/earth-system-ra
 
 ### Installation with pip
 
-You also have the option to build and install the package with pip. This should work with macOS and Linux systems.
+You also have the option to build and install the package with pip. This should work with macOS and Linux systems but requires you to install the system dependencies manually.
 
 #### Mac OS
 
