@@ -14,19 +14,15 @@ build:
 
 requirements:
   build:
-    - gcc_linux-64        # [linux]
-    - gxx_linux-64        # [linux]
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
     - gfortran_linux-64   # [linux]
-    - clang_osx-64        # [osx]
-    - clangxx_osx-64      # [osx]
     - gfortran_osx-64     # [osx]
-    - binutils            # [not win]
     - m2w64-gcc-fortran   # [win]
-    - m2w64-gcc           # [win]
-    - m2w64-binutils      # [win]
     - libuv==1.44.2
     - cmake==3.26.4
-    - make
+    - git==2.44.0
+    - make==4.3
 
   host:
     - python
@@ -40,6 +36,7 @@ requirements:
     - numpy >=1.21.0
     - xarray >=2023.5.0
     - netcdf4 >=1.5.7
+    - requests>=2.4.0
 
 test:
   imports:
@@ -49,6 +46,7 @@ test:
     - pytest>=7.4
     - xarray >=2023.5.0
     - netcdf4 >=1.5.7
+    - requests>=2.4.0
   source_files:
     - tests
   commands:

@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import xarray as xr
 from pyrte_rrtmgp import rrtmgp_gas_optics
+from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_planck_source,
     compute_tau_absorption,
@@ -15,7 +16,7 @@ from utils import convert_args_arrays
 
 ERROR_TOLERANCE = 1e-4
 
-rte_rrtmgp_dir = os.environ.get("RRTMGP_DATA", "rrtmgp-data")
+rte_rrtmgp_dir = download_rrtmgp_data()
 clear_sky_example_files = f"{rte_rrtmgp_dir}/examples/rfmip-clear-sky/inputs"
 
 rfmip = xr.load_dataset(

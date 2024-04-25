@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest, macos-latest]
         python-version: ["3.11"]
 
     runs-on: ${{ matrix.platform }}
@@ -39,6 +39,7 @@ jobs:
       - name: Get conda
         uses: conda-incubator/setup-miniconda@v3.0.0
         with:
+          miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
 
