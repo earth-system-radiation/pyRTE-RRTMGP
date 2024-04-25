@@ -132,13 +132,7 @@ Using conda is the recommended method because conda will take care of the system
     cd pyRTE-RRTMGP
     ```
 
-2. **Update the submodules**:
-
-    ```bash
-    git submodule update --init --recursive
-    ```
-
-3. **Make sure you have conda installed**. If not, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
+2. **Make sure you have conda installed**. If not, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
     To make sure your conda setup is working, run the command below:
 
     ```bash
@@ -147,19 +141,19 @@ Using conda is the recommended method because conda will take care of the system
 
     If this runs without errors, you are good to go.
 
-4. **Install the conda build requirements** (if you haven't already):
+3. **Install the conda build requirements** (if you haven't already):
 
     ```bash
     conda install conda-build conda-verify
     ```
 
-5. **Build the conda package locally**:
+4. **Build the conda package locally**:
 
     ```bash
     conda build conda.recipe
     ```
 
-6. **Install the package** in your current conda environment:
+5. **Install the package** in your current conda environment:
 
     ```bash
     conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
