@@ -71,13 +71,13 @@ def interpolation(
     temp_ref_delta = (temp_ref.max() - temp_ref.min()) / (len(temp_ref) - 1)
 
     # outputs
-    jtemp = np.ndarray([nlay, ncol], dtype=np.int32)
-    fmajor = np.ndarray([nflav, nlay, ncol, 2, 2, 2], dtype=np.float64)
-    fminor = np.ndarray([nflav, nlay, ncol, 2, 2], dtype=np.float64)
-    col_mix = np.ndarray([nflav, nlay, ncol, 2], dtype=np.float64)
-    tropo = np.ndarray([nlay, ncol], dtype=np.int32)
-    jeta = np.ndarray([nflav, nlay, ncol, 2], dtype=np.int32)
-    jpress = np.ndarray([nlay, ncol], dtype=np.int32)
+    jtemp = np.ndarray([ncol, nlay], dtype=np.int32, order='F')
+    fmajor = np.ndarray([2, 2, 2, ncol, nlay, nflav], dtype=np.float64, order='F')
+    fminor = np.ndarray([2, 2, ncol, nlay, nflav], dtype=np.float64, order='F')
+    col_mix = np.ndarray([2, ncol, nlay, nflav], dtype=np.float64, order='F')
+    tropo = np.ndarray([ncol, nlay], dtype=np.int32, order='F')
+    jeta = np.ndarray([2, ncol, nlay, nflav], dtype=np.int32, order='F')
+    jpress = np.ndarray([ncol, nlay], dtype=np.int32, order='F')
 
     args = [
         ncol,
@@ -87,17 +87,17 @@ def interpolation(
         neta,
         npres,
         ntemp,
-        flavor.flatten("F"),
-        press_ref_log.flatten("F"),
-        temp_ref.flatten("F"),
+        np.asfortranarray(flavor),
+        np.asfortranarray(press_ref_log),
+        np.asfortranarray(temp_ref),
         press_ref_log_delta,
         temp_ref_min,
         temp_ref_delta,
         press_ref_trop_log,
-        vmr_ref.flatten("F"),
-        play.flatten("F"),
-        tlay.flatten("F"),
-        col_gas.flatten("F"),
+        np.asfortranarray(vmr_ref),
+        np.asfortranarray(play),
+        np.asfortranarray(tlay),
+        np.asfortranarray(col_gas),
         jtemp,
         fmajor,
         fminor,
@@ -110,7 +110,7 @@ def interpolation(
     rrtmgp_interpolation(*args)
 
     tropo = tropo != 0  # Convert to boolean
-    return jtemp.T, fmajor.T, fminor.T, col_mix.T, tropo.T, jeta.T, jpress.T
+    return jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress
 
 
 @convert_xarray_args
@@ -169,10 +169,10 @@ def compute_planck_source(
     totplnk_delta = (temp_ref_max - temp_ref_min) / (nPlanckTemp - 1)
 
     # outputs
-    sfc_src = np.ndarray([ngpt, ncol], dtype=np.float64)
-    lay_src = np.ndarray([ngpt, nlay, ncol], dtype=np.float64)
-    lev_src = np.ndarray([ngpt, nlay + 1, ncol], dtype=np.float64)
-    sfc_src_jac = np.ndarray([ngpt, ncol], dtype=np.float64)
+    sfc_src = np.ndarray((ncol, ngpt), dtype=np.float64, order='F')
+    lay_src = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order='F')
+    lev_src = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
+    sfc_src_jac = np.ndarray((ncol, ngpt), dtype=np.float64, order='F')
 
     args = [
         ncol,
@@ -184,22 +184,22 @@ def compute_planck_source(
         npres,
         ntemp,
         nPlanckTemp,
-        tlay.flatten("F"),
-        tlev.flatten("F"),
-        tsfc.flatten("F"),
+        np.asfortranarray(tlay),
+        np.asfortranarray(tlev),
+        np.asfortranarray(tsfc),
         sfc_lay,
-        fmajor.flatten("F"),
-        jeta.flatten("F"),
-        tropo.flatten("F"),
-        jtemp.flatten("F"),
-        jpress.flatten("F"),
+        np.asfortranarray(fmajor),
+        np.asfortranarray(jeta),
+        np.asfortranarray(tropo),
+        np.asfortranarray(jtemp),
+        np.asfortranarray(jpress),
         gpoint_bands,
-        band_lims_gpt.flatten("F"),
-        pfracin.flatten("F"),
+        np.asfortranarray(band_lims_gpt),
+        np.asfortranarray(pfracin),
         temp_ref_min,
         totplnk_delta,
-        totplnk.flatten("F"),
-        gpoint_flavor.flatten("F"),
+        np.asfortranarray(totplnk),
+        np.asfortranarray(gpoint_flavor),
         sfc_src,
         lay_src,
         lev_src,
@@ -208,7 +208,7 @@ def compute_planck_source(
 
     rrtmgp_compute_Planck_source(*args)
 
-    return sfc_src.T, lay_src.T, lev_src.T, sfc_src_jac.T
+    return sfc_src, lay_src, lev_src, sfc_src_jac
 
 
 @convert_xarray_args
@@ -289,7 +289,7 @@ def compute_tau_absorption(
     nminorkupper = kminor_upper.shape[2]
 
     # outputs
-    tau = np.zeros([ngpt, nlay, ncol], dtype=np.float64)
+    tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order='F')
 
     args = [
         ncol,
@@ -306,39 +306,39 @@ def compute_tau_absorption(
         nminorupper,
         nminorkupper,
         idx_h2o,
-        gpoint_flavor.flatten("F"),  # correct
-        band_lims_gpt.flatten("F"),
-        kmajor.transpose(0, 2, 1, 3).flatten("F"),
-        kminor_lower.flatten("F"),
-        kminor_upper.flatten("F"),
-        minor_limits_gpt_lower.flatten("F"),
-        minor_limits_gpt_upper.flatten("F"),
-        minor_scales_with_density_lower.flatten("F"),
-        minor_scales_with_density_upper.flatten("F"),
-        scale_by_complement_lower.flatten("F"),
-        scale_by_complement_upper.flatten("F"),
-        idx_minor_lower.flatten("F"),
-        idx_minor_upper.flatten("F"),
-        idx_minor_scaling_lower.flatten("F"),
-        idx_minor_scaling_upper.flatten("F"),
-        kminor_start_lower.flatten("F"),
-        kminor_start_upper.flatten("F"),
-        tropo.flatten("F"),
-        col_mix.flatten("F"),
-        fmajor.flatten("F"),
-        fminor.flatten("F"),
-        play.flatten("F"),
-        tlay.flatten("F"),
-        col_gas.flatten("F"),
-        jeta.flatten("F"),
-        jtemp.flatten("F"),
-        jpress.flatten("F"),
+        np.asfortranarray(gpoint_flavor),
+        np.asfortranarray(band_lims_gpt),
+        np.asfortranarray(kmajor.transpose(0, 2, 1, 3)),
+        np.asfortranarray(kminor_lower),
+        np.asfortranarray(kminor_upper),
+        np.asfortranarray(minor_limits_gpt_lower),
+        np.asfortranarray(minor_limits_gpt_upper),
+        np.asfortranarray(minor_scales_with_density_lower),
+        np.asfortranarray(minor_scales_with_density_upper),
+        np.asfortranarray(scale_by_complement_lower),
+        np.asfortranarray(scale_by_complement_upper),
+        np.asfortranarray(idx_minor_lower),
+        np.asfortranarray(idx_minor_upper),
+        np.asfortranarray(idx_minor_scaling_lower),
+        np.asfortranarray(idx_minor_scaling_upper),
+        np.asfortranarray(kminor_start_lower),
+        np.asfortranarray(kminor_start_upper),
+        np.asfortranarray(tropo),
+        np.asfortranarray(col_mix),
+        np.asfortranarray(fmajor),
+        np.asfortranarray(fminor),
+        np.asfortranarray(play),
+        np.asfortranarray(tlay),
+        np.asfortranarray(col_gas),
+        np.asfortranarray(jeta),
+        np.asfortranarray(jtemp),
+        np.asfortranarray(jpress),
         tau,
     ]
 
     rrtmgp_compute_tau_absorption(*args)
 
-    return tau.T
+    return tau
 
 
 @convert_xarray_args
@@ -378,7 +378,7 @@ def compute_tau_rayleigh(
     nbnd = band_lims_gpt.shape[1]
 
     # outputs
-    tau_rayleigh = np.ndarray((ngpt, nlay, ncol), dtype=np.float64)
+    tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order='F')
 
     args = [
         ncol,
@@ -390,19 +390,19 @@ def compute_tau_rayleigh(
         neta,
         0,  # not used in fortran
         ntemp,
-        gpoint_flavor.flatten("F"),
-        band_lims_gpt.flatten("F"),
-        krayl.flatten("F"),
+        np.asfortranarray(gpoint_flavor),
+        np.asfortranarray(band_lims_gpt),
+        np.asfortranarray(krayl),
         idx_h2o,
-        col_dry.flatten("F"),
-        col_gas.flatten("F"),
-        fminor.flatten("F"),
-        jeta.flatten("F"),
-        tropo.flatten("F"),
-        jtemp.flatten("F"),
+        np.asfortranarray(col_dry),
+        np.asfortranarray(col_gas),
+        np.asfortranarray(fminor),
+        np.asfortranarray(jeta),
+        np.asfortranarray(tropo),
+        np.asfortranarray(jtemp),
         tau_rayleigh,
     ]
 
     rrtmgp_compute_tau_rayleigh(*args)
 
-    return tau_rayleigh.T
+    return tau_rayleigh

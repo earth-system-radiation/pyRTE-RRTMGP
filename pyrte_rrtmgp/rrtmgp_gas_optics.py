@@ -8,7 +8,7 @@ import xarray as xr
 
 from pyrte_rrtmgp.constants import AVOGAD, HELMERT1, HELMERT2, M_DRY, M_H2O
 from pyrte_rrtmgp.exceptions import (
-    MissingAtmosfericConditionsError,
+    MissingAtmosphericConditionsError,
     NotExternalSourceError,
     NotInternalSourceError,
 )
@@ -35,7 +35,7 @@ class GasOptics:
 
 
 @dataclass
-class InterpolatedAtmosfereGases:
+class InterpolatedAtmosphereGases:
     jtemp: Optional[np.ndarray] = None
     fmajor: Optional[np.ndarray] = None
     fminor: Optional[np.ndarray] = None
@@ -57,7 +57,7 @@ class GasOpticsAccessor:
         self._vmr_ref = None
         self.col_gas = None
 
-        self._interpolated = InterpolatedAtmosfereGases()
+        self._interpolated = InterpolatedAtmosphereGases()
         self.gas_optics = GasOptics()
 
     @property
@@ -105,9 +105,9 @@ class GasOpticsAccessor:
                 + (sb_index - b_offset) * solar_source_sunspot
             ).data
 
-    def load_atmosferic_conditions(self, atmosferic_conditions: xr.Dataset):
+    def load_atmospheric_conditions(self, atmospheric_conditions: xr.Dataset):
         """Load atmospheric conditions"""
-        self._atm_cond = atmosferic_conditions
+        self._atm_cond = atmospheric_conditions
 
         # RRTMGP won't run with pressure less than its minimum.
         # So we add a small value to the minimum pressure
@@ -128,7 +128,7 @@ class GasOpticsAccessor:
 
     def get_col_gas(self):
         if self._atm_cond is None:
-            raise MissingAtmosfericConditionsError()
+            raise MissingAtmosphericConditionsError()
 
         ncol = len(self._atm_cond["site"])
         nlay = len(self._atm_cond["layer"])
@@ -164,7 +164,7 @@ class GasOpticsAccessor:
         """Gas mappings"""
 
         if self._atm_cond is None:
-            raise MissingAtmosfericConditionsError()
+            raise MissingAtmosphericConditionsError()
 
         if self._gas_mappings is None:
             gas_name_map = {
@@ -206,7 +206,7 @@ class GasOpticsAccessor:
     def top_at_1(self):
         if self._top_at_1 is None:
             if self._atm_cond is None:
-                raise MissingAtmosfericConditionsError()
+                raise MissingAtmosphericConditionsError()
 
             pres_layers = self._atm_cond["pres_layer"]["layer"]
             self._top_at_1 = pres_layers[0] < pres_layers[-1]
@@ -216,7 +216,7 @@ class GasOpticsAccessor:
     def vmr_ref(self):
         if self._vmr_ref is None:
             if self._atm_cond is None:
-                raise MissingAtmosfericConditionsError()
+                raise MissingAtmosphericConditionsError()
             sel_gases = self.gas_mappings.keys()
             vmr_idx = [i for i, g in enumerate(self._gas_names, 1) if g in sel_gases]
             vmr_idx = [0] + vmr_idx

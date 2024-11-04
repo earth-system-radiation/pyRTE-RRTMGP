@@ -42,7 +42,7 @@ endif()
 ExternalProject_Add(
     rte-rrtmgp
     GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
-    GIT_TAG origin/develop
+    GIT_TAG v1.8
     GIT_SHALLOW TRUE
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
     CONFIGURE_COMMAND ""

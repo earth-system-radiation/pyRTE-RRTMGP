@@ -102,11 +102,11 @@ def lw_solver_noscat(
     g = g or tau
 
     # outputs
-    flux_up_jac = np.full([nlay + 1, ncol], np.nan, dtype=np.float64)
-    broadband_up = np.full([nlay + 1, ncol], np.nan, dtype=np.float64)
-    broadband_dn = np.full([nlay + 1, ncol], np.nan, dtype=np.float64)
-    flux_up = np.full([ngpt, nlay + 1, ncol], np.nan, dtype=np.float64)
-    flux_dn = np.full([ngpt, nlay + 1, ncol], np.nan, dtype=np.float64)
+    flux_up_jac = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order='F')
+    broadband_up = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order='F')
+    broadband_dn = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order='F')
+    flux_up = np.full([ncol, nlay + 1, ngpt], np.nan, dtype=np.float64, order='F')
+    flux_dn = np.full([ncol, nlay + 1, ngpt], np.nan, dtype=np.float64, order='F')
 
     args = [
         ncol,
@@ -114,30 +114,30 @@ def lw_solver_noscat(
         ngpt,
         top_at_1,
         nmus,
-        ds.flatten("F"),
-        weights.flatten("F"),
-        tau.flatten("F"),
-        lay_source.flatten("F"),
-        lev_source.flatten("F"),
-        sfc_emis.flatten("F"),
-        sfc_src.flatten("F"),
-        inc_flux.flatten("F"),
+        np.asfortranarray(ds),
+        np.asfortranarray(weights),
+        np.asfortranarray(tau),
+        np.asfortranarray(lay_source),
+        np.asfortranarray(lev_source),
+        np.asfortranarray(sfc_emis),
+        np.asfortranarray(sfc_src),
+        np.asfortranarray(inc_flux),
         flux_up,
         flux_dn,
         do_broadband,
         broadband_up,
         broadband_dn,
         do_Jacobians,
-        sfc_src_jac.flatten("F"),
+        np.asfortranarray(sfc_src_jac),
         flux_up_jac,
         do_rescaling,
-        ssa.flatten("F"),
-        g.flatten("F"),
+        np.asfortranarray(ssa),
+        np.asfortranarray(g),
     ]
 
     rte_lw_solver_noscat(*args)
 
-    return flux_up_jac.T, broadband_up.T, broadband_dn.T, flux_up.T, flux_dn.T
+    return flux_up_jac, broadband_up, broadband_dn, flux_up, flux_dn
 
 
 def sw_solver_noscat(
@@ -162,7 +162,7 @@ def sw_solver_noscat(
     ncol, nlay, ngpt = tau.shape
 
     # outputs
-    flux_dir = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64)
+    flux_dir = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
 
     args = [ncol, nlay, ngpt, top_at_1, tau, mu0, inc_flux_dir, flux_dir]
 
@@ -223,30 +223,30 @@ def sw_solver_2stream(
         inc_flux_dif = np.zeros((ncol, ngpt), dtype=np.float64)
 
     # outputs
-    flux_up = np.zeros((ngpt, nlay + 1, ncol), dtype=np.float64)
-    flux_dn = np.zeros((ngpt, nlay + 1, ncol), dtype=np.float64)
-    flux_dir = np.zeros((ngpt, nlay + 1, ncol), dtype=np.float64)
-    broadband_up = np.zeros((nlay + 1, ncol), dtype=np.float64)
-    broadband_dn = np.zeros((nlay + 1, ncol), dtype=np.float64)
-    broadband_dir = np.zeros((nlay + 1, ncol), dtype=np.float64)
+    flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
+    flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
+    flux_dir = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
+    broadband_up = np.zeros((ncol, nlay + 1), dtype=np.float64, order='F')
+    broadband_dn = np.zeros((ncol, nlay + 1), dtype=np.float64, order='F')
+    broadband_dir = np.zeros((ncol, nlay + 1), dtype=np.float64, order='F')
 
     args = [
         ncol,
         nlay,
         ngpt,
         top_at_1,
-        tau.flatten("F"),
-        ssa.flatten("F"),
-        g.flatten("F"),
-        mu0.flatten("F"),
-        sfc_alb_dir.flatten("F"),
-        sfc_alb_dif.flatten("F"),
-        inc_flux_dir.flatten("F"),
+        np.asfortranarray(tau),
+        np.asfortranarray(ssa),
+        np.asfortranarray(g),
+        np.asfortranarray(mu0),
+        np.asfortranarray(sfc_alb_dir),
+        np.asfortranarray(sfc_alb_dif),
+        np.asfortranarray(inc_flux_dir),
         flux_up,
         flux_dn,
         flux_dir,
         has_dif_bc,
-        inc_flux_dif.flatten("F"),
+        np.asfortranarray(inc_flux_dif),
         do_broadband,
         broadband_up,
         broadband_dn,
@@ -255,11 +255,4 @@ def sw_solver_2stream(
 
     rte_sw_solver_2stream(*args)
 
-    return (
-        flux_up.T,
-        flux_dn.T,
-        flux_dir.T,
-        broadband_up.T,
-        broadband_dn.T,
-        broadband_dir.T,
-    )
+    return flux_up, flux_dn, flux_dir, broadband_up, broadband_dn, broadband_dir

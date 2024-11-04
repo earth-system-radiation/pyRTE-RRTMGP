@@ -45,18 +45,14 @@ def compute_toa_flux(total_solar_irradiance, solar_source):
 
 
 def convert_xarray_args(func):
+    """Decorator to convert xarray DataArrays to numpy arrays efficiently"""
     def wrapper(*args, **kwargs):
-        output_args = []
-        for x in args:
-            if isinstance(x, xr.DataArray):
-                output_args.append(x.data)
+        new_args = []
+        for arg in args:
+            if hasattr(arg, 'values'):
+                # Get direct reference to underlying numpy array without copy
+                new_args.append(arg.values)
             else:
-                output_args.append(x)
-        for k, v in kwargs.items():
-            if isinstance(v, xr.DataArray):
-                kwargs[k] = v.data
-            else:
-                kwargs[k] = v
-        return func(*output_args, **kwargs)
-
+                new_args.append(arg)
+        return func(*new_args, **kwargs)
     return wrapper
