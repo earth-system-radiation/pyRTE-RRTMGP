@@ -18,13 +18,26 @@ GAUSS_DS = np.array(
     ]
 )
 
+## This is the new version of the Gauss quadrature points and weights
+##   that matches the RRTMGP version. But it is not matching the reference
+##   data.
+# GAUSS_DS = np.reciprocal(
+#     np.array(
+#         [
+#             [0.6096748751, np.inf, np.inf, np.inf],
+#             [0.2509907356, 0.7908473988, np.inf, np.inf],
+#             [0.1024922169, 0.4417960320, 0.8633751621, np.inf],
+#             [0.0454586727, 0.2322334416, 0.5740198775, 0.9030775973],
+#         ]
+#     )
+# )
 
 GAUSS_WTS = np.array(
     [
-        [0.5, 0.0, 0.0, 0.0],
-        [0.3180413817, 0.1819586183, 0.0, 0.0],
-        [0.2009319137, 0.2292411064, 0.0698269799, 0.0],
-        [0.1355069134, 0.2034645680, 0.1298475476, 0.0311809710],
+        [1.0, 0.0, 0.0, 0.0],
+        [0.2300253764, 0.7699746236, 0.0, 0.0],
+        [0.0437820218, 0.3875796738, 0.5686383044, 0.0],
+        [0.0092068785, 0.1285704278, 0.4323381850, 0.4298845087],
     ]
 )
 
@@ -102,11 +115,11 @@ def lw_solver_noscat(
     g = g or tau
 
     # outputs
-    flux_up_jac = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order='F')
-    broadband_up = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order='F')
-    broadband_dn = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order='F')
-    flux_up = np.full([ncol, nlay + 1, ngpt], np.nan, dtype=np.float64, order='F')
-    flux_dn = np.full([ncol, nlay + 1, ngpt], np.nan, dtype=np.float64, order='F')
+    flux_up_jac = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order="F")
+    broadband_up = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order="F")
+    broadband_dn = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order="F")
+    flux_up = np.full([ncol, nlay + 1, ngpt], np.nan, dtype=np.float64, order="F")
+    flux_dn = np.full([ncol, nlay + 1, ngpt], np.nan, dtype=np.float64, order="F")
 
     args = [
         ncol,
@@ -162,7 +175,7 @@ def sw_solver_noscat(
     ncol, nlay, ngpt = tau.shape
 
     # outputs
-    flux_dir = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
+    flux_dir = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
 
     args = [ncol, nlay, ngpt, top_at_1, tau, mu0, inc_flux_dir, flux_dir]
 
@@ -223,12 +236,12 @@ def sw_solver_2stream(
         inc_flux_dif = np.zeros((ncol, ngpt), dtype=np.float64)
 
     # outputs
-    flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
-    flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
-    flux_dir = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
-    broadband_up = np.zeros((ncol, nlay + 1), dtype=np.float64, order='F')
-    broadband_dn = np.zeros((ncol, nlay + 1), dtype=np.float64, order='F')
-    broadband_dir = np.zeros((ncol, nlay + 1), dtype=np.float64, order='F')
+    flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+    flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+    flux_dir = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+    broadband_up = np.zeros((ncol, nlay + 1), dtype=np.float64, order="F")
+    broadband_dn = np.zeros((ncol, nlay + 1), dtype=np.float64, order="F")
+    broadband_dir = np.zeros((ncol, nlay + 1), dtype=np.float64, order="F")
 
     args = [
         ncol,
