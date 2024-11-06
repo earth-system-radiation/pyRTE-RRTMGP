@@ -4,13 +4,13 @@ import numpy as np
 import pytest
 import xarray as xr
 from pyrte_rrtmgp import rrtmgp_gas_optics
-from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_planck_source,
     compute_tau_absorption,
     compute_tau_rayleigh,
     interpolation,
 )
+from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 
 from utils import convert_args_arrays
 
@@ -26,8 +26,8 @@ rfmip = rfmip.sel(expt=0)  # only one experiment
 kdist = xr.load_dataset(f"{rte_rrtmgp_dir}/rrtmgp-gas-lw-g256.nc")
 kdist_sw = xr.load_dataset(f"{rte_rrtmgp_dir}/rrtmgp-gas-sw-g224.nc")
 
-rrtmgp_gas_optics = kdist.gas_optics.load_atmosferic_conditions(rfmip)
-rrtmgp_gas_optics_sw = kdist_sw.gas_optics.load_atmosferic_conditions(rfmip)
+rrtmgp_gas_optics = kdist.gas_optics.load_atmospheric_conditions(rfmip)
+rrtmgp_gas_optics_sw = kdist_sw.gas_optics.load_atmospheric_conditions(rfmip)
 
 # Prepare the arguments for the interpolation function
 interpolation_args = [

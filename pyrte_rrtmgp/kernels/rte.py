@@ -9,28 +9,17 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
     rte_sw_solver_noscat,
 )
 
-GAUSS_DS = np.array(
-    [
-        [1.66, 0.0, 0.0, 0.0],  # Diffusivity angle, not Gaussian angle
-        [1.18350343, 2.81649655, 0.0, 0.0],
-        [1.09719858, 1.69338507, 4.70941630, 0.0],
-        [1.06056257, 1.38282560, 2.40148179, 7.15513024],
-    ]
-)
 
-## This is the new version of the Gauss quadrature points and weights
-##   that matches the RRTMGP version. But it is not matching the reference
-##   data.
-# GAUSS_DS = np.reciprocal(
-#     np.array(
-#         [
-#             [0.6096748751, np.inf, np.inf, np.inf],
-#             [0.2509907356, 0.7908473988, np.inf, np.inf],
-#             [0.1024922169, 0.4417960320, 0.8633751621, np.inf],
-#             [0.0454586727, 0.2322334416, 0.5740198775, 0.9030775973],
-#         ]
-#     )
-# )
+GAUSS_DS = np.reciprocal(
+    np.array(
+        [
+            [0.6096748751, np.inf, np.inf, np.inf],
+            [0.2509907356, 0.7908473988, np.inf, np.inf],
+            [0.1024922169, 0.4417960320, 0.8633751621, np.inf],
+            [0.0454586727, 0.2322334416, 0.5740198775, 0.9030775973],
+        ]
+    )
+)
 
 GAUSS_WTS = np.array(
     [
