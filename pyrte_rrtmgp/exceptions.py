@@ -1,11 +1,3 @@
-class NotInternalSourceError(ValueError):
-    pass
-
-
-class NotExternalSourceError(ValueError):
-    pass
-
-
 class MissingAtmosphericConditionsError(AttributeError):
     message = (
         "You need to load the atmospheric conditions first."

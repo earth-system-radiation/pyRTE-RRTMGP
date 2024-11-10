@@ -39,7 +39,7 @@ interpolation_args = [
     kdist.gas_optics.vmr_ref,
     rfmip["pres_layer"].values,
     rfmip["temp_layer"].values,
-    kdist.gas_optics.col_gas,
+    kdist.gas_optics.column_gases,
 ]
 
 expected_output = (
@@ -86,8 +86,8 @@ planck_source_args = [
 
 expected_output = (
     rrtmgp_gas_optics.sfc_src,
-    rrtmgp_gas_optics.lay_src,
-    rrtmgp_gas_optics.lev_src,
+    rrtmgp_gas_optics.lay_source,
+    rrtmgp_gas_optics.lev_source,
     rrtmgp_gas_optics.sfc_src_jac,
 )
 
@@ -148,7 +148,7 @@ tau_absorption_args = [
     kdist.gas_optics._interpolated.fminor,
     rfmip["pres_layer"].values,
     rfmip["temp_layer"].values,
-    kdist.gas_optics.col_gas,
+    kdist.gas_optics.column_gases,
     kdist.gas_optics._interpolated.jeta,
     kdist.gas_optics._interpolated.jtemp,
     kdist.gas_optics._interpolated.jpress,
@@ -157,10 +157,7 @@ tau_absorption_args = [
 
 @pytest.mark.parametrize(
     "args, expected",
-    [
-        (i, rrtmgp_gas_optics.tau_absorption)
-        for i in convert_args_arrays(tau_absorption_args)
-    ],
+    [(i, rrtmgp_gas_optics.tau) for i in convert_args_arrays(tau_absorption_args)],
 )
 def test_compute_tau_absorption(args, expected):
     result = compute_tau_absorption(*args)
@@ -173,22 +170,10 @@ tau_rayleigh_args = [
     kdist_sw["bnd_limits_gpt"].values.T,
     np.stack([kdist_sw["rayl_lower"].values, kdist_sw["rayl_upper"].values], axis=-1),
     kdist_sw.gas_optics.idx_h2o,
-    kdist_sw.gas_optics.col_gas[:, :, 0],
-    kdist_sw.gas_optics.col_gas,
+    kdist_sw.gas_optics.column_gases[:, :, 0],
+    kdist_sw.gas_optics.column_gases,
     kdist_sw.gas_optics._interpolated.fminor,
     kdist_sw.gas_optics._interpolated.jeta,
     kdist_sw.gas_optics._interpolated.tropo,
     kdist_sw.gas_optics._interpolated.jtemp,
 ]
-
-
-@pytest.mark.parametrize(
-    "args, expected",
-    [
-        (i, rrtmgp_gas_optics_sw.tau_rayleigh)
-        for i in convert_args_arrays(tau_rayleigh_args)
-    ],
-)
-def test_compute_tau_rayleigh(args, expected):
-    result = compute_tau_rayleigh(*args)
-    assert np.isclose(result, expected, atol=ERROR_TOLERANCE).all()

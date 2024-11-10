@@ -38,7 +38,6 @@ def download_rrtmgp_data():
     checksum_file_path = os.path.join(cache_dir, f"{TAG}.tar.gz.sha256")
 
     # Download the file if it doesn't exist or if the checksum doesn't match
-    # Download the file if it doesn't exist or if the checksum doesn't match
     if not os.path.exists(file_path) or (
         os.path.exists(checksum_file_path)
         and _get_file_checksum(checksum_file_path)

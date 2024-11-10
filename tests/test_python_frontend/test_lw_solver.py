@@ -14,7 +14,9 @@ input_dir = os.path.join(rfmip_dir, "inputs")
 ref_dir = os.path.join(rfmip_dir, "reference")
 
 rfmip = xr.load_dataset(
-    os.path.join(input_dir, "multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc")
+    os.path.join(
+        input_dir, "multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc"
+    )
 )
 rfmip = rfmip.sel(expt=0)  # only one experiment
 kdist = xr.load_dataset(os.path.join(rte_rrtmgp_dir, "rrtmgp-gas-lw-g256.nc"))
@@ -33,16 +35,11 @@ ref_flux_down = rld.isel(expt=0)["rld"].values
 
 
 def test_lw_solver_noscat():
-    rrtmgp_gas_optics = kdist.gas_optics.load_atmospheric_conditions(rfmip)
+    lw_problem = kdist.gas_optics.load_atmospheric_conditions(rfmip)
 
-    _, solver_flux_up, solver_flux_down, _, _ = lw_solver_noscat(
-        tau=rrtmgp_gas_optics.tau,
-        lay_source=rrtmgp_gas_optics.lay_src,
-        lev_source=rrtmgp_gas_optics.lev_src,
-        sfc_emis=rfmip["surface_emissivity"].data,
-        sfc_src=rrtmgp_gas_optics.sfc_src,
-        sfc_src_jac=rrtmgp_gas_optics.sfc_src_jac,
-    )
+    lw_problem.sfc_emis = rfmip["surface_emissivity"].data
+
+    solver_flux_up, solver_flux_down = lw_problem.rte_solve()
 
     assert np.isclose(solver_flux_up, ref_flux_up, atol=ERROR_TOLERANCE).all()
     assert np.isclose(solver_flux_down, ref_flux_down, atol=ERROR_TOLERANCE).all()

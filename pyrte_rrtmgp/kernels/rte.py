@@ -174,7 +174,6 @@ def sw_solver_noscat(
 
 
 def sw_solver_2stream(
-    top_at_1,
     tau,
     ssa,
     g,
@@ -182,15 +181,15 @@ def sw_solver_2stream(
     sfc_alb_dir,
     sfc_alb_dif,
     inc_flux_dir,
+    top_at_1=True,
     inc_flux_dif=None,
     has_dif_bc=False,
-    do_broadband=False,
+    do_broadband=True,
 ):
     """
     Solve the shortwave radiative transfer equation using the 2-stream approximation.
 
     Args:
-        top_at_1 (bool): Flag indicating whether the top of the atmosphere is at level 1.
         tau (ndarray): Array of optical depths with shape (ncol, nlay, ngpt).
         ssa (ndarray): Array of single scattering albedos with shape (ncol, nlay, ngpt).
         g (ndarray): Array of asymmetry parameters with shape (ncol, nlay, ngpt).
@@ -198,12 +197,14 @@ def sw_solver_2stream(
         sfc_alb_dir (ndarray): Array of direct surface albedos with shape (ncol, ngpt).
         sfc_alb_dif (ndarray): Array of diffuse surface albedos with shape (ncol, ngpt).
         inc_flux_dir (ndarray): Array of direct incident fluxes with shape (ncol, ngpt).
+        top_at_1 (bool): Flag indicating whether the top of the atmosphere is at level 1.
+            Defaults to True.
         inc_flux_dif (ndarray, optional): Array of diffuse incident fluxes with shape (ncol, ngpt).
             Defaults to None.
         has_dif_bc (bool, optional): Flag indicating whether the boundary condition includes diffuse fluxes.
             Defaults to False.
         do_broadband (bool, optional): Flag indicating whether to compute broadband fluxes.
-            Defaults to False.
+            Defaults to True.
 
     Returns:
         Tuple of ndarrays: Tuple containing the following arrays:

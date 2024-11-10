@@ -16,7 +16,9 @@ input_dir = os.path.join(rfmip_dir, "inputs")
 ref_dir = os.path.join(rfmip_dir, "reference")
 
 rfmip = xr.load_dataset(
-    os.path.join(input_dir, "multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc")
+    os.path.join(
+        input_dir, "multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc"
+    )
 )
 rfmip = rfmip.sel(expt=0)  # only one experiment
 kdist = xr.load_dataset(os.path.join(rte_rrtmgp_dir, "rrtmgp-gas-sw-g224.nc"))
@@ -35,36 +37,13 @@ ref_flux_down = rsd.isel(expt=0)["rsd"].values
 
 
 def test_sw_solver_noscat():
-    gas_optics = kdist.gas_optics.load_atmospheric_conditions(rfmip)
+    sw_problem = kdist.gas_optics.load_atmospheric_conditions(rfmip)
 
-    surface_albedo = rfmip["surface_albedo"].data
-    total_solar_irradiance = rfmip["total_solar_irradiance"].data
+    sw_problem.sfc_alb_dir = rfmip["surface_albedo"].data
+    sw_problem.total_solar_irradiance = rfmip["total_solar_irradiance"].data
+    sw_problem.solar_zenith_angle = rfmip["solar_zenith_angle"].values
 
-    nlayer = len(rfmip["layer"])
-    mu0 = compute_mu0(rfmip["solar_zenith_angle"].values, nlayer=nlayer)
-
-    toa_flux = compute_toa_flux(total_solar_irradiance, gas_optics.solar_source)
-
-    _, _, _, solver_flux_up, solver_flux_down, _ = sw_solver_2stream(
-        kdist.gas_optics.top_at_1,
-        gas_optics.tau,
-        gas_optics.ssa,
-        gas_optics.g,
-        mu0,
-        sfc_alb_dir=surface_albedo,
-        sfc_alb_dif=surface_albedo,
-        inc_flux_dir=toa_flux,
-        inc_flux_dif=None,
-        has_dif_bc=False,
-        do_broadband=True,
-    )
-
-    # RTE will fail if passed solar zenith angles greater than 90 degree. We replace any with
-    #   nighttime columns with a default solar zenith angle. We'll mask these out later, of
-    #   course, but this gives us more work and so a better measure of timing.
-    usecol = get_usecols(rfmip["solar_zenith_angle"].values)
-    solver_flux_up = solver_flux_up * usecol[:, np.newaxis]
-    solver_flux_down = solver_flux_down * usecol[:, np.newaxis]
+    solver_flux_up, solver_flux_down = sw_problem.solve()
 
     assert np.isclose(solver_flux_up, ref_flux_up, atol=ERROR_TOLERANCE).all()
     assert np.isclose(solver_flux_down, ref_flux_down, atol=ERROR_TOLERANCE).all()
