@@ -81,7 +81,23 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
     DCMAKE_LIBRARY_OUTPUT_DIRECTORY=pyrte_rrtmgp
 )
 
+# Add these checks after the initial Linux check
+set(APPLE_ARM FALSE)
+if(APPLE)
+    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
+        set(APPLE_ARM TRUE)
+    endif()
+endif()
+
 if (${LINUX})
+    target_link_libraries(${TARGET_NAME} PUBLIC gfortran)
+elseif(APPLE)
+    # On macOS, explicitly link against gfortran runtime
+    if(APPLE_ARM)
+        target_link_directories(${TARGET_NAME} PUBLIC /opt/homebrew/lib/gcc/current)
+    else()
+        target_link_directories(${TARGET_NAME} PUBLIC /usr/local/lib/gcc/current)
+    endif()
     target_link_libraries(${TARGET_NAME} PUBLIC gfortran)
 endif()
 
