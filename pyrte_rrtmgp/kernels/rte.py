@@ -7,10 +7,11 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
     rte_lw_solver_noscat,
     rte_sw_solver_2stream,
     rte_sw_solver_noscat,
+    rte_lw_solver_2stream,
 )
 
 
-GAUSS_DS = np.reciprocal(
+GAUSS_DS: npt.NDArray[np.float64] = np.reciprocal(
     np.array(
         [
             [0.6096748751, np.inf, np.inf, np.inf],
@@ -20,8 +21,9 @@ GAUSS_DS = np.reciprocal(
         ]
     )
 )
+"""Gaussian quadrature secants (1/μ) for different numbers of streams"""
 
-GAUSS_WTS = np.array(
+GAUSS_WTS: npt.NDArray[np.float64] = np.array(
     [
         [1.0, 0.0, 0.0, 0.0],
         [0.2300253764, 0.7699746236, 0.0, 0.0],
@@ -29,54 +31,56 @@ GAUSS_WTS = np.array(
         [0.0092068785, 0.1285704278, 0.4323381850, 0.4298845087],
     ]
 )
+"""Gaussian quadrature weights for different numbers of streams"""
 
 
 def lw_solver_noscat(
-    tau: npt.NDArray,
-    lay_source: npt.NDArray,
-    lev_source: npt.NDArray,
-    sfc_emis: npt.NDArray,
-    sfc_src: npt.NDArray,
+    tau: npt.NDArray[np.float64],
+    lay_source: npt.NDArray[np.float64],
+    lev_source: npt.NDArray[np.float64],
+    sfc_emis: npt.NDArray[np.float64],
+    sfc_src: npt.NDArray[np.float64],
     top_at_1: bool = True,
     nmus: int = 1,
-    inc_flux: Optional[npt.NDArray] = None,
-    ds: Optional[npt.NDArray] = None,
-    weights: Optional[npt.NDArray] = None,
-    do_broadband: Optional[bool] = True,
-    do_Jacobians: Optional[bool] = False,
-    sfc_src_jac: Optional[npt.NDArray] = [],
-    do_rescaling: Optional[bool] = False,
-    ssa: Optional[npt.NDArray] = None,
-    g: Optional[np.ndarray] = None,
-) -> Tuple:
+    inc_flux: Optional[npt.NDArray[np.float64]] = None,
+    ds: Optional[npt.NDArray[np.float64]] = None,
+    weights: Optional[npt.NDArray[np.float64]] = None,
+    do_broadband: bool = True,
+    do_Jacobians: bool = False,
+    sfc_src_jac: Optional[npt.NDArray[np.float64]] = None,
+    do_rescaling: bool = False,
+    ssa: Optional[npt.NDArray[np.float64]] = None,
+    g: Optional[npt.NDArray[np.float64]] = None,
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], 
+           npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
     Perform longwave radiation transfer calculations without scattering.
 
     Args:
-        top_at_1 (bool): Flag indicating whether the top of the atmosphere is at level 1.
-        nmus (int): Number of quadrature points.
-        tau (npt.NDArray): Array of optical depths.
-        lay_source (npt.NDArray): Array of layer sources.
-        lev_source (npt.NDArray): Array of level sources.
-        sfc_emis (npt.NDArray): Array of surface emissivities.
-        sfc_src (npt.NDArray): Array of surface sources.
-        inc_flux (npt.NDArray): Array of incoming fluxes.
-        ds (Optional[npt.NDArray], optional): Array of integration weights. Defaults to None.
-        weights (Optional[npt.NDArray], optional): Array of Gaussian quadrature weights. Defaults to None.
-        do_broadband (Optional[bool], optional): Flag indicating whether to compute broadband fluxes. Defaults to None.
-        do_Jacobians (Optional[bool], optional): Flag indicating whether to compute Jacobians. Defaults to None.
-        sfc_src_jac (Optional[npt.NDArray], optional): Array of surface source Jacobians. Defaults to None.
-        do_rescaling (Optional[bool], optional): Flag indicating whether to perform flux rescaling. Defaults to None.
-        ssa (Optional[npt.NDArray], optional): Array of single scattering albedos. Defaults to None.
-        g (Optional[np.ndarray], optional): Array of asymmetry parameters. Defaults to None.
+        tau: Optical depths with shape (ncol, nlay, ngpt)
+        lay_source: Layer source terms with shape (ncol, nlay, ngpt)
+        lev_source: Level source terms with shape (ncol, nlay+1, ngpt)
+        sfc_emis: Surface emissivities with shape (ncol, ngpt) or (ncol,)
+        sfc_src: Surface source terms with shape (ncol, ngpt)
+        top_at_1: Whether the top of the atmosphere is at index 1
+        nmus: Number of quadrature points (1-4)
+        inc_flux: Incident fluxes with shape (ncol, ngpt)
+        ds: Integration weights with shape (ncol, ngpt, n_quad_angs)
+        weights: Gaussian quadrature weights with shape (n_quad_angs,)
+        do_broadband: Whether to compute broadband fluxes
+        do_Jacobians: Whether to compute Jacobians
+        sfc_src_jac: Surface source Jacobians with shape (ncol, nlay+1)
+        do_rescaling: Whether to perform flux rescaling
+        ssa: Single scattering albedos with shape (ncol, nlay, ngpt)
+        g: Asymmetry parameters with shape (ncol, nlay, ngpt)
 
     Returns:
-        Tuple: A tuple containing the following arrays:
-            - flux_up_jac (np.ndarray): Array of upward flux Jacobians.
-            - broadband_up (np.ndarray): Array of upward broadband fluxes.
-            - broadband_dn (np.ndarray): Array of downward broadband fluxes.
-            - flux_up (np.ndarray): Array of upward fluxes.
-            - flux_dn (np.ndarray): Array of downward fluxes.
+        Tuple containing:
+            flux_up_jac: Upward flux Jacobians (ncol, nlay+1)
+            broadband_up: Upward broadband fluxes (ncol, nlay+1)
+            broadband_dn: Downward broadband fluxes (ncol, nlay+1)
+            flux_up: Upward fluxes (ncol, nlay+1, ngpt)
+            flux_dn: Downward fluxes (ncol, nlay+1, ngpt)
     """
 
     ncol, nlay, ngpt = tau.shape
@@ -143,30 +147,38 @@ def lw_solver_noscat(
 
 
 def sw_solver_noscat(
-    top_at_1,
-    tau,
-    mu0,
-    inc_flux_dir,
-):
+    tau: npt.NDArray[np.float64],
+    mu0: npt.NDArray[np.float64],
+    inc_flux_dir: npt.NDArray[np.float64],
+    top_at_1: bool = True,
+) -> npt.NDArray[np.float64]:
     """
-    Computes the direct-beam flux for a shortwave radiative transfer problem without scattering.
+    Perform shortwave radiation transfer calculations without scattering.
 
     Args:
-        top_at_1 (bool): Logical flag indicating if the top layer is at index 1.
-        tau (numpy.ndarray): Absorption optical thickness of size (ncol, nlay, ngpt).
-        mu0 (numpy.ndarray): Cosine of solar zenith angle of size (ncol, nlay).
-        inc_flux_dir (numpy.ndarray): Direct beam incident flux of size (ncol, ngpt).
+        tau: Optical depths with shape (ncol, nlay, ngpt)
+        mu0: Cosine of solar zenith angles with shape (ncol, nlay)
+        inc_flux_dir: Direct beam incident fluxes with shape (ncol, ngpt)
+        top_at_1: Whether the top of the atmosphere is at index 1
 
     Returns:
-        numpy.ndarray: Direct-beam flux of size (ncol, nlay+1, ngpt).
+        Direct-beam fluxes with shape (ncol, nlay+1, ngpt)
     """
-
     ncol, nlay, ngpt = tau.shape
 
     # outputs
-    flux_dir = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+    flux_dir = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
 
-    args = [ncol, nlay, ngpt, top_at_1, tau, mu0, inc_flux_dir, flux_dir]
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        top_at_1,
+        np.asfortranarray(tau),
+        np.asfortranarray(mu0),
+        np.asfortranarray(inc_flux_dir),
+        flux_dir,
+    ]
 
     rte_sw_solver_noscat(*args)
 
@@ -174,46 +186,43 @@ def sw_solver_noscat(
 
 
 def sw_solver_2stream(
-    tau,
-    ssa,
-    g,
-    mu0,
-    sfc_alb_dir,
-    sfc_alb_dif,
-    inc_flux_dir,
-    top_at_1=True,
-    inc_flux_dif=None,
-    has_dif_bc=False,
-    do_broadband=True,
-):
+    tau: npt.NDArray[np.float64],
+    ssa: npt.NDArray[np.float64],
+    g: npt.NDArray[np.float64],
+    mu0: npt.NDArray[np.float64],
+    sfc_alb_dir: npt.NDArray[np.float64],
+    sfc_alb_dif: npt.NDArray[np.float64],
+    inc_flux_dir: npt.NDArray[np.float64],
+    top_at_1: bool = True,
+    inc_flux_dif: Optional[npt.NDArray[np.float64]] = None,
+    has_dif_bc: bool = False,
+    do_broadband: bool = True,
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64],
+          npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
-    Solve the shortwave radiative transfer equation using the 2-stream approximation.
+    Perform shortwave radiation transfer calculations using the 2-stream approximation.
 
     Args:
-        tau (ndarray): Array of optical depths with shape (ncol, nlay, ngpt).
-        ssa (ndarray): Array of single scattering albedos with shape (ncol, nlay, ngpt).
-        g (ndarray): Array of asymmetry parameters with shape (ncol, nlay, ngpt).
-        mu0 (ndarray): Array of cosine of solar zenith angles with shape (ncol, ngpt).
-        sfc_alb_dir (ndarray): Array of direct surface albedos with shape (ncol, ngpt).
-        sfc_alb_dif (ndarray): Array of diffuse surface albedos with shape (ncol, ngpt).
-        inc_flux_dir (ndarray): Array of direct incident fluxes with shape (ncol, ngpt).
-        top_at_1 (bool): Flag indicating whether the top of the atmosphere is at level 1.
-            Defaults to True.
-        inc_flux_dif (ndarray, optional): Array of diffuse incident fluxes with shape (ncol, ngpt).
-            Defaults to None.
-        has_dif_bc (bool, optional): Flag indicating whether the boundary condition includes diffuse fluxes.
-            Defaults to False.
-        do_broadband (bool, optional): Flag indicating whether to compute broadband fluxes.
-            Defaults to True.
+        tau: Optical depths with shape (ncol, nlay, ngpt)
+        ssa: Single scattering albedos with shape (ncol, nlay, ngpt)
+        g: Asymmetry parameters with shape (ncol, nlay, ngpt)
+        mu0: Cosine of solar zenith angles with shape (ncol, ngpt)
+        sfc_alb_dir: Direct surface albedos with shape (ncol, ngpt) or (ncol,)
+        sfc_alb_dif: Diffuse surface albedos with shape (ncol, ngpt) or (ncol,)
+        inc_flux_dir: Direct incident fluxes with shape (ncol, ngpt)
+        top_at_1: Whether the top of the atmosphere is at index 1
+        inc_flux_dif: Diffuse incident fluxes with shape (ncol, ngpt)
+        has_dif_bc: Whether the boundary condition includes diffuse fluxes
+        do_broadband: Whether to compute broadband fluxes
 
     Returns:
-        Tuple of ndarrays: Tuple containing the following arrays:
-            - flux_up: Array of upward fluxes with shape (ngpt, nlay + 1, ncol).
-            - flux_dn: Array of downward fluxes with shape (ngpt, nlay + 1, ncol).
-            - flux_dir: Array of direct fluxes with shape (ngpt, nlay + 1, ncol).
-            - broadband_up: Array of broadband upward fluxes with shape (nlay + 1, ncol).
-            - broadband_dn: Array of broadband downward fluxes with shape (nlay + 1, ncol).
-            - broadband_dir: Array of broadband direct fluxes with shape (nlay + 1, ncol).
+        Tuple containing:
+            flux_up: Upward fluxes with shape (ncol, nlay+1, ngpt)
+            flux_dn: Downward fluxes with shape (ncol, nlay+1, ngpt)
+            flux_dir: Direct fluxes with shape (ncol, nlay+1, ngpt)
+            broadband_up: Broadband upward fluxes with shape (ncol, nlay+1)
+            broadband_dn: Broadband downward fluxes with shape (ncol, nlay+1)
+            broadband_dir: Broadband direct fluxes with shape (ncol, nlay+1)
     """
     ncol, nlay, ngpt = tau.shape
 
@@ -259,3 +268,64 @@ def sw_solver_2stream(
     rte_sw_solver_2stream(*args)
 
     return flux_up, flux_dn, flux_dir, broadband_up, broadband_dn, broadband_dir
+
+
+def lw_solver_2stream(
+    tau: npt.NDArray[np.float64],
+    ssa: npt.NDArray[np.float64],
+    g: npt.NDArray[np.float64],
+    lay_source: npt.NDArray[np.float64],
+    lev_source: npt.NDArray[np.float64],
+    sfc_emis: npt.NDArray[np.float64],
+    sfc_src: npt.NDArray[np.float64],
+    inc_flux: npt.NDArray[np.float64],
+    top_at_1: bool = True,
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """
+    Solve the longwave radiative transfer equation using the 2-stream approximation.
+
+    Args:
+        tau: Optical depths with shape (ncol, nlay, ngpt)
+        ssa: Single-scattering albedos with shape (ncol, nlay, ngpt)
+        g: Asymmetry parameters with shape (ncol, nlay, ngpt)
+        lay_source: Layer source terms with shape (ncol, nlay, ngpt)
+        lev_source: Level source terms with shape (ncol, nlay+1, ngpt)
+        sfc_emis: Surface emissivities with shape (ncol, ngpt) or (ncol,)
+        sfc_src: Surface source terms with shape (ncol, ngpt)
+        inc_flux: Incident fluxes with shape (ncol, ngpt)
+        top_at_1: Whether the top of the atmosphere is at index 1
+
+    Returns:
+        Tuple containing:
+            flux_up: Upward fluxes with shape (ncol, nlay+1, ngpt)
+            flux_dn: Downward fluxes with shape (ncol, nlay+1, ngpt)
+    """
+    ncol, nlay, ngpt = tau.shape
+
+    if len(sfc_emis.shape) == 1:
+        sfc_emis = np.stack([sfc_emis] * ngpt).T
+
+    # outputs
+    flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+    flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        top_at_1,
+        np.asfortranarray(tau),
+        np.asfortranarray(ssa),
+        np.asfortranarray(g),
+        np.asfortranarray(lay_source),
+        np.asfortranarray(lev_source),
+        np.asfortranarray(sfc_emis),
+        np.asfortranarray(sfc_src),
+        np.asfortranarray(inc_flux),
+        flux_up,
+        flux_dn,
+    ]
+
+    rte_lw_solver_2stream(*args)
+
+    return flux_up, flux_dn
