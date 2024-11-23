@@ -4,12 +4,11 @@ import numpy as np
 import numpy.typing as npt
 
 from pyrte_rrtmgp.pyrte_rrtmgp import (
+    rte_lw_solver_2stream,
     rte_lw_solver_noscat,
     rte_sw_solver_2stream,
     rte_sw_solver_noscat,
-    rte_lw_solver_2stream,
 )
-
 
 GAUSS_DS: npt.NDArray[np.float64] = np.reciprocal(
     np.array(
@@ -51,8 +50,13 @@ def lw_solver_noscat(
     do_rescaling: bool = False,
     ssa: Optional[npt.NDArray[np.float64]] = None,
     g: Optional[npt.NDArray[np.float64]] = None,
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64], 
-           npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+) -> Tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+]:
     """
     Perform longwave radiation transfer calculations without scattering.
 
@@ -197,8 +201,14 @@ def sw_solver_2stream(
     inc_flux_dif: Optional[npt.NDArray[np.float64]] = None,
     has_dif_bc: bool = False,
     do_broadband: bool = True,
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64],
-          npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+) -> Tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+]:
     """
     Perform shortwave radiation transfer calculations using the 2-stream approximation.
 

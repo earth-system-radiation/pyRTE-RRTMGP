@@ -56,9 +56,10 @@ def download_rrtmgp_data():
 
     # Uncompress the file
     with tarfile.open(file_path) as tar:
-        tar.extractall(path=cache_dir, filter='data')
+        tar.extractall(path=cache_dir, filter="data")
 
     return os.path.join(cache_dir, f"rrtmgp-data-{TAG[1:]}")
+
 
 def _get_file_checksum(filepath, mode="r"):
     """Helper function to safely read file and get checksum if needed"""

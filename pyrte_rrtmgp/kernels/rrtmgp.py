@@ -71,13 +71,13 @@ def interpolation(
     temp_ref_delta = (temp_ref.max() - temp_ref.min()) / (len(temp_ref) - 1)
 
     # outputs
-    jtemp = np.ndarray([ncol, nlay], dtype=np.int32, order='F')
-    fmajor = np.ndarray([2, 2, 2, ncol, nlay, nflav], dtype=np.float64, order='F')
-    fminor = np.ndarray([2, 2, ncol, nlay, nflav], dtype=np.float64, order='F')
-    col_mix = np.ndarray([2, ncol, nlay, nflav], dtype=np.float64, order='F')
-    tropo = np.ndarray([ncol, nlay], dtype=np.int32, order='F')
-    jeta = np.ndarray([2, ncol, nlay, nflav], dtype=np.int32, order='F')
-    jpress = np.ndarray([ncol, nlay], dtype=np.int32, order='F')
+    jtemp = np.ndarray([ncol, nlay], dtype=np.int32, order="F")
+    fmajor = np.ndarray([2, 2, 2, ncol, nlay, nflav], dtype=np.float64, order="F")
+    fminor = np.ndarray([2, 2, ncol, nlay, nflav], dtype=np.float64, order="F")
+    col_mix = np.ndarray([2, ncol, nlay, nflav], dtype=np.float64, order="F")
+    tropo = np.ndarray([ncol, nlay], dtype=np.int32, order="F")
+    jeta = np.ndarray([2, ncol, nlay, nflav], dtype=np.int32, order="F")
+    jpress = np.ndarray([ncol, nlay], dtype=np.int32, order="F")
 
     args = [
         ncol,
@@ -169,10 +169,10 @@ def compute_planck_source(
     totplnk_delta = (temp_ref_max - temp_ref_min) / (nPlanckTemp - 1)
 
     # outputs
-    sfc_src = np.ndarray((ncol, ngpt), dtype=np.float64, order='F')
-    lay_src = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order='F')
-    lev_src = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order='F')
-    sfc_src_jac = np.ndarray((ncol, ngpt), dtype=np.float64, order='F')
+    sfc_src = np.ndarray((ncol, ngpt), dtype=np.float64, order="F")
+    lay_src = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order="F")
+    lev_src = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+    sfc_src_jac = np.ndarray((ncol, ngpt), dtype=np.float64, order="F")
 
     args = [
         ncol,
@@ -289,7 +289,7 @@ def compute_tau_absorption(
     nminorkupper = kminor_upper.shape[2]
 
     # outputs
-    tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order='F')
+    tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
     args = [
         ncol,
@@ -378,7 +378,7 @@ def compute_tau_rayleigh(
     nbnd = band_lims_gpt.shape[1]
 
     # outputs
-    tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order='F')
+    tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
     args = [
         ncol,
