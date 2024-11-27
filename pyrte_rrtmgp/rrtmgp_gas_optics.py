@@ -570,14 +570,6 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
 class SWGasOpticsAccessor(BaseGasOpticsAccessor):
     """Accessor for external radiation sources"""
 
-    # def __init__(self, xarray_obj, selected_gases=None):
-    #     super().__init__(xarray_obj, selected_gases)
-    #     self._solar_source = None
-    #     self._total_solar_irradiance = None
-    #     self._solar_zenith_angle = None
-    #     self._sfc_alb_dir = None
-    #     self._sfc_alb_dif = None
-
     def compute_problem(self, atmospheric_conditions, gas_interpolation_data):
         # Calculate absorption optical depth
         tau_abs = self.tau_absorption(atmospheric_conditions, gas_interpolation_data)
