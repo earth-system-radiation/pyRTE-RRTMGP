@@ -150,6 +150,67 @@ def lw_solver_noscat(
     return flux_up_jac, broadband_up, broadband_dn, flux_up, flux_dn
 
 
+def lw_solver_2stream(
+    tau: npt.NDArray[np.float64],
+    ssa: npt.NDArray[np.float64],
+    g: npt.NDArray[np.float64],
+    lay_source: npt.NDArray[np.float64],
+    lev_source: npt.NDArray[np.float64],
+    sfc_emis: npt.NDArray[np.float64],
+    sfc_src: npt.NDArray[np.float64],
+    inc_flux: npt.NDArray[np.float64],
+    top_at_1: bool = True,
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """
+    Solve the longwave radiative transfer equation using the 2-stream approximation.
+
+    Args:
+        tau: Optical depths with shape (ncol, nlay, ngpt)
+        ssa: Single-scattering albedos with shape (ncol, nlay, ngpt)
+        g: Asymmetry parameters with shape (ncol, nlay, ngpt)
+        lay_source: Layer source terms with shape (ncol, nlay, ngpt)
+        lev_source: Level source terms with shape (ncol, nlay+1, ngpt)
+        sfc_emis: Surface emissivities with shape (ncol, ngpt) or (ncol,)
+        sfc_src: Surface source terms with shape (ncol, ngpt)
+        inc_flux: Incident fluxes with shape (ncol, ngpt)
+        top_at_1: Whether the top of the atmosphere is at index 1
+
+    Returns:
+        Tuple containing:
+            flux_up: Upward fluxes with shape (ncol, nlay+1, ngpt)
+            flux_dn: Downward fluxes with shape (ncol, nlay+1, ngpt)
+    """
+    ncol, nlay, ngpt = tau.shape
+
+    if len(sfc_emis.shape) == 1:
+        sfc_emis = np.stack([sfc_emis] * ngpt).T
+
+    # outputs
+    flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+    flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
+
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        top_at_1,
+        np.asfortranarray(tau),
+        np.asfortranarray(ssa),
+        np.asfortranarray(g),
+        np.asfortranarray(lay_source),
+        np.asfortranarray(lev_source),
+        np.asfortranarray(sfc_emis),
+        np.asfortranarray(sfc_src),
+        np.asfortranarray(inc_flux),
+        flux_up,
+        flux_dn,
+    ]
+
+    rte_lw_solver_2stream(*args)
+
+    return flux_up, flux_dn
+
+
 def sw_solver_noscat(
     tau: npt.NDArray[np.float64],
     mu0: npt.NDArray[np.float64],
@@ -278,64 +339,3 @@ def sw_solver_2stream(
     rte_sw_solver_2stream(*args)
 
     return flux_up, flux_dn, flux_dir, broadband_up, broadband_dn, broadband_dir
-
-
-def lw_solver_2stream(
-    tau: npt.NDArray[np.float64],
-    ssa: npt.NDArray[np.float64],
-    g: npt.NDArray[np.float64],
-    lay_source: npt.NDArray[np.float64],
-    lev_source: npt.NDArray[np.float64],
-    sfc_emis: npt.NDArray[np.float64],
-    sfc_src: npt.NDArray[np.float64],
-    inc_flux: npt.NDArray[np.float64],
-    top_at_1: bool = True,
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """
-    Solve the longwave radiative transfer equation using the 2-stream approximation.
-
-    Args:
-        tau: Optical depths with shape (ncol, nlay, ngpt)
-        ssa: Single-scattering albedos with shape (ncol, nlay, ngpt)
-        g: Asymmetry parameters with shape (ncol, nlay, ngpt)
-        lay_source: Layer source terms with shape (ncol, nlay, ngpt)
-        lev_source: Level source terms with shape (ncol, nlay+1, ngpt)
-        sfc_emis: Surface emissivities with shape (ncol, ngpt) or (ncol,)
-        sfc_src: Surface source terms with shape (ncol, ngpt)
-        inc_flux: Incident fluxes with shape (ncol, ngpt)
-        top_at_1: Whether the top of the atmosphere is at index 1
-
-    Returns:
-        Tuple containing:
-            flux_up: Upward fluxes with shape (ncol, nlay+1, ngpt)
-            flux_dn: Downward fluxes with shape (ncol, nlay+1, ngpt)
-    """
-    ncol, nlay, ngpt = tau.shape
-
-    if len(sfc_emis.shape) == 1:
-        sfc_emis = np.stack([sfc_emis] * ngpt).T
-
-    # outputs
-    flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
-    flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
-
-    args = [
-        ncol,
-        nlay,
-        ngpt,
-        top_at_1,
-        np.asfortranarray(tau),
-        np.asfortranarray(ssa),
-        np.asfortranarray(g),
-        np.asfortranarray(lay_source),
-        np.asfortranarray(lev_source),
-        np.asfortranarray(sfc_emis),
-        np.asfortranarray(sfc_src),
-        np.asfortranarray(inc_flux),
-        flux_up,
-        flux_dn,
-    ]
-
-    rte_lw_solver_2stream(*args)
-
-    return flux_up, flux_dn

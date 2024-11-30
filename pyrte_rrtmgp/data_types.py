@@ -13,5 +13,5 @@ class GasOpticsFiles(Enum):
 class ProblemTypes(Enum):
     LW_ABSORPTION = "Longwave absorption"
     LW_2STREAM = "Longwave 2-stream"
-    SW_ABSORPTION = "Shortwave absorption"
+    SW_DIRECT = "Shortwave direct"
     SW_2STREAM = "Shortwave 2-stream"
