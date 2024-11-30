@@ -17,7 +17,6 @@ from pyrte_rrtmgp.constants import (
     SOLAR_CONSTANTS,
 )
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
-from pyrte_rrtmgp.exceptions import MissingAtmosphericConditionsError
 from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_planck_source,
     compute_tau_absorption,
@@ -25,6 +24,8 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     interpolation,
 )
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp import atmospheric_data
+from pyrte_rrtmgp.atmospheric_data import AtmosphericMapping, create_default_mapping
 
 
 def load_gas_optics(
@@ -72,94 +73,114 @@ class GasOpticsAccessor:
 
 
 class BaseGasOpticsAccessor:
-    def __init__(self, xarray_obj, is_internal, selected_gases=None, gas_name_map=None):
 
-        if gas_name_map is None:
-            self.gas_name_map = {
-                "h2o": "water_vapor",
-                "co2": "carbon_dioxide_GM",
-                "o3": "ozone",
-                "n2o": "nitrous_oxide_GM",
-                "co": "carbon_monoxide_GM",
-                "ch4": "methane_GM",
-                "o2": "oxygen_GM",
-                "n2": "nitrogen_GM",
-                "ccl4": "carbon_tetrachloride_GM",
-                "cfc11": "cfc11_GM",
-                "cfc12": "cfc12_GM",
-                "cfc22": "hcfc22_GM",
-                "hfc143a": "hfc143a_GM",
-                "hfc125": "hfc125_GM",
-                "hfc23": "hfc23_GM",
-                "hfc32": "hfc32_GM",
-                "hfc134a": "hfc134a_GM",
-                "cf4": "cf4_GM",
-                "no2": "no2",
-            }
-        else:
-            self.gas_name_map = gas_name_map
-
+    def __init__(self, xarray_obj, is_internal, selected_gases: list[str] | None = None, gas_name_map: dict[str, str] | None = None):
         self._dataset = xarray_obj
-        self._selected_gases = selected_gases
-        self._gas_names = None
-        self._gas_mappings = None
-        self._top_at_1 = None
-        self._vmr_ref = None
+
         self.is_internal = is_internal
 
-        self._atmospheric_conditions = None
+        # Get the gas names from the dataset
+        self._gas_names = self.extract_names(self._dataset["gas_names"].values)
 
-    @property
-    def gas_names(self):
-        """Gas names"""
-        if self._gas_names is None:
-            names = self._dataset["gas_names"].values
-            self._gas_names = self.extract_names(names)
-        return self._gas_names
+        # Default gas name map
+        default_map = {
+            "h2o": "water_vapor",
+            "co2": "carbon_dioxide_GM", 
+            "o3": "ozone",
+            "n2o": "nitrous_oxide_GM",
+            "co": "carbon_monoxide_GM",
+            "ch4": "methane_GM",
+            "o2": "oxygen_GM",
+            "n2": "nitrogen_GM",
+            "ccl4": "carbon_tetrachloride_GM",
+            "cfc11": "cfc11_GM",
+            "cfc12": "cfc12_GM",
+            "cfc22": "hcfc22_GM",
+            "hfc143a": "hfc143a_GM",
+            "hfc125": "hfc125_GM",
+            "hfc23": "hfc23_GM",
+            "hfc32": "hfc32_GM",
+            "hfc134a": "hfc134a_GM",
+            "cf4": "cf4_GM",
+            "no2": "no2",
+        }
+
+        # Get the gas map to use
+        if gas_name_map is None:
+            gas_map = default_map
+            if selected_gases is not None:
+                gas_map = {g: default_map[g] for g in selected_gases if g in default_map}
+        else:
+            if selected_gases is not None:
+                raise ValueError("When providing a gas_name_map, the selected gases are the keys of the gas_name_map")
+            gas_map = gas_name_map
+
+        # Validate the gas map
+        invalid_gases = [g for g in gas_map.keys() if g not in self._gas_names]
+        if invalid_gases:
+            raise ValueError(f"Invalid gases in gas_name_map: {invalid_gases}. Valid gases are: {self._gas_names}")
+
+        if "h2o" not in gas_map:
+            raise ValueError("'h2o' must be included in gas mapping as it is required to compute Dry air")
+        
+        self.gas_name_map = gas_map
+
+        # Set the gas names as coordinate in the dataset
+        self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
     def _initialize_pressure_levels(self, atmospheric_conditions, inplace=True):
         """Initialize pressure levels with minimum pressure adjustment"""
-        min_index = np.argmin(atmospheric_conditions["pres_level"].data)
+        pres_level_var = atmospheric_conditions.mapping.get_var("pres_level")
+
+        min_index = np.argmin(atmospheric_conditions[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
-        atmospheric_conditions["pres_level"][:, min_index] = min_press
+        atmospheric_conditions[pres_level_var][:, min_index] = min_press
+
         if not inplace:
             return atmospheric_conditions
 
-    def get_gases_columns(self, atmospheric_conditions):
-        ncol = len(atmospheric_conditions["site"])
-        nlay = len(atmospheric_conditions["layer"])
-        col_gas = []
-        for gas_name in self.gas_mappings.values():
-            # if gas_name is not available, fill it with zeros
-            if gas_name not in atmospheric_conditions.data_vars.keys():
-                gas_values = np.zeros((ncol, nlay))
+    @property
+    def _selected_gas_names(self):
+        return list(self.gas_name_map.keys())
+    
+    @property
+    def _selected_gas_names_ext(self):
+        return ["dry_air"] + self._selected_gas_names
+
+    def get_gases_columns(self, atm_data):
+        gas_values = []
+
+        pres_level_var = atm_data.mapping.get_var("pres_level")
+
+        for gas_map in self.gas_name_map.values():
+            if gas_map in atm_data.data_vars.keys():
+                if hasattr(atm_data[gas_map], 'units'):
+                    values = atm_data[gas_map].values * float(atm_data[gas_map].units)
+                else:
+                    values = atm_data[gas_map].values
+                if values.ndim == 0:
+                    values = np.full((len(atm_data.site), len(atm_data.layer)), values)
             else:
-                try:
-                    scale = float(atmospheric_conditions[gas_name].units)
-                except AttributeError:
-                    scale = 1.0
-                gas_values = atmospheric_conditions[gas_name].values * scale
+                values = np.zeros((len(atm_data.site), len(atm_data.layer)))
+            gas_values.append(values)
 
-            if gas_values.ndim == 0:
-                gas_values = np.full((ncol, nlay), gas_values)
-            col_gas.append(gas_values)
-
-        vmr_h2o = col_gas[self.gas_names.index("h2o")]
+        gas_values = np.stack(gas_values, axis=-1)
+        
+        vmr_h2o = gas_values[..., self._selected_gas_names.index("h2o")]
         col_dry = self.get_col_dry(
-            vmr_h2o, atmospheric_conditions["pres_level"].data, latitude=None
+            vmr_h2o, atm_data[pres_level_var].data, latitude=None
         )
-        col_gas = [col_dry] + col_gas
-
-        col_gas = np.stack(col_gas, axis=-1).astype(np.float64)
-        col_gas[:, :, 1:] = col_gas[:, :, 1:] * col_gas[:, :, :1]
-
+        
+        gas_values = gas_values * col_dry[..., np.newaxis]
+        gas_values = np.concatenate([col_dry[..., np.newaxis], gas_values], axis=-1)
+        
         return xr.DataArray(
-            col_gas,
+            gas_values,
             dims=['site', 'layer', 'gas'],
             coords={
-                'site': atmospheric_conditions.site,
-                'layer': atmospheric_conditions.layer,
-                'gas': ['col_dry'] + list(self.gas_mappings.keys())
+                'site': atm_data.site,
+                'layer': atm_data.layer,
+                'gas': self._selected_gas_names_ext
             },
             name='gases_columns'
         )
@@ -173,51 +194,18 @@ class BaseGasOpticsAccessor:
     def compute_boundary_conditions(self, atmospheric_conditions):
         raise NotImplementedError()
 
-    @property
-    def gas_mappings(self):
-        """Gas mappings"""
-
-        if self._gas_mappings is None:
-            gas_name_map = self.gas_name_map
-
-            if self._selected_gases is not None:
-                gas_name_map = {
-                    g: gas_name_map[g]
-                    for g in self._selected_gases
-                    if g in gas_name_map
-                }
-
-            gas_name_map = {
-                g: gas_name_map[g] for g in self.gas_names if g in gas_name_map
-            }
-            self._gas_mappings = gas_name_map
-        return self._gas_mappings
-
-    def top_at_1(self, pres_layers):
-        if self._top_at_1 is None:
-            self._top_at_1 = pres_layers[0] < pres_layers[-1]
-        return self._top_at_1.item()
-
-    @property
-    def vmr_ref(self):
-        if self._vmr_ref is None:
-            sel_gases = self.gas_mappings.keys()
-            vmr_idx = [i for i, g in enumerate(self._gas_names, 1) if g in sel_gases]
-            vmr_idx = [0] + vmr_idx
-            self._vmr_ref = self._dataset["vmr_ref"].sel(absorber_ext=vmr_idx)
-        return self._vmr_ref
-
     def interpolate(self, atmospheric_conditions) -> xr.Dataset:
-        
-        gases_columns = self.get_gases_columns(atmospheric_conditions)
-        
+        # Get the gas columns from atmospheric conditions
+        gas_order = self._selected_gas_names_ext
+        gases_columns = self.get_gases_columns(atmospheric_conditions).sel(gas=gas_order)
+
         (jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress) = interpolation(
             neta=len(self._dataset["mixing_fraction"]),
-            flavor=self.flavors_sets,
+            flavor=self.flavors_sets.values.T,
             press_ref=self._dataset["press_ref"].values,
             temp_ref=self._dataset["temp_ref"].values,
-            press_ref_trop=self._dataset["press_ref_trop"].values.item(),
-            vmr_ref=self.vmr_ref.values.T,
+            press_ref_trop=self._dataset["press_ref_trop"].values,
+            vmr_ref=self._dataset["vmr_ref"].sel(absorber_ext=gas_order).values.T,
             play=atmospheric_conditions["pres_layer"].values,
             tlay=atmospheric_conditions["temp_layer"].values,
             col_gas=gases_columns.values,
@@ -251,14 +239,14 @@ class BaseGasOpticsAccessor:
         minor_gases_lower = self.extract_names(self._dataset["minor_gases_lower"].data)
         minor_gases_upper = self.extract_names(self._dataset["minor_gases_upper"].data)
         # check if the index is correct
-        idx_minor_lower = self.get_idx_minor(self.gas_names, minor_gases_lower)
-        idx_minor_upper = self.get_idx_minor(self.gas_names, minor_gases_upper)
+        idx_minor_lower = self.get_idx_minor(self._gas_names, minor_gases_lower)
+        idx_minor_upper = self.get_idx_minor(self._gas_names, minor_gases_upper)
 
         scaling_gas_lower = self.extract_names(self._dataset["scaling_gas_lower"].data)
         scaling_gas_upper = self.extract_names(self._dataset["scaling_gas_upper"].data)
 
-        idx_minor_scaling_lower = self.get_idx_minor(self.gas_names, scaling_gas_lower)
-        idx_minor_scaling_upper = self.get_idx_minor(self.gas_names, scaling_gas_upper)
+        idx_minor_scaling_lower = self.get_idx_minor(self._gas_names, scaling_gas_lower)
+        idx_minor_scaling_upper = self.get_idx_minor(self._gas_names, scaling_gas_upper)
 
         tau_absorption = compute_tau_absorption(
             self.idx_h2o,
@@ -305,7 +293,7 @@ class BaseGasOpticsAccessor:
 
     @property
     def idx_h2o(self):
-        return list(self.gas_names).index("h2o") + 1
+        return list(self._gas_names).index("h2o") + 1
 
     @property
     def gpoint_flavor(self) -> npt.NDArray:
@@ -328,7 +316,7 @@ class BaseGasOpticsAccessor:
         key_species_rep[np.all(key_species_rep == [0, 0], axis=2)] = [2, 2]
 
         # unique flavors
-        flist = self.flavors_sets.T.tolist()
+        flist = self.flavors_sets.values.tolist()
 
         def key_species_pair2flavor(key_species_pair):
             return flist.index(key_species_pair.tolist()) + 1
@@ -355,7 +343,16 @@ class BaseGasOpticsAccessor:
         all_flav[np.all(all_flav == [0, 0], axis=1)] = [2, 2]
         # we do that instead of unique to preserv the order
         _, idx = np.unique(all_flav, axis=0, return_index=True)
-        return all_flav[np.sort(idx)].T
+        # return all_flav[np.sort(idx)].T
+        flavors = all_flav[np.sort(idx)]
+        return xr.DataArray(
+            flavors,
+            dims=['flavor', 'pairs'],
+            coords={
+                'flavor': np.arange(flavors.shape[0]),
+                'pairs': np.arange(flavors.shape[1])
+            }
+        )
 
     @staticmethod
     def get_idx_minor(gas_names, minor_gases):
@@ -431,42 +428,18 @@ class BaseGasOpticsAccessor:
         self,
         atmospheric_conditions: xr.Dataset,
         problem_type: str,
-        dim_mapping: dict = None,
-        var_mapping: dict = None,
+        mapping: AtmosphericMapping | None = None,
         add_to_input: bool = True,
     ):
-        # Default required dimensions and their mappings
-        default_dims = {"site": "site", "layer": "layer", "level": "level"}
-        required_dims = dim_mapping or default_dims
+        if mapping is None:
+            mapping = create_default_mapping()
 
-        # Check that all required dimensions exist in dataset
-        dataset_dims = {
-            dim: dim_name
-            for dim, dim_name in required_dims.items()
-            if dim_name in atmospheric_conditions.dims
-        }
-        missing_dims = set(required_dims.keys()) - set(dataset_dims.keys())
-        if missing_dims:
-            raise ValueError(f"Missing required dimensions: {missing_dims}")
+        # Set mapping in accessor
+        atmospheric_conditions.mapping.set_mapping(mapping)
 
-        # Default required variables and their mappings
-        default_vars = {
-            "pres_layer": "pres_layer",
-            "pres_level": "pres_level",
-            "temp_layer": "temp_layer",
-            "temp_level": "temp_level",
-        }
-        required_vars = var_mapping or default_vars
-
-        # Check that all required variables exist in dataset
-        dataset_vars = {
-            var: var_name
-            for var, var_name in required_vars.items()
-            if var_name in atmospheric_conditions.data_vars
-        }
-        missing_vars = set(required_vars.keys()) - set(dataset_vars.keys())
-        if missing_vars:
-            raise ValueError(f"Missing required variables: {missing_vars}")
+        # Get actual variable names in dataset
+        pres_var = atmospheric_conditions.mapping.get_var("pres_layer")
+        layer_dim = atmospheric_conditions.mapping.get_dim("layer")
 
         # Modify pressure levels to avoid division by zero, runs inplace
         self._initialize_pressure_levels(atmospheric_conditions)
@@ -528,6 +501,9 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
 
 
     def compute_planck(self, atmospheric_conditions, gas_interpolation_data):
+
+        top_at_1 = atmospheric_conditions["layer"][0] < atmospheric_conditions["layer"][-1]
+
         (
             sfc_src,
             lay_source,
@@ -537,7 +513,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             atmospheric_conditions["temp_layer"].values,
             atmospheric_conditions["temp_level"].values,
             atmospheric_conditions["surface_temperature"].values,
-            self.top_at_1(atmospheric_conditions["layer"]),
+            top_at_1,
             gas_interpolation_data["fmajor"].values,
             gas_interpolation_data["eta_index"].values,
             gas_interpolation_data["tropopause_mask"].values,
