@@ -1,9 +1,10 @@
-import xarray as xr
 import numpy as np
+import xarray as xr
 
 from pyrte_rrtmgp.data_types import ProblemTypes
 from pyrte_rrtmgp.kernels.rte import lw_solver_noscat, sw_solver_2stream
 from pyrte_rrtmgp.utils import get_usecols
+
 
 def rte_solve(problem_ds: xr.Dataset, add_to_input: bool = True):
     if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
@@ -52,7 +53,9 @@ def rte_solve(problem_ds: xr.Dataset, add_to_input: bool = True):
         # Post-process results for nighttime columns
         if "solar_angle_mask" in problem_ds:
             fluxes["sw_flux_up"] = fluxes["sw_flux_up"] * problem_ds["solar_angle_mask"]
-            fluxes["sw_flux_down"] = fluxes["sw_flux_down"] * problem_ds["solar_angle_mask"]
+            fluxes["sw_flux_down"] = (
+                fluxes["sw_flux_down"] * problem_ds["solar_angle_mask"]
+            )
 
     if add_to_input:
         problem_ds.assign_coords(fluxes.coords)

@@ -278,7 +278,7 @@ def compute_tau_absorption(
         np.ndarray): tau Absorption optical depth.
     """
 
-    ntemp, npres_e, neta, ngpt = kmajor.shape
+    ntemp, neta, npres_e, ngpt = kmajor.shape
     npres = npres_e - 1
     nbnd = band_lims_gpt.shape[1]
     _, ncol, nlay, nflav = jeta.shape
@@ -308,7 +308,7 @@ def compute_tau_absorption(
         idx_h2o,
         np.asfortranarray(gpoint_flavor),
         np.asfortranarray(band_lims_gpt),
-        np.asfortranarray(kmajor.transpose(0, 2, 1, 3)),
+        np.asfortranarray(kmajor),
         np.asfortranarray(kminor_lower),
         np.asfortranarray(kminor_upper),
         np.asfortranarray(minor_limits_gpt_lower),
