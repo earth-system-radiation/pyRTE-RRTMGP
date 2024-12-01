@@ -2,6 +2,36 @@ from dataclasses import asdict, dataclass
 from typing import Dict, Optional
 
 import xarray as xr
+from dataclasses import dataclass
+from typing import Dict, Set
+from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
+
+@dataclass
+class GasMapping:
+    _mapping: Dict[str, str]
+    _required_gases: Set[str]
+    
+    @classmethod
+    def create(cls, gas_names: Set[str], custom_mapping: Dict[str, str] | None = None) -> "GasMapping":
+        mapping = DEFAULT_GAS_MAPPING.copy()
+        if custom_mapping:
+            mapping.update(custom_mapping)
+            
+        return cls(mapping, gas_names)
+    
+    def validate(self) -> Dict[str, str]:
+        """Validates and returns the final mapping."""
+        validated_mapping = {}
+        
+        for gas in self._required_gases:
+            if gas not in self._mapping:
+                if gas not in DEFAULT_GAS_MAPPING:
+                    raise ValueError(f"Gas {gas} not found in any mapping")
+                validated_mapping[gas] = DEFAULT_GAS_MAPPING[gas]
+            else:
+                validated_mapping[gas] = self._mapping[gas]
+                
+        return validated_mapping
 
 
 @dataclass
@@ -37,10 +67,6 @@ class DatasetMappingAccessor:
         missing_dims = set(mapping.dim_mapping.values()) - set(self._obj.dims)
         if missing_dims:
             raise ValueError(f"Dataset missing required dimensions: {missing_dims}")
-
-        missing_vars = set(mapping.var_mapping.values()) - set(self._obj.data_vars)
-        if missing_vars:
-            raise ValueError(f"Dataset missing required variables: {missing_vars}")
 
         # Store mapping in attributes
         self._obj.attrs["dataset_mapping"] = asdict(mapping)
@@ -93,5 +119,12 @@ def create_default_mapping() -> AtmosphericMapping:
             "pres_level": "pres_level",
             "temp_layer": "temp_layer",
             "temp_level": "temp_level",
+            "surface_temperature": "surface_temperature",
+            "solar_zenith_angle": "solar_zenith_angle",
+            "surface_albedo": "surface_albedo",
+            "surface_albedo_dir": "surface_albedo_dir",
+            "surface_albedo_dif": "surface_albedo_dif",
+            "surface_emissivity": "surface_emissivity",
+            "surface_emissivity_jacobian": "surface_emissivity_jacobian",
         },
     )

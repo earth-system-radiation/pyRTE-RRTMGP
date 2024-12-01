@@ -8,11 +8,16 @@ from pyrte_rrtmgp.kernels.rte import (
     sw_solver_2stream,
     sw_solver_noscat,
 )
-from pyrte_rrtmgp.utils import get_usecols
+from pyrte_rrtmgp.utils import logger
 
 
-def rte_solve(problem_ds: xr.Dataset, add_to_input: bool = True):
+def rte_solve(
+    problem_ds: xr.Dataset, add_to_input: bool = True, spectrally_resolved: bool | None = None
+):
     if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
+        if spectrally_resolved is None:
+            spectrally_resolved = False
+
         _, solver_flux_up, solver_flux_down, _, _ = lw_solver_noscat(
             tau=problem_ds["tau"].transpose("site", "layer", "gpt"),
             lay_source=problem_ds["layer_source"].transpose("site", "layer", "gpt"),
@@ -20,6 +25,7 @@ def rte_solve(problem_ds: xr.Dataset, add_to_input: bool = True):
             sfc_emis=problem_ds["surface_emissivity"],
             sfc_src=problem_ds["surface_source"].transpose("site", "gpt"),
             sfc_src_jac=problem_ds["surface_source_jacobian"].transpose("site", "gpt"),
+            do_broadband=not spectrally_resolved,
         )
 
         fluxes = xr.Dataset(
@@ -33,6 +39,11 @@ def rte_solve(problem_ds: xr.Dataset, add_to_input: bool = True):
             },
         )
     elif problem_ds.attrs["problem_type"] == ProblemTypes.LW_2STREAM.value:
+        if spectrally_resolved is not None:
+            logger.warning(
+                "Spectrally resolved is not supported for LW_2STREAM. Ignoring spectrally resolved."
+            )
+
         flux_up, flux_down = lw_solver_2stream(
             tau=problem_ds["tau"].transpose("site", "layer", "gpt"),
             ssa=problem_ds["ssa"].transpose("site", "layer", "gpt"),
@@ -76,8 +87,33 @@ def rte_solve(problem_ds: xr.Dataset, add_to_input: bool = True):
             fluxes["sw_flux_dir"] = (
                 fluxes["sw_flux_dir"] * problem_ds["solar_angle_mask"]
             )
+    elif problem_ds.attrs["problem_type"] == ProblemTypes.SW_DIRECT.value:
+        flux_dir = sw_solver_noscat(
+            tau=problem_ds["tau"].transpose("site", "layer", "gpt"),
+            mu0=problem_ds["solar_zenith_angle"].transpose("site", "layer"),
+            inc_flux_dir=problem_ds["toa_source"].transpose("site", "gpt"),
+        )
+
+        fluxes = xr.Dataset(
+            {
+                "sw_flux_dir": (["site", "level"], flux_dir),
+            },
+            coords={
+                "site": problem_ds.site,
+                "level": problem_ds.level,
+            },
+        )
+
+        # Post-process results for nighttime columns
+        if "solar_angle_mask" in problem_ds:
+            fluxes["sw_flux_dir"] = (
+                fluxes["sw_flux_dir"] * problem_ds["solar_angle_mask"]
+            )
 
     elif problem_ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
+        if spectrally_resolved is None:
+            spectrally_resolved = False
+
         _, _, _, flux_up, flux_down, _ = sw_solver_2stream(
             tau=problem_ds["tau"].transpose("site", "layer", "gpt"),
             ssa=problem_ds["ssa"].transpose("site", "layer", "gpt"),
@@ -86,6 +122,7 @@ def rte_solve(problem_ds: xr.Dataset, add_to_input: bool = True):
             sfc_alb_dir=problem_ds["surface_albedo_direct"],
             sfc_alb_dif=problem_ds["surface_albedo_diffuse"],
             inc_flux_dir=problem_ds["toa_source"].transpose("site", "gpt"),
+            do_broadband=not spectrally_resolved,
         )
 
         fluxes = xr.Dataset(

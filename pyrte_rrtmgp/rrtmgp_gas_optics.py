@@ -6,8 +6,8 @@ import numpy.typing as npt
 import pandas as pd
 import xarray as xr
 
-from pyrte_rrtmgp import atmospheric_data
-from pyrte_rrtmgp.atmospheric_data import AtmosphericMapping, create_default_mapping
+from pyrte_rrtmgp import data_validation
+from pyrte_rrtmgp.data_validation import AtmosphericMapping, GasMapping, create_default_mapping
 from pyrte_rrtmgp.constants import (
     AVOGAD,
     HELMERT1,
@@ -24,6 +24,7 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     interpolation,
 )
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.utils import logger
 
 
 def load_gas_optics(
@@ -76,7 +77,6 @@ class BaseGasOpticsAccessor:
         xarray_obj,
         is_internal,
         selected_gases: list[str] | None = None,
-        gas_name_map: dict[str, str] | None = None,
     ):
         self._dataset = xarray_obj
 
@@ -85,102 +85,68 @@ class BaseGasOpticsAccessor:
         # Get the gas names from the dataset
         self._gas_names = self.extract_names(self._dataset["gas_names"].values)
 
-        # Default gas name map
-        default_map = {
-            "h2o": "water_vapor",
-            "co2": "carbon_dioxide_GM",
-            "o3": "ozone",
-            "n2o": "nitrous_oxide_GM",
-            "co": "carbon_monoxide_GM",
-            "ch4": "methane_GM",
-            "o2": "oxygen_GM",
-            "n2": "nitrogen_GM",
-            "ccl4": "carbon_tetrachloride_GM",
-            "cfc11": "cfc11_GM",
-            "cfc12": "cfc12_GM",
-            "cfc22": "hcfc22_GM",
-            "hfc143a": "hfc143a_GM",
-            "hfc125": "hfc125_GM",
-            "hfc23": "hfc23_GM",
-            "hfc32": "hfc32_GM",
-            "hfc134a": "hfc134a_GM",
-            "cf4": "cf4_GM",
-            "no2": "no2",
-        }
+        if selected_gases is not None:
+            # Filter gas names to only include those that exist in the dataset
+            available_gases = tuple(g for g in selected_gases if g in self._gas_names)
+            
+            # Log warning for any gases that weren't found
+            missing_gases = set(selected_gases) - set(available_gases)
+            for gas in missing_gases:
+                logger.warning(f"Gas {gas} not found in gas optics file")
 
-        # Get the gas map to use
-        if gas_name_map is None:
-            gas_map = default_map
-            if selected_gases is not None:
-                gas_map = {
-                    g: default_map[g] for g in selected_gases if g in default_map
-                }
-        else:
-            if selected_gases is not None:
-                raise ValueError(
-                    "When providing a gas_name_map, the selected gases are the keys of the gas_name_map"
-                )
-            gas_map = gas_name_map
+            self._gas_names = available_gases
 
-        # Validate the gas map
-        invalid_gases = [g for g in gas_map.keys() if g not in self._gas_names]
-        if invalid_gases:
-            raise ValueError(
-                f"Invalid gases in gas_name_map: {invalid_gases}. Valid gases are: {self._gas_names}"
-            )
 
-        if "h2o" not in gas_map:
+        if "h2o" not in self._gas_names:
             raise ValueError(
                 "'h2o' must be included in gas mapping as it is required to compute Dry air"
             )
 
-        self.gas_name_map = gas_map
-
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
-    def _initialize_pressure_levels(self, atmospheric_conditions, inplace=True):
+    def _initialize_pressure_levels(self, atmosphere, inplace=True):
         """Initialize pressure levels with minimum pressure adjustment"""
-        pres_level_var = atmospheric_conditions.mapping.get_var("pres_level")
+        pres_level_var = atmosphere.mapping.get_var("pres_level")
 
-        min_index = np.argmin(atmospheric_conditions[pres_level_var].data)
+        min_index = np.argmin(atmosphere[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
-        atmospheric_conditions[pres_level_var][:, min_index] = min_press
+        atmosphere[pres_level_var][:, min_index] = min_press
 
         if not inplace:
-            return atmospheric_conditions
+            return atmosphere
 
     @property
     def _selected_gas_names(self):
-        return list(self.gas_name_map.keys())
+        return list(self._gas_names)
 
     @property
     def _selected_gas_names_ext(self):
         return ["dry_air"] + self._selected_gas_names
 
-    def get_gases_columns(self, atm_data):
-        pres_level_var = atm_data.mapping.get_var("pres_level")
+    def get_gases_columns(self, atmosphere, gas_name_map):
+        pres_level_var = atmosphere.mapping.get_var("pres_level")
 
         gas_values = []
-        for gas_map in self.gas_name_map.values():
-            if gas_map in atm_data.data_vars:
-                values = atm_data[gas_map]
+        for gas_map in gas_name_map.values():
+            if gas_map in atmosphere.data_vars:
+                values = atmosphere[gas_map]
                 if hasattr(values, "units"):
                     values = values * float(values.units)
                 if values.ndim == 0:
                     values = xr.full_like(
-                        atm_data[pres_level_var].isel(level=0), values
+                        atmosphere[pres_level_var].isel(level=0), values
                     )
             else:
-                values = xr.zeros_like(atm_data[pres_level_var].isel(level=0))
+                values = xr.zeros_like(atmosphere[pres_level_var].isel(level=0))
             gas_values.append(values)
 
         gas_values = xr.concat(
-            gas_values, dim=pd.Index(self.gas_name_map.keys(), name="gas")
+            gas_values, dim=pd.Index(gas_name_map.keys(), name="gas")
         )
 
         col_dry = self.get_col_dry(
-            gas_values.sel(gas="h2o"), atm_data[pres_level_var], latitude=None
+            gas_values.sel(gas="h2o"), atmosphere[pres_level_var], latitude=None
         )
 
         gas_values = gas_values * col_dry
@@ -190,21 +156,24 @@ class BaseGasOpticsAccessor:
 
         return gas_values
 
-    def compute_problem(self, atmospheric_conditions, gas_interpolation_data):
+    def compute_problem(self, atmosphere, gas_interpolation_data):
         raise NotImplementedError()
 
-    def compute_sources(self, atmospheric_conditions, gas_interpolation_data):
+    def compute_sources(self, atmosphere, gas_interpolation_data):
         raise NotImplementedError()
 
-    def compute_boundary_conditions(self, atmospheric_conditions):
+    def compute_boundary_conditions(self, atmosphere):
         raise NotImplementedError()
 
-    def interpolate(self, atmospheric_conditions) -> xr.Dataset:
+    def interpolate(self, atmosphere, gas_name_map) -> xr.Dataset:
         # Get the gas columns from atmospheric conditions
         gas_order = self._selected_gas_names_ext
-        gases_columns = self.get_gases_columns(atmospheric_conditions).sel(
+        gases_columns = self.get_gases_columns(atmosphere, gas_name_map).sel(
             gas=gas_order
         )
+
+        site_dim = atmosphere.mapping.get_dim("site")
+        layer_dim = atmosphere.mapping.get_dim("layer")
 
         (jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress) = interpolation(
             neta=self._dataset["mixing_fraction"].size,
@@ -215,9 +184,9 @@ class BaseGasOpticsAccessor:
             vmr_ref=self._dataset["vmr_ref"]
             .sel(absorber_ext=gas_order)
             .transpose("atmos_layer", "absorber_ext", "temperature"),
-            play=atmospheric_conditions["pres_layer"].transpose("site", "layer"),
-            tlay=atmospheric_conditions["temp_layer"].transpose("site", "layer"),
-            col_gas=gases_columns.sel(gas=gas_order).transpose("site", "layer", "gas"),
+            play=atmosphere["pres_layer"].transpose(site_dim, layer_dim),
+            tlay=atmosphere["temp_layer"].transpose(site_dim, layer_dim),
+            col_gas=gases_columns.sel(gas=gas_order).transpose(site_dim, layer_dim, "gas"),
         )
 
         # Create and return the dataset
@@ -246,8 +215,8 @@ class BaseGasOpticsAccessor:
                 "gases_columns": (["gas", "site", "layer"], gases_columns.values),
             },
             coords={
-                "site": atmospheric_conditions.site,
-                "layer": atmospheric_conditions.layer,
+                "site": atmosphere[site_dim],
+                "layer": atmosphere[layer_dim],
                 "flavor": np.arange(fmajor.shape[-1]),
                 "eta_interp": ["lower", "upper"],
                 "pressure_interp": ["lower", "upper"],
@@ -257,7 +226,7 @@ class BaseGasOpticsAccessor:
             },
         )
 
-    def tau_absorption(self, atmospheric_conditions, gas_interpolation_data):
+    def tau_absorption(self, atmosphere, gas_interpolation_data):
         minor_gases_lower = self.extract_names(self._dataset["minor_gases_lower"].data)
         minor_gases_upper = self.extract_names(self._dataset["minor_gases_upper"].data)
         # check if the index is correct
@@ -269,6 +238,12 @@ class BaseGasOpticsAccessor:
 
         idx_minor_scaling_lower = self.get_idx_minor(scaling_gas_lower)
         idx_minor_scaling_upper = self.get_idx_minor(scaling_gas_upper)
+
+        site_dim = atmosphere.mapping.get_dim("site")
+        layer_dim = atmosphere.mapping.get_dim("layer")
+        pres_layer_var = atmosphere.mapping.get_var("pres_layer")
+        temp_layer_var = atmosphere.mapping.get_var("temp_layer")
+
 
         tau_absorption = compute_tau_absorption(
             self._selected_gas_names_ext.index("h2o"),
@@ -314,8 +289,8 @@ class BaseGasOpticsAccessor:
             gas_interpolation_data["fminor"].transpose(
                 "eta_interp", "temp_interp", "site", "layer", "flavor"
             ),
-            atmospheric_conditions["pres_layer"].transpose("site", "layer"),
-            atmospheric_conditions["temp_layer"].transpose("site", "layer"),
+            atmosphere[pres_layer_var].transpose(site_dim, layer_dim),
+            atmosphere[temp_layer_var].transpose(site_dim, layer_dim),
             gas_interpolation_data["gases_columns"].transpose("site", "layer", "gas"),
             gas_interpolation_data["eta_index"].transpose(
                 "pair", "site", "layer", "flavor"
@@ -330,8 +305,8 @@ class BaseGasOpticsAccessor:
                 "tau": (["site", "layer", "gpt"], tau_absorption),
             },
             coords={
-                "site": atmospheric_conditions.site,
-                "layer": atmospheric_conditions.layer,
+                "site": atmosphere[site_dim],
+                "layer": atmosphere[layer_dim],
                 "gpt": self._dataset.gpt,
             },
         )
@@ -476,28 +451,32 @@ class BaseGasOpticsAccessor:
 
     def compute(
         self,
-        atmospheric_conditions: xr.Dataset,
+        atmosphere: xr.Dataset,
         problem_type: str,
-        mapping: AtmosphericMapping | None = None,
+        gas_name_map: dict[str, str] | None = None,
+        variable_mapping: AtmosphericMapping | None = None,
         add_to_input: bool = True,
     ):
-        if mapping is None:
-            mapping = create_default_mapping()
+        
+        # Create and validate gas mapping
+        gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
 
+        if variable_mapping is None:
+            variable_mapping = create_default_mapping()
         # Set mapping in accessor
-        atmospheric_conditions.mapping.set_mapping(mapping)
+        atmosphere.mapping.set_mapping(variable_mapping)
 
         # Get actual variable names in dataset
-        pres_var = atmospheric_conditions.mapping.get_var("pres_layer")
-        layer_dim = atmospheric_conditions.mapping.get_dim("layer")
+        pres_var = atmosphere.mapping.get_var("pres_layer")
+        layer_dim = atmosphere.mapping.get_dim("layer")
 
         # Modify pressure levels to avoid division by zero, runs inplace
-        self._initialize_pressure_levels(atmospheric_conditions)
+        self._initialize_pressure_levels(atmosphere)
 
-        gas_interpolation_data = self.interpolate(atmospheric_conditions)
-        problem = self.compute_problem(atmospheric_conditions, gas_interpolation_data)
-        sources = self.compute_sources(atmospheric_conditions, gas_interpolation_data)
-        boundary_conditions = self.compute_boundary_conditions(atmospheric_conditions)
+        gas_interpolation_data = self.interpolate(atmosphere, gas_mapping)
+        problem = self.compute_problem(atmosphere, gas_interpolation_data)
+        sources = self.compute_sources(atmosphere, gas_interpolation_data)
+        boundary_conditions = self.compute_boundary_conditions(atmosphere)
 
         gas_optics = xr.merge([sources, problem, boundary_conditions])
 
@@ -506,16 +485,16 @@ class BaseGasOpticsAccessor:
             problem_type = ProblemTypes.LW_ABSORPTION.value
         elif problem_type == "two-stream" and self.is_internal:
             problem_type = ProblemTypes.LW_2STREAM.value
-        elif problem_type == "absorption" and not self.is_internal:
-            problem_type = ProblemTypes.SW_ABSORPTION.value
+        elif problem_type == "direct" and not self.is_internal:
+            problem_type = ProblemTypes.SW_DIRECT.value
         elif problem_type == "two-stream" and not self.is_internal:
             problem_type = ProblemTypes.SW_2STREAM.value
         else:
-            raise ValueError(f"Invalid problem type: {problem_type}")
+            raise ValueError(f"Invalid problem type: {problem_type} for {'LW' if self.is_internal else 'SW'} radiation")
 
         if add_to_input:
-            atmospheric_conditions.update(gas_optics)
-            atmospheric_conditions.attrs["problem_type"] = problem_type
+            atmosphere.update(gas_optics)
+            atmosphere.attrs["problem_type"] = problem_type
         else:
             output_ds = gas_optics
             output_ds.attrs["problem_type"] = problem_type
@@ -525,35 +504,43 @@ class BaseGasOpticsAccessor:
 class LWGasOpticsAccessor(BaseGasOpticsAccessor):
     """Accessor for internal radiation sources"""
 
-    def compute_problem(self, atmospheric_conditions, gas_interpolation_data):
-        return self.tau_absorption(atmospheric_conditions, gas_interpolation_data)
+    def compute_problem(self, atmosphere, gas_interpolation_data):
+        return self.tau_absorption(atmosphere, gas_interpolation_data)
 
-    def compute_sources(self, atmospheric_conditions, gas_interpolation_data):
-        return self.compute_planck(atmospheric_conditions, gas_interpolation_data)
+    def compute_sources(self, atmosphere, gas_interpolation_data):
+        return self.compute_planck(atmosphere, gas_interpolation_data)
 
-    def compute_boundary_conditions(self, atmospheric_conditions):
-        if "surface_emissivity" not in atmospheric_conditions.data_vars:
+    def compute_boundary_conditions(self, atmosphere):
+        if "surface_emissivity" not in atmosphere.data_vars:
             # Add surface emissivity directly to atmospheric conditions
             return xr.DataArray(
                 np.ones(
                     (
-                        atmospheric_conditions.sizes["site"],
-                        atmospheric_conditions.sizes["gpt"],
+                        atmosphere.sizes["site"],
+                        atmosphere.sizes["gpt"],
                     )
                 ),
                 dims=["site", "gpt"],
                 coords={
-                    "site": atmospheric_conditions.site,
-                    "gpt": atmospheric_conditions.gpt,
+                    "site": atmosphere.site,
+                    "gpt": atmosphere.gpt,
                 },
             )
         else:
-            return atmospheric_conditions["surface_emissivity"]
+            return atmosphere["surface_emissivity"]
 
-    def compute_planck(self, atmospheric_conditions, gas_interpolation_data):
+    def compute_planck(self, atmosphere, gas_interpolation_data):
+        site_dim = atmosphere.mapping.get_dim("site")
+        layer_dim = atmosphere.mapping.get_dim("layer")
+        level_dim = atmosphere.mapping.get_dim("level")
+
+        temp_layer_var = atmosphere.mapping.get_var("temp_layer")
+        temp_level_var = atmosphere.mapping.get_var("temp_level")
+        surface_temperature_var = atmosphere.mapping.get_var("surface_temperature")
+
         # Check if the top layer is at the first level
         top_at_1 = (
-            atmospheric_conditions["layer"][0] < atmospheric_conditions["layer"][-1]
+            atmosphere[layer_dim][0] < atmosphere[layer_dim][-1]
         )
 
         (
@@ -562,9 +549,9 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             lev_source,
             sfc_src_jac,
         ) = compute_planck_source(
-            tlay=atmospheric_conditions["temp_layer"].transpose("site", "layer"),
-            tlev=atmospheric_conditions["temp_level"].transpose("site", "level"),
-            tsfc=atmospheric_conditions["surface_temperature"].transpose("site"),
+            tlay=atmosphere[temp_layer_var].transpose(site_dim, layer_dim),
+            tlev=atmosphere[temp_level_var].transpose(site_dim, level_dim),
+            tsfc=atmosphere[surface_temperature_var].transpose(site_dim),
             top_at_1=top_at_1,
             fmajor=gas_interpolation_data["fmajor"].transpose(
                 "eta_interp",
@@ -601,9 +588,9 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                 "surface_source_jacobian": (["site", "gpt"], sfc_src_jac),
             },
             coords={
-                "site": atmospheric_conditions.site,
-                "layer": atmospheric_conditions.layer,
-                "level": atmospheric_conditions.level,
+                "site": atmosphere[site_dim],
+                "layer": atmosphere[layer_dim],
+                "level": atmosphere[level_dim],
                 "gpt": self._dataset.gpt,
             },
         )
@@ -612,9 +599,9 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
 class SWGasOpticsAccessor(BaseGasOpticsAccessor):
     """Accessor for external radiation sources"""
 
-    def compute_problem(self, atmospheric_conditions, gas_interpolation_data):
+    def compute_problem(self, atmosphere, gas_interpolation_data):
         # Calculate absorption optical depth
-        tau_abs = self.tau_absorption(atmospheric_conditions, gas_interpolation_data)
+        tau_abs = self.tau_absorption(atmosphere, gas_interpolation_data)
 
         # Calculate Rayleigh scattering optical depth
         tau_rayleigh = self.tau_rayleigh(gas_interpolation_data)
@@ -627,7 +614,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         g = xr.zeros_like(tau["tau"]).rename("g")
         return xr.merge([tau, ssa, g])
 
-    def compute_sources(self, atmospheric_conditions, *args, **kwargs):
+    def compute_sources(self, atmosphere, *args, **kwargs):
         """Implementation for external source computation"""
         a_offset = SOLAR_CONSTANTS["A_OFFSET"]
         b_offset = SOLAR_CONSTANTS["B_OFFSET"]
@@ -645,41 +632,46 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             + (sb_index - b_offset) * solar_source_sunspot
         )
 
-        total_solar_irradiance = atmospheric_conditions["total_solar_irradiance"]
+        total_solar_irradiance = atmosphere["total_solar_irradiance"]
 
         toa_flux = solar_source.broadcast_like(total_solar_irradiance)
         def_tsi = toa_flux.sum(dim="gpt")
         return (toa_flux * (total_solar_irradiance / def_tsi)).rename("toa_source")
 
-    def compute_boundary_conditions(self, atmospheric_conditions):
-        usecol_values = atmospheric_conditions["solar_zenith_angle"] < (
+    def compute_boundary_conditions(self, atmosphere):
+        solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
+        surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
+        surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
+        surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_dif")
+
+        usecol_values = atmosphere[solar_zenith_angle_var] < (
             90.0 - 2.0 * np.spacing(90.0)
         )
         usecol_values = usecol_values.rename("solar_angle_mask")
         mu0 = xr.where(
             usecol_values,
-            np.cos(np.radians(atmospheric_conditions["solar_zenith_angle"])),
+            np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
             1.0,
         )
-        solar_zenith_angle = mu0.broadcast_like(atmospheric_conditions.layer).rename(
+        solar_zenith_angle = mu0.broadcast_like(atmosphere.layer).rename(
             "solar_zenith_angle"
         )
 
-        if "surface_albedo_dir" not in atmospheric_conditions.data_vars:
-            surface_albedo_direct = atmospheric_conditions["surface_albedo"]
+        if surface_albedo_dir_var not in atmosphere.data_vars:
+            surface_albedo_direct = atmosphere[surface_albedo_var]
             surface_albedo_direct = surface_albedo_direct.rename(
                 "surface_albedo_direct"
             )
-            surface_albedo_diffuse = atmospheric_conditions["surface_albedo"]
+            surface_albedo_diffuse = atmosphere[surface_albedo_var]
             surface_albedo_diffuse = surface_albedo_diffuse.rename(
                 "surface_albedo_diffuse"
             )
         else:
-            surface_albedo_direct = atmospheric_conditions["surface_albedo_dir"]
+            surface_albedo_direct = atmosphere[surface_albedo_dir_var]
             surface_albedo_direct = surface_albedo_direct.rename(
                 "surface_albedo_direct"
             )
-            surface_albedo_diffuse = atmospheric_conditions["surface_albedo_dif"]
+            surface_albedo_diffuse = atmosphere[surface_albedo_dif_var]
             surface_albedo_diffuse = surface_albedo_diffuse.rename(
                 "surface_albedo_diffuse"
             )
