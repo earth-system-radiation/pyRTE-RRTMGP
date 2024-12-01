@@ -12,9 +12,14 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
 from pyrte_rrtmgp.utils import convert_xarray_args
 
 
-@convert_xarray_args
 def interpolation(
+    ncol: int,
+    nlay: int,
+    ngas: int,
+    nflav: int,
     neta: int,
+    npres: int,
+    ntemp: int,
     flavor: npt.NDArray,
     press_ref: npt.NDArray,
     temp_ref: npt.NDArray,
@@ -35,7 +40,13 @@ def interpolation(
     """Interpolate the RRTMGP coefficients.
 
     Args:
+        ncol (int): Number of atmospheric columns.
+        nlay (int): Number of atmospheric layers.
+        ngas (int): Number of gases.
+        nflav (int): Number of gas flavors.
         neta (int): Number of mixing_fraction.
+        npres (int): Number of reference pressure grid points.
+        ntemp (int): Number of reference temperature grid points.
         flavor (np.ndarray): Index into vmr_ref of major gases for each flavor.
         press_ref (np.ndarray): Reference pressure grid.
         temp_ref (np.ndarray): Reference temperature grid.
@@ -55,12 +66,6 @@ def interpolation(
             - jeta (np.ndarray): Index for binary species interpolation.
             - jpress (np.ndarray): Pressure interpolation index.
     """
-    npres = press_ref.shape[0]
-    ntemp = temp_ref.shape[0]
-    ncol, nlay, ngas = col_gas.shape
-    ngas = ngas - 1  # Fortran uses index 0 here
-    nflav = flavor.shape[1]
-
     press_ref_log = np.log(press_ref)
     press_ref_log_delta = (press_ref_log.min() - press_ref_log.max()) / (
         len(press_ref_log) - 1
@@ -69,6 +74,8 @@ def interpolation(
 
     temp_ref_min = temp_ref.min()
     temp_ref_delta = (temp_ref.max() - temp_ref.min()) / (len(temp_ref) - 1)
+
+    ngas = ngas - 1  # Fortran uses index 0 here
 
     # outputs
     jtemp = np.ndarray([ncol, nlay], dtype=np.int32, order="F")
@@ -115,6 +122,15 @@ def interpolation(
 
 @convert_xarray_args
 def compute_planck_source(
+    ncol,
+    nlay,
+    nbnd,
+    ngpt,
+    nflav,
+    neta,
+    npres,
+    ntemp,
+    nPlanckTemp,
     tlay,
     tlev,
     tsfc,
@@ -157,10 +173,10 @@ def compute_planck_source(
         sfc_source_Jac (numpy.ndarray): Jacobian (derivative) of the surface Planck source with respect to surface temperature, shape (ncol, ngpt).
     """
 
-    _, ncol, nlay, nflav = jeta.shape
-    nPlanckTemp, nbnd = totplnk.shape
-    ntemp, neta, npres_e, ngpt = pfracin.shape
-    npres = npres_e - 1
+    # _, ncol, nlay, nflav = jeta.shape
+    # nPlanckTemp, nbnd = totplnk.shape
+    # ntemp, neta, npres_e, ngpt = pfracin.shape
+    # npres = npres_e - 1
 
     sfc_lay = nlay if top_at_1 else 1
 
@@ -211,8 +227,20 @@ def compute_planck_source(
     return sfc_src, lay_src, lev_src, sfc_src_jac
 
 
-@convert_xarray_args
 def compute_tau_absorption(
+    ncol,
+    nlay,
+    nbnd,
+    ngpt,
+    ngas,
+    nflav,
+    neta,
+    npres,
+    ntemp,
+    nminorlower,
+    nminorklower,
+    nminorupper,
+    nminorkupper,
     idx_h2o,
     gpoint_flavor,
     band_lims_gpt,
@@ -278,15 +306,7 @@ def compute_tau_absorption(
         np.ndarray): tau Absorption optical depth.
     """
 
-    ntemp, neta, npres_e, ngpt = kmajor.shape
-    npres = npres_e - 1
-    nbnd = band_lims_gpt.shape[1]
-    _, ncol, nlay, nflav = jeta.shape
-    ngas = col_gas.shape[2] - 1
-    nminorlower = minor_scales_with_density_lower.shape[0]
-    nminorupper = minor_scales_with_density_upper.shape[0]
-    nminorklower = kminor_lower.shape[2]
-    nminorkupper = kminor_upper.shape[2]
+    ngas = ngas - 1  # Fortran uses index 0 here
 
     # outputs
     tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")

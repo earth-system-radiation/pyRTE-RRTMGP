@@ -34,6 +34,9 @@ GAUSS_WTS: npt.NDArray[np.float64] = np.array(
 
 
 def lw_solver_noscat(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
     tau: npt.NDArray[np.float64],
     lay_source: npt.NDArray[np.float64],
     lev_source: npt.NDArray[np.float64],
@@ -87,13 +90,13 @@ def lw_solver_noscat(
             flux_dn: Downward fluxes (ncol, nlay+1, ngpt)
     """
 
-    ncol, nlay, ngpt = tau.shape
+    # ncol, nlay, ngpt = tau.shape
+    # n_quad_angs = nmus
 
     if len(sfc_emis.shape) == 1:
         sfc_emis = np.stack([sfc_emis] * ngpt).T
 
-    # default values
-    n_quad_angs = nmus
+
 
     if inc_flux is None:
         inc_flux = np.zeros(sfc_src.shape)

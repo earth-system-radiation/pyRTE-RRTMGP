@@ -145,7 +145,7 @@ class BaseGasOpticsAccessor:
             gas_values.append(values)
 
         gas_values = xr.concat(
-            gas_values, dim=pd.Index(gas_name_map.keys(), name="gas")
+            gas_values, dim=pd.Index(gas_name_map.keys(), name="gas"), coords='minimal'
         )
 
         col_dry = self.get_col_dry(
@@ -154,7 +154,7 @@ class BaseGasOpticsAccessor:
 
         gas_values = gas_values * col_dry
         gas_values = xr.concat(
-            [col_dry.expand_dims(gas=["dry_air"]), gas_values], dim="gas"
+            [col_dry.expand_dims(gas=["dry_air"]), gas_values], dim="gas", 
         )
 
         return gas_values
@@ -178,60 +178,96 @@ class BaseGasOpticsAccessor:
         site_dim = atmosphere.mapping.get_dim("site")
         layer_dim = atmosphere.mapping.get_dim("layer")
 
-        (jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress) = interpolation(
-            neta=self._dataset["mixing_fraction"].size,
-            flavor=self.flavors_sets.transpose("pair", "flavor"),
-            press_ref=self._dataset["press_ref"],
-            temp_ref=self._dataset["temp_ref"],
-            press_ref_trop=self._dataset["press_ref_trop"],
-            vmr_ref=self._dataset["vmr_ref"]
-            .sel(absorber_ext=gas_order)
-            .transpose("atmos_layer", "absorber_ext", "temperature"),
-            play=atmosphere["pres_layer"].transpose(site_dim, layer_dim),
-            tlay=atmosphere["temp_layer"].transpose(site_dim, layer_dim),
-            col_gas=gases_columns.sel(gas=gas_order).transpose(
-                site_dim, layer_dim, "gas"
-            ),
+        npres = self._dataset.sizes["pressure"]
+        ntemp = self._dataset.sizes["temperature"]
+        ngas = gases_columns["gas"].size
+        ncol = atmosphere[site_dim].size
+        nlay = atmosphere[layer_dim].size
+        nflav = self.flavors_sets["flavor"].size
+        neta = self._dataset["mixing_fraction"].size
+
+        jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress = xr.apply_ufunc(
+            interpolation,
+            ncol,  # ncol
+            nlay,  # nlay
+            ngas,  # ngas
+            nflav,  # nflav
+            neta,  # neta
+            npres,  # npres
+            ntemp,  # ntemp
+            self.flavors_sets.transpose("pair", "flavor"),  # flavor
+            self._dataset["press_ref"],  # press_ref
+            self._dataset["temp_ref"],  # temp_ref
+            self._dataset["press_ref_trop"],  # press_ref_trop (scalar)
+            self._dataset["vmr_ref"].sel(absorber_ext=gas_order),
+            atmosphere["pres_layer"],  # play
+            atmosphere["temp_layer"],  # tlay
+            gases_columns.sel(gas=gas_order),  # col_gas
+            input_core_dims=[
+                [],  # ncol
+                [],  # nlay
+                [],  # ngas
+                [],  # nflav
+                [],  # neta
+                [],  # npres
+                [],  # ntemp
+                ["pair", "flavor"],  # flavor
+                ["pressure"],  # press_ref
+                ["temperature"],  # temp_ref
+                [],  # press_ref_trop
+                ["atmos_layer", "absorber_ext", "temperature"],  # vmr_ref
+                [site_dim, layer_dim],  # play
+                [site_dim, layer_dim],  # tlay
+                [site_dim, layer_dim, "gas"],  # col_gas
+            ],
+            output_core_dims=[
+                [site_dim, layer_dim],  # jtemp
+                ["eta_interp", "press_interp", "temp_interp", site_dim, layer_dim, "flavor"],  # fmajor
+                ["eta_interp", "temp_interp", site_dim, layer_dim, "flavor"],  # fminor
+                ["temp_interp", site_dim, layer_dim, "flavor"],  # col_mix
+                [site_dim, layer_dim],  # tropo
+                ["pair", site_dim, layer_dim, "flavor"],  # jeta
+                [site_dim, layer_dim],  # jpress
+            ],
+            vectorize=True,
+            dask="allowed",
         )
 
-        # Create and return the dataset
-        return xr.Dataset(
-            data_vars={
-                "temperature_index": (["site", "layer"], jtemp),
-                "pressure_index": (["site", "layer"], jpress),
-                "tropopause_mask": (["site", "layer"], tropo),
-                "eta_index": (["pair", "site", "layer", "flavor"], jeta),
-                "column_mix": (["temp_interp", "site", "layer", "flavor"], col_mix),
-                "fmajor": (
-                    [
-                        "eta_interp",
-                        "pressure_interp",
-                        "temp_interp",
-                        "site",
-                        "layer",
-                        "flavor",
-                    ],
-                    fmajor,
-                ),
-                "fminor": (
-                    ["eta_interp", "temp_interp", "site", "layer", "flavor"],
-                    fminor,
-                ),
-                "gases_columns": (["gas", "site", "layer"], gases_columns.values),
-            },
-            coords={
-                "site": atmosphere[site_dim],
-                "layer": atmosphere[layer_dim],
-                "flavor": np.arange(fmajor.shape[-1]),
-                "eta_interp": ["lower", "upper"],
-                "pressure_interp": ["lower", "upper"],
-                "temp_interp": ["lower", "upper"],
-                "pair": [0, 1],
-                "gas": gases_columns.gas,
-            },
+        interpolation_results = xr.Dataset(
+            {
+                "temperature_index": jtemp,
+                "fmajor": fmajor,
+                "fminor": fminor,
+                "column_mix": col_mix,
+                "tropopause_mask": tropo,
+                "eta_index": jeta,
+                "pressure_index": jpress,
+                "gases_columns": gases_columns,
+            }
         )
+
+        return interpolation_results
 
     def tau_absorption(self, atmosphere, gas_interpolation_data):
+
+        site_dim = atmosphere.mapping.get_dim("site")
+        layer_dim = atmosphere.mapping.get_dim("layer")
+
+        ncol = atmosphere[site_dim].size
+        nlay = atmosphere[layer_dim].size
+        ntemp = self._dataset["temperature"].size
+        neta = self._dataset["mixing_fraction"].size
+        npres = self._dataset["press_ref"].size
+        nbnd = self._dataset["bnd"].size
+        ngpt = self._dataset["gpt"].size
+        ngas = gas_interpolation_data["gas"].size
+        nflav = self.flavors_sets["flavor"].size
+
+        nminorlower = self._dataset["minor_scales_with_density_lower"].size
+        nminorupper = self._dataset["minor_scales_with_density_upper"].size
+        nminorklower = self._dataset["contributors_lower"].size
+        nminorkupper = self._dataset["contributors_upper"].size
+
         minor_gases_lower = self.extract_names(self._dataset["minor_gases_lower"].data)
         minor_gases_upper = self.extract_names(self._dataset["minor_gases_upper"].data)
         # check if the index is correct
@@ -244,30 +280,21 @@ class BaseGasOpticsAccessor:
         idx_minor_scaling_lower = self.get_idx_minor(scaling_gas_lower)
         idx_minor_scaling_upper = self.get_idx_minor(scaling_gas_upper)
 
-        site_dim = atmosphere.mapping.get_dim("site")
-        layer_dim = atmosphere.mapping.get_dim("layer")
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         temp_layer_var = atmosphere.mapping.get_var("temp_layer")
 
-        tau_absorption = compute_tau_absorption(
+        tau_absorption = xr.apply_ufunc(
+            compute_tau_absorption,
+            ncol, nlay, nbnd, ngpt, ngas, nflav, neta, npres, ntemp,
+            nminorlower, nminorklower, nminorupper, nminorkupper,
             self._selected_gas_names_ext.index("h2o"),
-            self.gpoint_flavor.transpose("atmos_layer", "gpt"),
-            self._dataset["bnd_limits_gpt"].transpose("pair", "bnd"),
-            self._dataset["kmajor"].transpose(
-                "temperature", "mixing_fraction", "pressure_interp", "gpt"
-            ),
-            self._dataset["kminor_lower"].transpose(
-                "temperature", "mixing_fraction", "contributors_lower"
-            ),
-            self._dataset["kminor_upper"].transpose(
-                "temperature", "mixing_fraction", "contributors_upper"
-            ),
-            self._dataset["minor_limits_gpt_lower"].transpose(
-                "pair", "minor_absorber_intervals_lower"
-            ),
-            self._dataset["minor_limits_gpt_upper"].transpose(
-                "pair", "minor_absorber_intervals_upper"
-            ),
+            self.gpoint_flavor,
+            self._dataset["bnd_limits_gpt"],
+            self._dataset["kmajor"],
+            self._dataset["kminor_lower"],
+            self._dataset["kminor_upper"],
+            self._dataset["minor_limits_gpt_lower"],
+            self._dataset["minor_limits_gpt_upper"],
             self._dataset["minor_scales_with_density_lower"],
             self._dataset["minor_scales_with_density_upper"],
             self._dataset["scale_by_complement_lower"],
@@ -278,42 +305,55 @@ class BaseGasOpticsAccessor:
             idx_minor_scaling_upper,
             self._dataset["kminor_start_lower"],
             self._dataset["kminor_start_upper"],
-            gas_interpolation_data["tropopause_mask"].transpose("site", "layer"),
-            gas_interpolation_data["column_mix"].transpose(
-                "temp_interp", "site", "layer", "flavor"
-            ),
-            gas_interpolation_data["fmajor"].transpose(
-                "eta_interp",
-                "pressure_interp",
-                "temp_interp",
-                "site",
-                "layer",
-                "flavor",
-            ),
-            gas_interpolation_data["fminor"].transpose(
-                "eta_interp", "temp_interp", "site", "layer", "flavor"
-            ),
-            atmosphere[pres_layer_var].transpose(site_dim, layer_dim),
-            atmosphere[temp_layer_var].transpose(site_dim, layer_dim),
-            gas_interpolation_data["gases_columns"].transpose("site", "layer", "gas"),
-            gas_interpolation_data["eta_index"].transpose(
-                "pair", "site", "layer", "flavor"
-            ),
-            gas_interpolation_data["temperature_index"].transpose("site", "layer"),
-            gas_interpolation_data["pressure_index"].transpose("site", "layer"),
+            gas_interpolation_data["tropopause_mask"],
+            gas_interpolation_data["column_mix"],
+            gas_interpolation_data["fmajor"],
+            gas_interpolation_data["fminor"],
+            atmosphere[pres_layer_var],
+            atmosphere[temp_layer_var],
+            gas_interpolation_data["gases_columns"],
+            gas_interpolation_data["eta_index"],
+            gas_interpolation_data["temperature_index"],
+            gas_interpolation_data["pressure_index"],
+            input_core_dims=[
+                [], [], [], [], [], [], [], [], [], 
+                [], [], [], [],
+                [], # idx_h2o
+                ["atmos_layer", "gpt"],  # gpoint_flavor
+                ["pair", "bnd"],  # bnd_limits_gpt
+                ["temperature", "mixing_fraction", "pressure_interp", "gpt"],  # kmajor
+                ["temperature", "mixing_fraction", "contributors_lower"],  # kminor_lower
+                ["temperature", "mixing_fraction", "contributors_upper"],  # kminor_upper
+                ["pair", "minor_absorber_intervals_lower"],  # minor_limits_gpt_lower
+                ["pair", "minor_absorber_intervals_upper"],  # minor_limits_gpt_upper
+                ["minor_absorber_intervals_lower"],  # minor_scales_with_density_lower
+                ["minor_absorber_intervals_upper"],  # minor_scales_with_density_upper
+                ["minor_absorber_intervals_lower"],  # scale_by_complement_lower
+                ["minor_absorber_intervals_upper"],  # scale_by_complement_upper
+                ["minor_absorber_intervals_lower"], # idx_minor_lower
+                ["minor_absorber_intervals_upper"], # idx_minor_upper
+                ["minor_absorber_intervals_lower"], # idx_minor_scaling_lower
+                ["minor_absorber_intervals_upper"], # idx_minor_scaling_upper
+                ["minor_absorber_intervals_lower"], # kminor_start_lower
+                ["minor_absorber_intervals_upper"], # kminor_start_upper
+                ["site", "layer"],  # tropopause_mask
+                ["temp_interp", "site", "layer", "flavor"],  # column_mix
+                ["eta_interp", "press_interp", "temp_interp", "site", "layer", "flavor"],  # fmajor
+                ["eta_interp", "temp_interp", "site", "layer", "flavor"],  # fminor
+                [site_dim, layer_dim],  # pres_layer
+                [site_dim, layer_dim],  # temp_layer
+                ["site", "layer", "gas"],  # gases_columns
+                ["pair", "site", "layer", "flavor"],  # eta_index
+                ["site", "layer"],  # temperature_index
+                ["site", "layer"],  # pressure_index
+            ],
+            output_core_dims=[["site", "layer", "gpt"]],
+            vectorize=True,
+            dask="allowed",
         )
 
-        # Create xarray Dataset with the computed values
-        return xr.Dataset(
-            {
-                "tau": (["site", "layer", "gpt"], tau_absorption),
-            },
-            coords={
-                "site": atmosphere[site_dim],
-                "layer": atmosphere[layer_dim],
-                "gpt": self._dataset.gpt,
-            },
-        )
+        return tau_absorption.rename("tau").to_dataset()
+
 
     @property
     def gpoint_flavor(self) -> xr.DataArray:
@@ -469,10 +509,6 @@ class BaseGasOpticsAccessor:
         # Set mapping in accessor
         atmosphere.mapping.set_mapping(variable_mapping)
 
-        # Get actual variable names in dataset
-        pres_var = atmosphere.mapping.get_var("pres_layer")
-        layer_dim = atmosphere.mapping.get_dim("layer")
-
         # Modify pressure levels to avoid division by zero, runs inplace
         self._initialize_pressure_levels(atmosphere)
 
@@ -546,56 +582,69 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         # Check if the top layer is at the first level
         top_at_1 = atmosphere[layer_dim][0] < atmosphere[layer_dim][-1]
 
-        (
-            sfc_src,
-            lay_source,
-            lev_source,
-            sfc_src_jac,
-        ) = compute_planck_source(
-            tlay=atmosphere[temp_layer_var].transpose(site_dim, layer_dim),
-            tlev=atmosphere[temp_level_var].transpose(site_dim, level_dim),
-            tsfc=atmosphere[surface_temperature_var].transpose(site_dim),
-            top_at_1=top_at_1,
-            fmajor=gas_interpolation_data["fmajor"].transpose(
-                "eta_interp",
-                "pressure_interp",
-                "temp_interp",
-                "site",
-                "layer",
-                "flavor",
-            ),
-            jeta=gas_interpolation_data["eta_index"].transpose(
-                "pair", "site", "layer", "flavor"
-            ),
-            tropo=gas_interpolation_data["tropopause_mask"].transpose("site", "layer"),
-            jtemp=gas_interpolation_data["temperature_index"].transpose(
-                "site", "layer"
-            ),
-            jpress=gas_interpolation_data["pressure_index"].transpose("site", "layer"),
-            band_lims_gpt=self._dataset["bnd_limits_gpt"].transpose("pair", "bnd"),
-            pfracin=self._dataset["plank_fraction"].transpose(
-                "temperature", "mixing_fraction", "pressure_interp", "gpt"
-            ),
-            temp_ref_min=self._dataset["temp_ref"].min(),
-            temp_ref_max=self._dataset["temp_ref"].max(),
-            totplnk=self._dataset["totplnk"].transpose("temperature_Planck", "bnd"),
-            gpoint_flavor=self.gpoint_flavor.transpose("atmos_layer", "gpt"),
+        ncol = atmosphere.sizes["site"]
+        nlay = atmosphere.sizes["layer"]
+        nbnd = self._dataset.sizes["bnd"]
+        ngpt = self._dataset.sizes["gpt"]
+        nflav = self.flavors_sets.sizes["flavor"]
+        neta = self._dataset.sizes["mixing_fraction"]
+        npres = self._dataset.sizes["pressure"]
+        ntemp = self._dataset.sizes["temperature"]
+        nPlanckTemp = self._dataset.sizes["temperature_Planck"]
+
+        sfc_src, lay_source, lev_source, sfc_src_jac = xr.apply_ufunc(
+            compute_planck_source,
+            ncol, nlay, nbnd, ngpt, nflav, neta, npres, ntemp, nPlanckTemp,
+            atmosphere[temp_layer_var],
+            atmosphere[temp_level_var],
+            atmosphere[surface_temperature_var],
+            top_at_1,
+            gas_interpolation_data["fmajor"],
+            gas_interpolation_data["eta_index"],
+            gas_interpolation_data["tropopause_mask"],
+            gas_interpolation_data["temperature_index"],
+            gas_interpolation_data["pressure_index"],
+            self._dataset["bnd_limits_gpt"],
+            self._dataset["plank_fraction"],
+            self._dataset["temp_ref"].min(),
+            self._dataset["temp_ref"].max(),
+            self._dataset["totplnk"],
+            self.gpoint_flavor,
+            input_core_dims=[
+                [], [], [], [], [], [], [], [], [],  # scalar dimensions
+                [site_dim, layer_dim],  # tlay
+                [site_dim, level_dim],  # tlev
+                [site_dim],  # tsfc
+                [],  # top_at_1
+                ["eta_interp", "press_interp", "temp_interp", "site", "layer", "flavor"],  # fmajor
+                ["pair", "site", "layer", "flavor"],  # jeta
+                ["site", "layer"],  # tropo
+                ["site", "layer"],  # jtemp
+                ["site", "layer"],  # jpress
+                ["pair", "bnd"],  # band_lims_gpt
+                ["temperature", "mixing_fraction", "pressure_interp", "gpt"],  # pfracin
+                [],  # temp_ref_min
+                [],  # temp_ref_max
+                ["temperature_Planck", "bnd"],  # totplnk
+                ["atmos_layer", "gpt"],  # gpoint_flavor
+            ],
+            output_core_dims=[
+                ["site", "gpt"],  # sfc_src
+                ["site", "layer", "gpt"],  # lay_source
+                ["site", "level", "gpt"],  # lev_source
+                ["site", "gpt"],  # sfc_src_jac
+            ],
+            vectorize=True,
+            dask="allowed",
         )
 
-        # Create xarray Dataset with the computed values
         return xr.Dataset(
             {
-                "surface_source": (["site", "gpt"], sfc_src),
-                "layer_source": (["site", "layer", "gpt"], lay_source),
-                "level_source": (["site", "level", "gpt"], lev_source),
-                "surface_source_jacobian": (["site", "gpt"], sfc_src_jac),
-            },
-            coords={
-                "site": atmosphere[site_dim],
-                "layer": atmosphere[layer_dim],
-                "level": atmosphere[level_dim],
-                "gpt": self._dataset.gpt,
-            },
+                "surface_source": sfc_src,
+                "layer_source": lay_source,
+                "level_source": lev_source,
+                "surface_source_jacobian": sfc_src_jac,
+            }
         )
 
 
