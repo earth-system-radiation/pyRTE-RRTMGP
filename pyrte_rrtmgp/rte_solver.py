@@ -12,7 +12,9 @@ from pyrte_rrtmgp.utils import logger
 
 
 def rte_solve(
-    problem_ds: xr.Dataset, add_to_input: bool = True, spectrally_resolved: bool | None = None
+    problem_ds: xr.Dataset,
+    add_to_input: bool = True,
+    spectrally_resolved: bool | None = None,
 ):
     if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
         if spectrally_resolved is None:

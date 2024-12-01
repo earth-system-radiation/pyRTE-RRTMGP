@@ -7,7 +7,6 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp import data_validation
-from pyrte_rrtmgp.data_validation import AtmosphericMapping, GasMapping, create_default_mapping
 from pyrte_rrtmgp.constants import (
     AVOGAD,
     HELMERT1,
@@ -17,6 +16,11 @@ from pyrte_rrtmgp.constants import (
     SOLAR_CONSTANTS,
 )
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
+from pyrte_rrtmgp.data_validation import (
+    AtmosphericMapping,
+    GasMapping,
+    create_default_mapping,
+)
 from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_planck_source,
     compute_tau_absorption,
@@ -88,14 +92,13 @@ class BaseGasOpticsAccessor:
         if selected_gases is not None:
             # Filter gas names to only include those that exist in the dataset
             available_gases = tuple(g for g in selected_gases if g in self._gas_names)
-            
+
             # Log warning for any gases that weren't found
             missing_gases = set(selected_gases) - set(available_gases)
             for gas in missing_gases:
                 logger.warning(f"Gas {gas} not found in gas optics file")
 
             self._gas_names = available_gases
-
 
         if "h2o" not in self._gas_names:
             raise ValueError(
@@ -186,7 +189,9 @@ class BaseGasOpticsAccessor:
             .transpose("atmos_layer", "absorber_ext", "temperature"),
             play=atmosphere["pres_layer"].transpose(site_dim, layer_dim),
             tlay=atmosphere["temp_layer"].transpose(site_dim, layer_dim),
-            col_gas=gases_columns.sel(gas=gas_order).transpose(site_dim, layer_dim, "gas"),
+            col_gas=gases_columns.sel(gas=gas_order).transpose(
+                site_dim, layer_dim, "gas"
+            ),
         )
 
         # Create and return the dataset
@@ -243,7 +248,6 @@ class BaseGasOpticsAccessor:
         layer_dim = atmosphere.mapping.get_dim("layer")
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         temp_layer_var = atmosphere.mapping.get_var("temp_layer")
-
 
         tau_absorption = compute_tau_absorption(
             self._selected_gas_names_ext.index("h2o"),
@@ -457,7 +461,6 @@ class BaseGasOpticsAccessor:
         variable_mapping: AtmosphericMapping | None = None,
         add_to_input: bool = True,
     ):
-        
         # Create and validate gas mapping
         gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
 
@@ -490,7 +493,9 @@ class BaseGasOpticsAccessor:
         elif problem_type == "two-stream" and not self.is_internal:
             problem_type = ProblemTypes.SW_2STREAM.value
         else:
-            raise ValueError(f"Invalid problem type: {problem_type} for {'LW' if self.is_internal else 'SW'} radiation")
+            raise ValueError(
+                f"Invalid problem type: {problem_type} for {'LW' if self.is_internal else 'SW'} radiation"
+            )
 
         if add_to_input:
             atmosphere.update(gas_optics)
@@ -539,9 +544,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         surface_temperature_var = atmosphere.mapping.get_var("surface_temperature")
 
         # Check if the top layer is at the first level
-        top_at_1 = (
-            atmosphere[layer_dim][0] < atmosphere[layer_dim][-1]
-        )
+        top_at_1 = atmosphere[layer_dim][0] < atmosphere[layer_dim][-1]
 
         (
             sfc_src,

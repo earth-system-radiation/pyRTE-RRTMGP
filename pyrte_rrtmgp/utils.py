@@ -1,6 +1,7 @@
+import logging
+
 import numpy as np
 import xarray as xr
-import logging
 
 
 def get_usecols(solar_zenith_angle):
@@ -59,6 +60,7 @@ def convert_xarray_args(func):
         return func(*new_args, **kwargs)
 
     return wrapper
+
 
 def logger():
     """Get the logger"""

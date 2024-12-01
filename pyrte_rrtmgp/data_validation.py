@@ -1,28 +1,30 @@
 from dataclasses import asdict, dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 
 import xarray as xr
-from dataclasses import dataclass
-from typing import Dict, Set
+
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
+
 
 @dataclass
 class GasMapping:
     _mapping: Dict[str, str]
     _required_gases: Set[str]
-    
+
     @classmethod
-    def create(cls, gas_names: Set[str], custom_mapping: Dict[str, str] | None = None) -> "GasMapping":
+    def create(
+        cls, gas_names: Set[str], custom_mapping: Dict[str, str] | None = None
+    ) -> "GasMapping":
         mapping = DEFAULT_GAS_MAPPING.copy()
         if custom_mapping:
             mapping.update(custom_mapping)
-            
+
         return cls(mapping, gas_names)
-    
+
     def validate(self) -> Dict[str, str]:
         """Validates and returns the final mapping."""
         validated_mapping = {}
-        
+
         for gas in self._required_gases:
             if gas not in self._mapping:
                 if gas not in DEFAULT_GAS_MAPPING:
@@ -30,7 +32,7 @@ class GasMapping:
                 validated_mapping[gas] = DEFAULT_GAS_MAPPING[gas]
             else:
                 validated_mapping[gas] = self._mapping[gas]
-                
+
         return validated_mapping
 
 
