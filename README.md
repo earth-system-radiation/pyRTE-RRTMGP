@@ -107,10 +107,12 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 <!-- start-installation-section -->
 
 pyRTE-RRTMGP is available as a [conda package for Linux (x86_64)](https://anaconda.org/conda-forge/pyrte_rrtmgp). You can install it from the `conda-forge` channel:
-    
+
 ```bash
 conda install -c conda-forge pyrte_rrtmgp
 ```
+
+This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
 
 After installing the package, you can import it in your Python code:
 
