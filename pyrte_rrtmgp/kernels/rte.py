@@ -16,7 +16,7 @@ def lw_solver_noscat(
     nlay: int,
     ngpt: int,
     ds: npt.NDArray[np.float64],
-    weights: npt.NDArray[np.float64], 
+    weights: npt.NDArray[np.float64],
     tau: npt.NDArray[np.float64],
     ssa: npt.NDArray[np.float64],
     g: npt.NDArray[np.float64],

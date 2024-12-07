@@ -18,6 +18,7 @@ class GasMapping:
         _mapping: Dictionary mapping standard gas names to dataset-specific names
         _required_gases: Set of required gas names that must be present
     """
+
     _mapping: Dict[str, str]
     _required_gases: Set[str]
 
@@ -70,6 +71,7 @@ class DatasetMapping:
         dim_mapping: Dictionary mapping standard dimension names to dataset-specific names
         var_mapping: Dictionary mapping standard variable names to dataset-specific names
     """
+
     dim_mapping: Dict[str, str]
     var_mapping: Dict[str, str]
 

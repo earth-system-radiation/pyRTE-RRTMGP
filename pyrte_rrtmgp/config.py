@@ -10,7 +10,7 @@ from typing import Dict, Final
 DEFAULT_GAS_MAPPING: Final[Dict[str, str]] = {
     "h2o": "water_vapor",
     "co2": "carbon_dioxide_GM",
-    "o3": "ozone", 
+    "o3": "ozone",
     "n2o": "nitrous_oxide_GM",
     "co": "carbon_monoxide_GM",
     "ch4": "methane_GM",
@@ -32,7 +32,7 @@ DEFAULT_GAS_MAPPING: Final[Dict[str, str]] = {
 # Mapping of standard dimension names to dataset-specific names
 DEFAULT_DIM_MAPPING: Final[Dict[str, str]] = {
     "site": "site",
-    "layer": "layer", 
+    "layer": "layer",
     "level": "level",
 }
 

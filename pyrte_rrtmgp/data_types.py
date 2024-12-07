@@ -3,7 +3,7 @@ from enum import Enum, StrEnum
 
 class GasOpticsFiles(StrEnum):
     """Enumeration of default RRTMGP gas optics data files.
-    
+
     This enum defines the available pre-configured gas optics data files that can be used
     with RRTMGP. The files contain absorption coefficients and other optical properties
     needed for radiative transfer calculations.
@@ -23,7 +23,7 @@ class GasOpticsFiles(StrEnum):
 
 class ProblemTypes(StrEnum):
     """Enumeration of available radiation calculation types.
-    
+
     This enum defines the different types of radiation calculations that can be performed,
     including both longwave and shortwave calculations with different solution methods.
 
@@ -35,6 +35,6 @@ class ProblemTypes(StrEnum):
     """
 
     LW_ABSORPTION = "Longwave absorption"
-    LW_2STREAM = "Longwave 2-stream" 
+    LW_2STREAM = "Longwave 2-stream"
     SW_DIRECT = "Shortwave direct"
     SW_2STREAM = "Shortwave 2-stream"

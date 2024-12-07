@@ -6,6 +6,7 @@ masses, and Gaussian quadrature weights and points.
 """
 
 from typing import Dict, Final
+
 import numpy as np
 from numpy.typing import NDArray
 
