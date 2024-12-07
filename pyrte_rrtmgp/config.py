@@ -1,9 +1,16 @@
-from typing import Dict
+"""Default mappings for gas names, dimensions and variables used in RRTMGP.
 
-DEFAULT_GAS_MAPPING: Dict[str, str] = {
+This module contains dictionaries that map standard names to dataset-specific names
+for gases, dimensions and variables used in radiative transfer calculations.
+"""
+
+from typing import Dict, Final
+
+# Mapping of standard gas names to RRTMGP-specific names
+DEFAULT_GAS_MAPPING: Final[Dict[str, str]] = {
     "h2o": "water_vapor",
     "co2": "carbon_dioxide_GM",
-    "o3": "ozone",
+    "o3": "ozone", 
     "n2o": "nitrous_oxide_GM",
     "co": "carbon_monoxide_GM",
     "ch4": "methane_GM",
@@ -20,4 +27,26 @@ DEFAULT_GAS_MAPPING: Dict[str, str] = {
     "hfc134a": "hfc134a_GM",
     "cf4": "cf4_GM",
     "no2": "no2",
+}
+
+# Mapping of standard dimension names to dataset-specific names
+DEFAULT_DIM_MAPPING: Final[Dict[str, str]] = {
+    "site": "site",
+    "layer": "layer", 
+    "level": "level",
+}
+
+# Mapping of standard variable names to dataset-specific names
+DEFAULT_VAR_MAPPING: Final[Dict[str, str]] = {
+    "pres_layer": "pres_layer",
+    "pres_level": "pres_level",
+    "temp_layer": "temp_layer",
+    "temp_level": "temp_level",
+    "surface_temperature": "surface_temperature",
+    "solar_zenith_angle": "solar_zenith_angle",
+    "surface_albedo": "surface_albedo",
+    "surface_albedo_dir": "surface_albedo_dir",
+    "surface_albedo_dif": "surface_albedo_dif",
+    "surface_emissivity": "surface_emissivity",
+    "surface_emissivity_jacobian": "surface_emissivity_jacobian",
 }

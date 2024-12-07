@@ -9,7 +9,6 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
     rrtmgp_compute_tau_rayleigh,
     rrtmgp_interpolation,
 )
-from pyrte_rrtmgp.utils import convert_xarray_args
 
 
 def interpolation(
@@ -20,51 +19,54 @@ def interpolation(
     neta: int,
     npres: int,
     ntemp: int,
-    flavor: npt.NDArray,
-    press_ref: npt.NDArray,
-    temp_ref: npt.NDArray,
+    flavor: npt.NDArray[np.int32],
+    press_ref: npt.NDArray[np.float64],
+    temp_ref: npt.NDArray[np.float64],
     press_ref_trop: float,
-    vmr_ref: npt.NDArray,
-    play: npt.NDArray,
-    tlay: npt.NDArray,
-    col_gas: npt.NDArray,
+    vmr_ref: npt.NDArray[np.float64],
+    play: npt.NDArray[np.float64],
+    tlay: npt.NDArray[np.float64],
+    col_gas: npt.NDArray[np.float64],
 ) -> Tuple[
-    npt.NDArray,
-    npt.NDArray,
-    npt.NDArray,
-    npt.NDArray,
-    npt.NDArray,
-    npt.NDArray,
-    npt.NDArray,
+    npt.NDArray[np.int32],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.bool_],
+    npt.NDArray[np.int32],
+    npt.NDArray[np.int32],
 ]:
-    """Interpolate the RRTMGP coefficients.
+    """Interpolate the RRTMGP coefficients to the current atmospheric state.
+
+    This function performs interpolation of gas optics coefficients based on the current
+    atmospheric temperature and pressure profiles.
 
     Args:
-        ncol (int): Number of atmospheric columns.
-        nlay (int): Number of atmospheric layers.
-        ngas (int): Number of gases.
-        nflav (int): Number of gas flavors.
-        neta (int): Number of mixing_fraction.
-        npres (int): Number of reference pressure grid points.
-        ntemp (int): Number of reference temperature grid points.
-        flavor (np.ndarray): Index into vmr_ref of major gases for each flavor.
-        press_ref (np.ndarray): Reference pressure grid.
-        temp_ref (np.ndarray): Reference temperature grid.
-        press_ref_trop (float): Reference pressure at the tropopause.
-        vmr_ref (np.ndarray): Reference volume mixing ratio.
-        play (np.ndarray): Pressure layers.
-        tlay (np.ndarray): Temperature layers.
-        col_gas (np.ndarray): Gas concentrations.
+        ncol: Number of atmospheric columns
+        nlay: Number of atmospheric layers
+        ngas: Number of gases
+        nflav: Number of gas flavors
+        neta: Number of mixing fraction points
+        npres: Number of reference pressure grid points
+        ntemp: Number of reference temperature grid points
+        flavor: Index into vmr_ref of major gases for each flavor with shape (nflav,)
+        press_ref: Reference pressure grid with shape (npres,)
+        temp_ref: Reference temperature grid with shape (ntemp,)
+        press_ref_trop: Reference pressure at the tropopause
+        vmr_ref: Reference volume mixing ratios with shape (ngas,)
+        play: Layer pressures with shape (ncol, nlay)
+        tlay: Layer temperatures with shape (ncol, nlay)
+        col_gas: Gas concentrations with shape (ncol, nlay, ngas)
 
     Returns:
-        Tuple: A tuple containing the following arrays:
-            - jtemp (np.ndarray): Temperature interpolation index.
-            - fmajor (np.ndarray): Major gas interpolation fraction.
-            - fminor (np.ndarray): Minor gas interpolation fraction.
-            - col_mix (np.ndarray): Mixing fractions.
-            - tropo (np.ndarray): Use lower (or upper) atmosphere tables.
-            - jeta (np.ndarray): Index for binary species interpolation.
-            - jpress (np.ndarray): Pressure interpolation index.
+        Tuple containing:
+            - jtemp: Temperature interpolation indices with shape (ncol, nlay)
+            - fmajor: Major gas interpolation fractions with shape (2, 2, 2, ncol, nlay, nflav)
+            - fminor: Minor gas interpolation fractions with shape (2, 2, ncol, nlay, nflav)
+            - col_mix: Mixing fractions with shape (2, ncol, nlay, nflav)
+            - tropo: Boolean mask for troposphere with shape (ncol, nlay)
+            - jeta: Binary species interpolation indices with shape (2, ncol, nlay, nflav)
+            - jpress: Pressure interpolation indices with shape (ncol, nlay)
     """
     press_ref_log = np.log(press_ref)
     press_ref_log_delta = (press_ref_log.min() - press_ref_log.max()) / (
@@ -77,7 +79,7 @@ def interpolation(
 
     ngas = ngas - 1  # Fortran uses index 0 here
 
-    # outputs
+    # Initialize output arrays
     jtemp = np.ndarray([ncol, nlay], dtype=np.int32, order="F")
     fmajor = np.ndarray([2, 2, 2, ncol, nlay, nflav], dtype=np.float64, order="F")
     fminor = np.ndarray([2, 2, ncol, nlay, nflav], dtype=np.float64, order="F")
@@ -120,71 +122,80 @@ def interpolation(
     return jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress
 
 
-@convert_xarray_args
 def compute_planck_source(
-    ncol,
-    nlay,
-    nbnd,
-    ngpt,
-    nflav,
-    neta,
-    npres,
-    ntemp,
-    nPlanckTemp,
-    tlay,
-    tlev,
-    tsfc,
-    top_at_1,
-    fmajor,
-    jeta,
-    tropo,
-    jtemp,
-    jpress,
-    band_lims_gpt,
-    pfracin,
-    temp_ref_min,
-    temp_ref_max,
-    totplnk,
-    gpoint_flavor,
-):
-    """Compute the Planck source function for a radiative transfer calculation.
+    ncol: int,
+    nlay: int,
+    nbnd: int,
+    ngpt: int,
+    nflav: int,
+    neta: int,
+    npres: int,
+    ntemp: int,
+    nPlanckTemp: int,
+    tlay: npt.NDArray[np.float64],
+    tlev: npt.NDArray[np.float64],
+    tsfc: npt.NDArray[np.float64],
+    top_at_1: bool,
+    fmajor: npt.NDArray[np.float64],
+    jeta: npt.NDArray[np.int32],
+    tropo: npt.NDArray[np.bool_],
+    jtemp: npt.NDArray[np.int32],
+    jpress: npt.NDArray[np.int32],
+    band_lims_gpt: npt.NDArray[np.int32],
+    pfracin: npt.NDArray[np.float64],
+    temp_ref_min: float,
+    temp_ref_max: float,
+    totplnk: npt.NDArray[np.float64],
+    gpoint_flavor: npt.NDArray[np.int32],
+) -> Tuple[
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+    npt.NDArray[np.float64],
+]:
+    """Compute the Planck source function for radiative transfer calculations.
+
+    This function calculates the Planck blackbody emission source terms needed for
+    longwave radiative transfer calculations.
 
     Args:
-        tlay (numpy.ndarray): Temperature at layer centers (K), shape (ncol, nlay).
-        tlev (numpy.ndarray): Temperature at layer interfaces (K), shape (ncol, nlay+1).
-        tsfc (numpy.ndarray): Surface temperature, shape (ncol,).
-        top_at_1 (bool): Flag indicating if the top layer is at index 0.
-        sfc_lay (int): Index of the surface layer.
-        fmajor (numpy.ndarray): Interpolation weights for major gases, shape (2, 2, 2, ncol, nlay, nflav).
-        jeta (numpy.ndarray): Interpolation indexes in eta, shape (2, ncol, nlay, nflav).
-        tropo (numpy.ndarray): Use upper- or lower-atmospheric tables, shape (ncol, nlay).
-        jtemp (numpy.ndarray): Interpolation indexes in temperature, shape (ncol, nlay).
-        jpress (numpy.ndarray): Interpolation indexes in pressure, shape (ncol, nlay).
-        band_lims_gpt (numpy.ndarray): Start and end g-point for each band, shape (2, nbnd).
-        pfracin (numpy.ndarray): Fraction of the Planck function in each g-point, shape (ntemp, neta, npres+1, ngpt).
-        temp_ref_min (float): Minimum reference temperature for Planck function interpolation.
-        totplnk (numpy.ndarray): Total Planck function by band at each temperature, shape (nPlanckTemp, nbnd).
-        gpoint_flavor (numpy.ndarray): Major gas flavor (pair) by upper/lower, g-point, shape (2, ngpt).
+        ncol: Number of atmospheric columns
+        nlay: Number of atmospheric layers
+        nbnd: Number of spectral bands
+        ngpt: Number of g-points
+        nflav: Number of gas flavors
+        neta: Number of eta points
+        npres: Number of pressure points
+        ntemp: Number of temperature points
+        nPlanckTemp: Number of temperatures for Planck function
+        tlay: Layer temperatures with shape (ncol, nlay)
+        tlev: Level temperatures with shape (ncol, nlay+1)
+        tsfc: Surface temperatures with shape (ncol,)
+        top_at_1: Whether the top of the atmosphere is at index 1
+        fmajor: Major gas interpolation weights with shape (2, 2, 2, ncol, nlay, nflav)
+        jeta: Eta interpolation indices with shape (2, ncol, nlay, nflav)
+        tropo: Troposphere mask with shape (ncol, nlay)
+        jtemp: Temperature interpolation indices with shape (ncol, nlay)
+        jpress: Pressure interpolation indices with shape (ncol, nlay)
+        band_lims_gpt: Band limits in g-point space with shape (2, nbnd)
+        pfracin: Planck fractions with shape (ntemp, neta, npres+1, ngpt)
+        temp_ref_min: Minimum reference temperature
+        temp_ref_max: Maximum reference temperature
+        totplnk: Total Planck function by band with shape (nPlanckTemp, nbnd)
+        gpoint_flavor: G-point flavors with shape (2, ngpt)
 
     Returns:
-        sfc_src (numpy.ndarray): Planck emission from the surface, shape (ncol, ngpt).
-        lay_src (numpy.ndarray): Planck emission from layer centers, shape (ncol, nlay, ngpt).
-        lev_src (numpy.ndarray): Planck emission from layer boundaries, shape (ncol, nlay+1, ngpt).
-        sfc_source_Jac (numpy.ndarray): Jacobian (derivative) of the surface Planck source with respect to surface temperature, shape (ncol, ngpt).
+        Tuple containing:
+            - sfc_src: Surface emission with shape (ncol, ngpt)
+            - lay_src: Layer emission with shape (ncol, nlay, ngpt)
+            - lev_src: Level emission with shape (ncol, nlay+1, ngpt)
+            - sfc_src_jac: Surface emission Jacobian with shape (ncol, ngpt)
     """
-
-    # _, ncol, nlay, nflav = jeta.shape
-    # nPlanckTemp, nbnd = totplnk.shape
-    # ntemp, neta, npres_e, ngpt = pfracin.shape
-    # npres = npres_e - 1
-
     sfc_lay = nlay if top_at_1 else 1
-
     gpoint_bands = []
-
     totplnk_delta = (temp_ref_max - temp_ref_min) / (nPlanckTemp - 1)
 
-    # outputs
+    # Initialize output arrays
     sfc_src = np.ndarray((ncol, ngpt), dtype=np.float64, order="F")
     lay_src = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order="F")
     lev_src = np.ndarray((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
@@ -228,87 +239,102 @@ def compute_planck_source(
 
 
 def compute_tau_absorption(
-    ncol,
-    nlay,
-    nbnd,
-    ngpt,
-    ngas,
-    nflav,
-    neta,
-    npres,
-    ntemp,
-    nminorlower,
-    nminorklower,
-    nminorupper,
-    nminorkupper,
-    idx_h2o,
-    gpoint_flavor,
-    band_lims_gpt,
-    kmajor,
-    kminor_lower,
-    kminor_upper,
-    minor_limits_gpt_lower,
-    minor_limits_gpt_upper,
-    minor_scales_with_density_lower,
-    minor_scales_with_density_upper,
-    scale_by_complement_lower,
-    scale_by_complement_upper,
-    idx_minor_lower,
-    idx_minor_upper,
-    idx_minor_scaling_lower,
-    idx_minor_scaling_upper,
-    kminor_start_lower,
-    kminor_start_upper,
-    tropo,
-    col_mix,
-    fmajor,
-    fminor,
-    play,
-    tlay,
-    col_gas,
-    jeta,
-    jtemp,
-    jpress,
-):
-    """Compute the absorption optical depth for a set of atmospheric profiles.
+    ncol: int,
+    nlay: int,
+    nbnd: int,
+    ngpt: int,
+    ngas: int,
+    nflav: int,
+    neta: int,
+    npres: int,
+    ntemp: int,
+    nminorlower: int,
+    nminorklower: int,
+    nminorupper: int,
+    nminorkupper: int,
+    idx_h2o: int,
+    gpoint_flavor: npt.NDArray[np.int32],
+    band_lims_gpt: npt.NDArray[np.int32],
+    kmajor: npt.NDArray[np.float64],
+    kminor_lower: npt.NDArray[np.float64],
+    kminor_upper: npt.NDArray[np.float64],
+    minor_limits_gpt_lower: npt.NDArray[np.int32],
+    minor_limits_gpt_upper: npt.NDArray[np.int32],
+    minor_scales_with_density_lower: npt.NDArray[np.bool_],
+    minor_scales_with_density_upper: npt.NDArray[np.bool_],
+    scale_by_complement_lower: npt.NDArray[np.bool_],
+    scale_by_complement_upper: npt.NDArray[np.bool_],
+    idx_minor_lower: npt.NDArray[np.int32],
+    idx_minor_upper: npt.NDArray[np.int32],
+    idx_minor_scaling_lower: npt.NDArray[np.int32],
+    idx_minor_scaling_upper: npt.NDArray[np.int32],
+    kminor_start_lower: npt.NDArray[np.int32],
+    kminor_start_upper: npt.NDArray[np.int32],
+    tropo: npt.NDArray[np.bool_],
+    col_mix: npt.NDArray[np.float64],
+    fmajor: npt.NDArray[np.float64],
+    fminor: npt.NDArray[np.float64],
+    play: npt.NDArray[np.float64],
+    tlay: npt.NDArray[np.float64],
+    col_gas: npt.NDArray[np.float64],
+    jeta: npt.NDArray[np.int32],
+    jtemp: npt.NDArray[np.int32],
+    jpress: npt.NDArray[np.int32],
+) -> npt.NDArray[np.float64]:
+    """Compute the absorption optical depth for atmospheric profiles.
+
+    This function calculates the total absorption optical depth by combining contributions
+    from major and minor gas species in both the upper and lower atmosphere.
 
     Args:
-        idx_h2o (int): Index of the water vapor gas species.
-        gpoint_flavor (np.ndarray): Spectral g-point flavor indices.
-        band_lims_gpt (np.ndarray): Spectral band limits in g-point space.
-        kmajor (np.ndarray): Major gas absorption coefficients.
-        kminor_lower (np.ndarray): Minor gas absorption coefficients for the lower atmosphere.
-        kminor_upper (np.ndarray): Minor gas absorption coefficients for the upper atmosphere.
-        minor_limits_gpt_lower (np.ndarray): Spectral g-point limits for minor contributors in the lower atmosphere.
-        minor_limits_gpt_upper (np.ndarray): Spectral g-point limits for minor contributors in the upper atmosphere.
-        minor_scales_with_density_lower (np.ndarray): Flags indicating if minor contributors in the lower atmosphere scale with density.
-        minor_scales_with_density_upper (np.ndarray): Flags indicating if minor contributors in the upper atmosphere scale with density.
-        scale_by_complement_lower (np.ndarray): Flags indicating if minor contributors in the lower atmosphere should be scaled by the complement.
-        scale_by_complement_upper (np.ndarray): Flags indicating if minor contributors in the upper atmosphere should be scaled by the complement.
-        idx_minor_lower (np.ndarray): Indices of minor contributors in the lower atmosphere.
-        idx_minor_upper (np.ndarray): Indices of minor contributors in the upper atmosphere.
-        idx_minor_scaling_lower (np.ndarray): Indices of minor contributors in the lower atmosphere that require scaling.
-        idx_minor_scaling_upper (np.ndarray): Indices of minor contributors in the upper atmosphere that require scaling.
-        kminor_start_lower (np.ndarray): Starting indices of minor absorption coefficients in the lower atmosphere.
-        kminor_start_upper (np.ndarray): Starting indices of minor absorption coefficients in the upper atmosphere.
-        tropo (np.ndarray): Flags indicating if a layer is in the troposphere.
-        col_mix (np.ndarray): Column-dependent gas mixing ratios.
-        fmajor (np.ndarray): Major gas absorption coefficient scaling factors.
-        fminor (np.ndarray): Minor gas absorption coefficient scaling factors.
-        play (np.ndarray): Pressure in each layer.
-        tlay (np.ndarray): Temperature in each layer.
-        col_gas (np.ndarray): Column-dependent gas concentrations.
-        jeta (np.ndarray): Indices of temperature/pressure levels.
-        jtemp (np.ndarray): Indices of temperature levels.
-        jpress (np.ndarray): Indices of pressure levels.
+        ncol: Number of atmospheric columns
+        nlay: Number of atmospheric layers
+        nbnd: Number of spectral bands
+        ngpt: Number of g-points
+        ngas: Number of gases
+        nflav: Number of gas flavors
+        neta: Number of eta points
+        npres: Number of pressure points
+        ntemp: Number of temperature points
+        nminorlower: Number of minor species in lower atmosphere
+        nminorklower: Number of minor absorption coefficients in lower atmosphere
+        nminorupper: Number of minor species in upper atmosphere
+        nminorkupper: Number of minor absorption coefficients in upper atmosphere
+        idx_h2o: Index of water vapor
+        gpoint_flavor: G-point flavors with shape (2, ngpt)
+        band_lims_gpt: Band limits in g-point space with shape (2, nbnd)
+        kmajor: Major gas absorption coefficients
+        kminor_lower: Minor gas absorption coefficients for lower atmosphere
+        kminor_upper: Minor gas absorption coefficients for upper atmosphere
+        minor_limits_gpt_lower: G-point limits for minor gases in lower atmosphere
+        minor_limits_gpt_upper: G-point limits for minor gases in upper atmosphere
+        minor_scales_with_density_lower: Density scaling flags for lower atmosphere
+        minor_scales_with_density_upper: Density scaling flags for upper atmosphere
+        scale_by_complement_lower: Complement scaling flags for lower atmosphere
+        scale_by_complement_upper: Complement scaling flags for upper atmosphere
+        idx_minor_lower: Minor gas indices for lower atmosphere
+        idx_minor_upper: Minor gas indices for upper atmosphere
+        idx_minor_scaling_lower: Minor gas scaling indices for lower atmosphere
+        idx_minor_scaling_upper: Minor gas scaling indices for upper atmosphere
+        kminor_start_lower: Starting indices for minor gases in lower atmosphere
+        kminor_start_upper: Starting indices for minor gases in upper atmosphere
+        tropo: Troposphere mask with shape (ncol, nlay)
+        col_mix: Gas mixing ratios with shape (2, ncol, nlay, nflav)
+        fmajor: Major gas interpolation weights
+        fminor: Minor gas interpolation weights
+        play: Layer pressures with shape (ncol, nlay)
+        tlay: Layer temperatures with shape (ncol, nlay)
+        col_gas: Gas concentrations with shape (ncol, nlay, ngas)
+        jeta: Eta interpolation indices
+        jtemp: Temperature interpolation indices
+        jpress: Pressure interpolation indices
 
     Returns:
-        np.ndarray): tau Absorption optical depth.
+        Absorption optical depth with shape (ncol, nlay, ngpt)
     """
-
     ngas = ngas - 1  # Fortran uses index 0 here
 
-    # outputs
+    # Initialize output array
     tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
     args = [
@@ -361,46 +387,54 @@ def compute_tau_absorption(
     return tau
 
 
-@convert_xarray_args
 def compute_tau_rayleigh(
-    ncol,
-    nlay,
-    nbnd,
-    ngpt,
-    ngas,
-    nflav,
-    neta,
-    ntemp,
-    gpoint_flavor,
-    band_lims_gpt,
-    krayl,
-    idx_h2o,
-    col_dry,
-    col_gas,
-    fminor,
-    jeta,
-    tropo,
-    jtemp,
-):
-    """Compute Rayleigh optical depth.
+    ncol: int,
+    nlay: int,
+    nbnd: int,
+    ngpt: int,
+    ngas: int,
+    nflav: int,
+    neta: int,
+    ntemp: int,
+    gpoint_flavor: npt.NDArray[np.int32],
+    band_lims_gpt: npt.NDArray[np.int32],
+    krayl: npt.NDArray[np.float64],
+    idx_h2o: int,
+    col_dry: npt.NDArray[np.float64],
+    col_gas: npt.NDArray[np.float64],
+    fminor: npt.NDArray[np.float64],
+    jeta: npt.NDArray[np.int32],
+    tropo: npt.NDArray[np.bool_],
+    jtemp: npt.NDArray[np.int32],
+) -> npt.NDArray[np.float64]:
+    """Compute Rayleigh scattering optical depth.
+
+    This function calculates the optical depth due to Rayleigh scattering by air molecules.
 
     Args:
-        gpoint_flavor (numpy.ndarray): Major gas flavor (pair) by upper/lower, g-point (shape: (2, ngpt)).
-        band_lims_gpt (numpy.ndarray): Start and end g-point for each band (shape: (2, nbnd)).
-        krayl (numpy.ndarray): Rayleigh scattering coefficients (shape: (ntemp, neta, ngpt, 2)).
-        idx_h2o (int): Index of water vapor in col_gas.
-        col_dry (numpy.ndarray): Column amount of dry air (shape: (ncol, nlay)).
-        col_gas (numpy.ndarray): Input column gas amount (molecules/cm^2) (shape: (ncol, nlay, 0:ngas)).
-        fminor (numpy.ndarray): Interpolation weights for major gases - computed in interpolation() (shape: (2, 2, ncol, nlay, nflav)).
-        jeta (numpy.ndarray): Interpolation indexes in eta - computed in interpolation() (shape: (2, ncol, nlay, nflav)).
-        tropo (numpy.ndarray): Use upper- or lower-atmospheric tables? (shape: (ncol, nlay)).
-        jtemp (numpy.ndarray): Interpolation indexes in temperature - computed in interpolation() (shape: (ncol, nlay)).
+        ncol: Number of atmospheric columns
+        nlay: Number of atmospheric layers
+        nbnd: Number of spectral bands
+        ngpt: Number of g-points
+        ngas: Number of gases
+        nflav: Number of gas flavors
+        neta: Number of eta points
+        ntemp: Number of temperature points
+        gpoint_flavor: G-point flavors with shape (2, ngpt)
+        band_lims_gpt: Band limits in g-point space with shape (2, nbnd)
+        krayl: Rayleigh scattering coefficients with shape (ntemp, neta, ngpt, 2)
+        idx_h2o: Index of water vapor
+        col_dry: Dry air column amounts with shape (ncol, nlay)
+        col_gas: Gas concentrations with shape (ncol, nlay, ngas)
+        fminor: Minor gas interpolation weights
+        jeta: Eta interpolation indices
+        tropo: Troposphere mask with shape (ncol, nlay)
+        jtemp: Temperature interpolation indices
 
     Returns:
-        numpy.ndarray: Rayleigh optical depth (shape: (ncol, nlay, ngpt)).
+        Rayleigh scattering optical depth with shape (ncol, nlay, ngpt)
     """
-
-    # outputs
+    # Initialize output array
     tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
     args = [

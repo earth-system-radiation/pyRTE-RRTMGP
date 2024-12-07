@@ -4,8 +4,8 @@ import numpy as np
 import xarray as xr
 
 from pyrte_rrtmgp import rrtmgp_gas_optics
-from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 from pyrte_rrtmgp.rte_solver import RTESolver
 
 ERROR_TOLERANCE = 1e-7
@@ -38,14 +38,18 @@ ref_flux_down = rld.isel(expt=0)["rld"]
 def test_lw_solver_noscat():
     # Load gas optics with the new API
     gas_optics_lw = load_gas_optics(gas_optics_file=GasOpticsFiles.LW_G256)
-    
+
     # Compute gas optics for the atmosphere
     gas_optics_lw.gas_optics.compute(atmosphere, problem_type="absorption")
-    
+
     # Solve RTE with the new API
     solver = RTESolver()
     fluxes = solver.solve(atmosphere, add_to_input=False)
-    
+
     # Compare results with reference data
-    assert np.isclose(fluxes["lw_flux_up_broadband"], ref_flux_up, atol=ERROR_TOLERANCE).all()
-    assert np.isclose(fluxes["lw_flux_down_broadband"], ref_flux_down, atol=ERROR_TOLERANCE).all()
+    assert np.isclose(
+        fluxes["lw_flux_up_broadband"], ref_flux_up, atol=ERROR_TOLERANCE
+    ).all()
+    assert np.isclose(
+        fluxes["lw_flux_down_broadband"], ref_flux_down, atol=ERROR_TOLERANCE
+    ).all()

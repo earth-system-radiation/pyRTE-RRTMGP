@@ -1,5 +1,7 @@
+import logging
 import os
 import sys
+from typing import Union
 
 import numpy as np
 import numpy.typing as npt
@@ -28,23 +30,36 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     interpolation,
 )
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
-from pyrte_rrtmgp.utils import logger
+
+logger = logging.getLogger(__name__)
 
 
 def load_gas_optics(
     file_path: str | None = None,
     gas_optics_file: GasOpticsFiles | None = None,
-    selected_gases=None,
+    selected_gases: list[str] | None = None,
 ) -> xr.Dataset:
     """Load gas optics data from a file or predefined gas optics file.
 
+    This function loads gas optics data either from a custom netCDF file or from
+    a predefined gas optics file included in the RRTMGP data package. The data
+    contains absorption coefficients and other optical properties needed for
+    radiative transfer calculations.
+
     Args:
-        file_path: Path to custom gas optics netCDF file
-        gas_optics_file: Predefined gas optics file enum
-        selected_gases: List of gases to include
+        file_path: Path to a custom gas optics netCDF file. If provided, this takes
+            precedence over gas_optics_file.
+        gas_optics_file: Enum specifying a predefined gas optics file from the RRTMGP
+            data package. Only used if file_path is None.
+        selected_gases: Optional list of gas names to include in calculations.
+            If None, all gases in the file will be used.
 
     Returns:
-        xarray Dataset containing the gas optics data
+        xr.Dataset: Dataset containing the gas optics data with selected_gases
+            stored in the attributes.
+
+    Raises:
+        ValueError: If neither file_path nor gas_optics_file is provided.
     """
     if file_path is not None:
         dataset = xr.load_dataset(file_path)
@@ -58,36 +73,32 @@ def load_gas_optics(
     return dataset
 
 
-@xr.register_dataset_accessor("gas_optics")
-class GasOpticsAccessor:
-    """Factory class that returns appropriate GasOptics implementation"""
-
-    def __new__(cls, xarray_obj, selected_gases=None):
-        # Check if source is internal by looking at required variables
-        is_internal = (
-            "totplnk" in xarray_obj.data_vars
-            and "plank_fraction" in xarray_obj.data_vars
-        )
-
-        if is_internal:
-            return LWGasOpticsAccessor(xarray_obj, is_internal, selected_gases)
-        else:
-            return SWGasOpticsAccessor(xarray_obj, is_internal, selected_gases)
-
-
 class BaseGasOpticsAccessor:
+    """Base class for gas optics calculations.
+    
+    This class provides common functionality for both longwave and shortwave gas optics
+    calculations, including gas interpolation, optical depth computation, and handling of
+    atmospheric conditions.
+
+    Args:
+        xarray_obj (xr.Dataset): Dataset containing gas optics data
+        is_internal (bool): Whether this is for internal (longwave) radiation
+        selected_gases (list[str] | None): List of gases to include in calculations
+    
+    Raises:
+        ValueError: If 'h2o' is not included in the gas mapping
+    """
     def __init__(
         self,
-        xarray_obj,
-        is_internal,
+        xarray_obj: xr.Dataset,
+        is_internal: bool,
         selected_gases: list[str] | None = None,
-    ):
+    ) -> None:
         self._dataset = xarray_obj
-
         self.is_internal = is_internal
 
         # Get the gas names from the dataset
-        self._gas_names = self.extract_names(self._dataset["gas_names"].values)
+        self._gas_names: tuple[str, ...] = self.extract_names(self._dataset["gas_names"].values)
 
         if selected_gases is not None:
             # Filter gas names to only include those that exist in the dataset
@@ -108,8 +119,16 @@ class BaseGasOpticsAccessor:
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
-    def _initialize_pressure_levels(self, atmosphere, inplace=True):
-        """Initialize pressure levels with minimum pressure adjustment"""
+    def _initialize_pressure_levels(self, atmosphere: xr.Dataset, inplace: bool = True) -> xr.Dataset | None:
+        """Initialize pressure levels with minimum pressure adjustment.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            inplace: Whether to modify atmosphere in-place or return a copy
+            
+        Returns:
+            Modified atmosphere dataset if inplace=False, otherwise None
+        """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
 
         min_index = np.argmin(atmosphere[pres_level_var].data)
@@ -120,14 +139,25 @@ class BaseGasOpticsAccessor:
             return atmosphere
 
     @property
-    def _selected_gas_names(self):
+    def _selected_gas_names(self) -> list[str]:
+        """List of selected gas names."""
         return list(self._gas_names)
 
-    @property
-    def _selected_gas_names_ext(self):
+    @property 
+    def _selected_gas_names_ext(self) -> list[str]:
+        """List of selected gas names including dry air."""
         return ["dry_air"] + self._selected_gas_names
 
-    def get_gases_columns(self, atmosphere, gas_name_map):
+    def get_gases_columns(self, atmosphere: xr.Dataset, gas_name_map: dict[str, str]) -> xr.DataArray:
+        """Get gas columns from atmospheric conditions.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_name_map: Mapping between gas names and variable names
+            
+        Returns:
+            DataArray containing gas columns including dry air
+        """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
 
         gas_values = []
@@ -160,16 +190,51 @@ class BaseGasOpticsAccessor:
 
         return gas_values
 
-    def compute_problem(self, atmosphere, gas_interpolation_data):
+    def compute_problem(self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute optical properties for radiative transfer problem.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_interpolation_data: Dataset containing interpolated gas data
+            
+        Raises:
+            NotImplementedError: Must be implemented by subclasses
+        """
         raise NotImplementedError()
 
-    def compute_sources(self, atmosphere, gas_interpolation_data):
+    def compute_sources(self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute radiation sources.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_interpolation_data: Dataset containing interpolated gas data
+            
+        Raises:
+            NotImplementedError: Must be implemented by subclasses
+        """
         raise NotImplementedError()
 
-    def compute_boundary_conditions(self, atmosphere):
+    def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.Dataset:
+        """Compute boundary conditions.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            
+        Raises:
+            NotImplementedError: Must be implemented by subclasses
+        """
         raise NotImplementedError()
 
-    def interpolate(self, atmosphere, gas_name_map) -> xr.Dataset:
+    def interpolate(self, atmosphere: xr.Dataset, gas_name_map: dict[str, str]) -> xr.Dataset:
+        """Interpolate gas optics data to atmospheric conditions.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_name_map: Mapping between gas names and variable names
+            
+        Returns:
+            Dataset containing interpolated gas optics data
+        """
         # Get the gas columns from atmospheric conditions
         gas_order = self._selected_gas_names_ext
         gases_columns = self.get_gases_columns(atmosphere, gas_name_map).sel(
@@ -256,7 +321,16 @@ class BaseGasOpticsAccessor:
 
         return interpolation_results
 
-    def tau_absorption(self, atmosphere, gas_interpolation_data):
+    def tau_absorption(self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute absorption optical depth.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_interpolation_data: Dataset containing interpolated gas data
+            
+        Returns:
+            Dataset containing absorption optical depth
+        """
         site_dim = atmosphere.mapping.get_dim("site")
         layer_dim = atmosphere.mapping.get_dim("layer")
 
@@ -405,7 +479,7 @@ class BaseGasOpticsAccessor:
         Each g-point is associated with a flavor, which is a pair of key species.
 
         Returns:
-            np.ndarray: G-point flavors.
+            DataArray containing g-point flavors
         """
         band_sizes = (
             self._dataset["bnd_limits_gpt"].values[:, 1]
@@ -435,11 +509,11 @@ class BaseGasOpticsAccessor:
         return band_to_flavor.sel(bnd=gpoint_bands - 1)
 
     @property
-    def flavors_sets(self) -> npt.NDArray:
+    def flavors_sets(self) -> xr.DataArray:
         """Get the unique flavors from the k-distribution file.
 
         Returns:
-            np.ndarray: Unique flavors.
+            DataArray containing unique flavors
         """
         # Calculate total number of flavors and pairs
         n_bands = self._dataset["bnd"].size
@@ -470,15 +544,14 @@ class BaseGasOpticsAccessor:
             },
         )
 
-    def get_idx_minor(self, minor_gases):
-        """Index of each minor gas in col_gas
+    def get_idx_minor(self, minor_gases: list[str]) -> npt.NDArray[np.int32]:
+        """Get index of each minor gas in col_gas.
 
         Args:
-            gas_names (list): Gas names
-            minor_gases (list): List of minor gases
+            minor_gases: List of minor gases
 
         Returns:
-            list: Index of each minor gas in col_gas
+            Array containing indices of minor gases
         """
         idx_minor_gas = []
         for gas in minor_gases:
@@ -490,29 +563,29 @@ class BaseGasOpticsAccessor:
         return np.array(idx_minor_gas, dtype=np.int32)
 
     @staticmethod
-    def extract_names(names):
-        """Extract names from arrays, decoding and removing the suffix
+    def extract_names(names: npt.NDArray) -> tuple[str, ...]:
+        """Extract names from arrays, decoding and removing the suffix.
 
         Args:
-            names (np.ndarray): Names
+            names: Array of encoded names
 
         Returns:
-            tuple: tuple of names
+            Tuple of decoded and cleaned names
         """
         output = tuple(gas.tobytes().decode().strip().split("_")[0] for gas in names)
         return output
 
     @staticmethod
-    def get_col_dry(vmr_h2o, plev, latitude=None):
-        """Calculate the dry column of the atmosphere
+    def get_col_dry(vmr_h2o: xr.DataArray, plev: xr.DataArray, latitude: xr.DataArray | None = None) -> xr.DataArray:
+        """Calculate the dry column of the atmosphere.
 
         Args:
-            vmr_h2o (np.ndarray): Water vapor volume mixing ratio
-            plev (np.ndarray): Pressure levels
-            latitude (np.ndarray): Latitude of the location
+            vmr_h2o: Water vapor volume mixing ratio
+            plev: Pressure levels
+            latitude: Latitude of the location
 
         Returns:
-            np.ndarray: Dry column of the atmosphere
+            DataArray containing dry column of the atmosphere
         """
         # Convert latitude to g0 DataArray
         if latitude is not None:
@@ -543,7 +616,23 @@ class BaseGasOpticsAccessor:
         gas_name_map: dict[str, str] | None = None,
         variable_mapping: AtmosphericMapping | None = None,
         add_to_input: bool = True,
-    ):
+    ) -> xr.Dataset | None:
+        """Compute gas optics for given atmospheric conditions.
+        
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            problem_type: Type of radiative transfer problem to solve
+            gas_name_map: Optional mapping between gas names and variable names
+            variable_mapping: Optional mapping for atmospheric variables
+            add_to_input: Whether to add results to input dataset
+            
+        Returns:
+            Dataset containing gas optics results if add_to_input=False,
+            otherwise None
+            
+        Raises:
+            ValueError: If problem_type is invalid
+        """
         # Create and validate gas mapping
         gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
 
@@ -586,15 +675,45 @@ class BaseGasOpticsAccessor:
 
 
 class LWGasOpticsAccessor(BaseGasOpticsAccessor):
-    """Accessor for internal radiation sources"""
+    """Accessor for internal (longwave) radiation sources.
+    
+    This class handles gas optics calculations specific to longwave radiation, including
+    computing absorption optical depths, Planck sources, and boundary conditions.
+    """
 
-    def compute_problem(self, atmosphere, gas_interpolation_data):
+    def compute_problem(self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute absorption optical depths for longwave radiation.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_interpolation_data: Dataset containing interpolated gas properties
+
+        Returns:
+            Dataset containing absorption optical depths
+        """
         return self.tau_absorption(atmosphere, gas_interpolation_data)
 
-    def compute_sources(self, atmosphere, gas_interpolation_data):
+    def compute_sources(self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute Planck source terms for longwave radiation.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_interpolation_data: Dataset containing interpolated gas properties
+
+        Returns:
+            Dataset containing Planck source terms
+        """
         return self.compute_planck(atmosphere, gas_interpolation_data)
 
-    def compute_boundary_conditions(self, atmosphere):
+    def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.DataArray:
+        """Compute surface emissivity boundary conditions.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+
+        Returns:
+            DataArray containing surface emissivity values
+        """
         if "surface_emissivity" not in atmosphere.data_vars:
             # Add surface emissivity directly to atmospheric conditions
             return xr.DataArray(
@@ -613,7 +732,16 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         else:
             return atmosphere["surface_emissivity"]
 
-    def compute_planck(self, atmosphere, gas_interpolation_data):
+    def compute_planck(self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute Planck source terms for longwave radiation.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_interpolation_data: Dataset containing interpolated gas properties
+
+        Returns:
+            Dataset containing Planck source terms including surface, layer and level sources
+        """
         site_dim = atmosphere.mapping.get_dim("site")
         layer_dim = atmosphere.mapping.get_dim("layer")
         level_dim = atmosphere.mapping.get_dim("level")
@@ -715,9 +843,22 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
 
 
 class SWGasOpticsAccessor(BaseGasOpticsAccessor):
-    """Accessor for external radiation sources"""
+    """Accessor for external (shortwave) radiation sources.
+    
+    This class handles gas optics calculations specific to shortwave radiation, including
+    computing absorption and Rayleigh scattering optical depths, solar sources, and boundary conditions.
+    """
 
-    def compute_problem(self, atmosphere, gas_interpolation_data):
+    def compute_problem(self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute optical properties for shortwave radiation.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            gas_interpolation_data: Dataset containing interpolated gas properties
+
+        Returns:
+            Dataset containing optical properties (tau, ssa, g)
+        """
         # Calculate absorption optical depth
         tau_abs = self.tau_absorption(atmosphere, gas_interpolation_data)
 
@@ -732,8 +873,17 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         g = xr.zeros_like(tau["tau"]).rename("g")
         return xr.merge([tau, ssa, g])
 
-    def compute_sources(self, atmosphere, *args, **kwargs):
-        """Implementation for external source computation"""
+    def compute_sources(self, atmosphere: xr.Dataset, *args, **kwargs) -> xr.DataArray:
+        """Compute solar source terms.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+            *args: Variable length argument list
+            **kwargs: Arbitrary keyword arguments
+
+        Returns:
+            DataArray containing top-of-atmosphere solar source
+        """
         a_offset = SOLAR_CONSTANTS["A_OFFSET"]
         b_offset = SOLAR_CONSTANTS["B_OFFSET"]
 
@@ -756,7 +906,15 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         def_tsi = toa_flux.sum(dim="gpt")
         return (toa_flux * (total_solar_irradiance / def_tsi)).rename("toa_source")
 
-    def compute_boundary_conditions(self, atmosphere):
+    def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.Dataset:
+        """Compute surface and solar boundary conditions.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+
+        Returns:
+            Dataset containing solar zenith angles, surface albedos and solar angle mask
+        """
         solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
         surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
         surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
@@ -803,7 +961,15 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             ]
         )
 
-    def tau_rayleigh(self, gas_interpolation_data):
+    def tau_rayleigh(self, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
+        """Compute Rayleigh scattering optical depth.
+
+        Args:
+            gas_interpolation_data: Dataset containing interpolated gas properties
+
+        Returns:
+            Dataset containing Rayleigh scattering optical depth
+        """
         # Combine upper and lower Rayleigh coefficients
         krayl = xr.concat(
             [self._dataset["rayl_lower"], self._dataset["rayl_upper"]],
@@ -858,3 +1024,35 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         )
 
         return tau_rayleigh.rename("tau").to_dataset()
+
+
+@xr.register_dataset_accessor("gas_optics")
+class GasOpticsAccessor:
+    """Factory class that returns appropriate GasOptics implementation based on dataset contents.
+
+    This class determines whether to return a longwave (LW) or shortwave (SW) gas optics
+    accessor by checking for the presence of internal source variables in the dataset.
+
+    Args:
+        xarray_obj (xr.Dataset): The xarray Dataset containing gas optics data
+        selected_gases (list[str] | None): Optional list of gas names to include.
+            If None, all gases in the dataset will be used.
+
+    Returns:
+        Union[LWGasOpticsAccessor, SWGasOpticsAccessor]: The appropriate gas optics accessor
+            based on whether internal source terms are present.
+    """
+
+    def __new__(
+        cls, xarray_obj: xr.Dataset, selected_gases: list[str] | None = None
+    ) -> Union[LWGasOpticsAccessor, SWGasOpticsAccessor]:
+        # Check if source is internal by looking for required LW variables
+        is_internal: bool = (
+            "totplnk" in xarray_obj.data_vars
+            and "plank_fraction" in xarray_obj.data_vars
+        )
+
+        if is_internal:
+            return LWGasOpticsAccessor(xarray_obj, is_internal, selected_gases)
+        else:
+            return SWGasOpticsAccessor(xarray_obj, is_internal, selected_gases)

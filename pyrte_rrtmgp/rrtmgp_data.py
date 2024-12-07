@@ -2,6 +2,8 @@ import hashlib
 import os
 import platform
 import tarfile
+from pathlib import Path
+from typing import Union
 
 import requests
 
@@ -10,7 +12,12 @@ TAG = "v1.8.2"
 DATA_URL = f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/tags/{TAG}.tar.gz"
 
 
-def get_cache_dir():
+def get_cache_dir() -> str:
+    """Get the system-specific cache directory for pyrte_rrtmgp data.
+
+    Returns:
+        str: Path to the cache directory
+    """
     # Determine the system cache folder
     if platform.system() == "Windows":
         cache_path = os.getenv("LOCALAPPDATA")
@@ -27,7 +34,19 @@ def get_cache_dir():
     return cache_path
 
 
-def download_rrtmgp_data():
+def download_rrtmgp_data() -> str:
+    """Download and extract RRTMGP data files.
+
+    Downloads the RRTMGP data files from GitHub if not already present in the cache,
+    verifies the checksum, and extracts the contents.
+
+    Returns:
+        str: Path to the extracted data directory
+
+    Raises:
+        requests.exceptions.RequestException: If download fails
+        tarfile.TarError: If extraction fails
+    """
     # Directory where the data will be stored
     cache_dir = get_cache_dir()
 
@@ -61,8 +80,16 @@ def download_rrtmgp_data():
     return os.path.join(cache_dir, f"rrtmgp-data-{TAG[1:]}")
 
 
-def _get_file_checksum(filepath, mode="r"):
-    """Helper function to safely read file and get checksum if needed"""
+def _get_file_checksum(filepath: Union[str, Path], mode: str = "r") -> str:
+    """Calculate SHA256 checksum of a file or read existing checksum.
+
+    Args:
+        filepath: Path to the file
+        mode: File open mode, "r" for text or "rb" for binary
+
+    Returns:
+        str: File content if mode="r", or SHA256 hex digest if mode="rb"
+    """
     with open(filepath, mode) as f:
         content = f.read()
         return hashlib.sha256(content).hexdigest() if mode == "rb" else content
