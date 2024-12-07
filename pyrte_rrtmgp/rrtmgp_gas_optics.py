@@ -274,7 +274,7 @@ class BaseGasOpticsAccessor:
             neta,  # neta
             npres,  # npres
             ntemp,  # ntemp
-            self.flavors_sets.transpose("pair", "flavor"),  # flavor
+            self.flavors_sets,  # flavor
             self._dataset["press_ref"],  # press_ref
             self._dataset["temp_ref"],  # temp_ref
             self._dataset["press_ref_trop"],  # press_ref_trop (scalar)

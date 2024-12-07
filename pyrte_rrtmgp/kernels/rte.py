@@ -112,6 +112,9 @@ def lw_solver_noscat(
 
 
 def lw_solver_2stream(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
     tau: npt.NDArray[np.float64],
     ssa: npt.NDArray[np.float64],
     g: npt.NDArray[np.float64],
@@ -128,6 +131,9 @@ def lw_solver_2stream(
     accounting for both absorption and scattering processes.
 
     Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
         tau: Optical depths with shape (ncol, nlay, ngpt)
         ssa: Single-scattering albedos with shape (ncol, nlay, ngpt)
         g: Asymmetry parameters with shape (ncol, nlay, ngpt)
@@ -143,11 +149,6 @@ def lw_solver_2stream(
             flux_up: Upward fluxes with shape (ncol, nlay+1, ngpt)
             flux_dn: Downward fluxes with shape (ncol, nlay+1, ngpt)
     """
-    ncol, nlay, ngpt = tau.shape
-
-    if len(sfc_emis.shape) == 1:
-        sfc_emis = np.stack([sfc_emis] * ngpt).T
-
     # Initialize output arrays
     flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
     flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
@@ -175,6 +176,9 @@ def lw_solver_2stream(
 
 
 def sw_solver_noscat(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
     tau: npt.NDArray[np.float64],
     mu0: npt.NDArray[np.float64],
     inc_flux_dir: npt.NDArray[np.float64],
@@ -194,8 +198,6 @@ def sw_solver_noscat(
     Returns:
         Direct-beam fluxes with shape (ncol, nlay+1, ngpt)
     """
-    ncol, nlay, ngpt = tau.shape
-
     # Initialize output array
     flux_dir = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
 
