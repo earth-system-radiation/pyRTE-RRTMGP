@@ -363,6 +363,14 @@ def compute_tau_absorption(
 
 @convert_xarray_args
 def compute_tau_rayleigh(
+    ncol,
+    nlay,
+    nbnd,
+    ngpt,
+    ngas,
+    nflav,
+    neta,
+    ntemp,
     gpoint_flavor,
     band_lims_gpt,
     krayl,
@@ -391,11 +399,6 @@ def compute_tau_rayleigh(
     Returns:
         numpy.ndarray: Rayleigh optical depth (shape: (ncol, nlay, ngpt)).
     """
-
-    ncol, nlay, ngas = col_gas.shape
-    ntemp, neta, ngpt, _ = krayl.shape
-    nflav = jeta.shape[3]
-    nbnd = band_lims_gpt.shape[1]
 
     # outputs
     tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order="F")

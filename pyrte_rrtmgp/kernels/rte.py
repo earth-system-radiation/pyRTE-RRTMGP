@@ -10,49 +10,27 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
     rte_sw_solver_noscat,
 )
 
-GAUSS_DS: npt.NDArray[np.float64] = np.reciprocal(
-    np.array(
-        [
-            [0.6096748751, np.inf, np.inf, np.inf],
-            [0.2509907356, 0.7908473988, np.inf, np.inf],
-            [0.1024922169, 0.4417960320, 0.8633751621, np.inf],
-            [0.0454586727, 0.2322334416, 0.5740198775, 0.9030775973],
-        ]
-    )
-)
-"""Gaussian quadrature secants (1/μ) for different numbers of streams"""
-
-GAUSS_WTS: npt.NDArray[np.float64] = np.array(
-    [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.2300253764, 0.7699746236, 0.0, 0.0],
-        [0.0437820218, 0.3875796738, 0.5686383044, 0.0],
-        [0.0092068785, 0.1285704278, 0.4323381850, 0.4298845087],
-    ]
-)
-"""Gaussian quadrature weights for different numbers of streams"""
-
 
 def lw_solver_noscat(
     ncol: int,
     nlay: int,
     ngpt: int,
+    ds: npt.NDArray[np.float64],
+    weights: npt.NDArray[np.float64],
     tau: npt.NDArray[np.float64],
+    ssa: npt.NDArray[np.float64],
+    g: npt.NDArray[np.float64],
     lay_source: npt.NDArray[np.float64],
     lev_source: npt.NDArray[np.float64],
     sfc_emis: npt.NDArray[np.float64],
     sfc_src: npt.NDArray[np.float64],
+    sfc_src_jac: npt.NDArray[np.float64],
+    inc_flux: npt.NDArray[np.float64],
     top_at_1: bool = True,
     nmus: int = 1,
-    inc_flux: Optional[npt.NDArray[np.float64]] = None,
-    ds: Optional[npt.NDArray[np.float64]] = None,
-    weights: Optional[npt.NDArray[np.float64]] = None,
     do_broadband: bool = True,
     do_Jacobians: bool = False,
-    sfc_src_jac: Optional[npt.NDArray[np.float64]] = None,
     do_rescaling: bool = False,
-    ssa: Optional[npt.NDArray[np.float64]] = None,
-    g: Optional[npt.NDArray[np.float64]] = None,
 ) -> Tuple[
     npt.NDArray[np.float64],
     npt.NDArray[np.float64],
@@ -89,31 +67,6 @@ def lw_solver_noscat(
             flux_up: Upward fluxes (ncol, nlay+1, ngpt)
             flux_dn: Downward fluxes (ncol, nlay+1, ngpt)
     """
-
-    # ncol, nlay, ngpt = tau.shape
-    # n_quad_angs = nmus
-
-    if len(sfc_emis.shape) == 1:
-        sfc_emis = np.stack([sfc_emis] * ngpt).T
-
-
-
-    if inc_flux is None:
-        inc_flux = np.zeros(sfc_src.shape)
-
-    if ds is None:
-        ds = np.empty((ncol, ngpt, n_quad_angs))
-        for imu in range(n_quad_angs):
-            for igpt in range(ngpt):
-                for icol in range(ncol):
-                    ds[icol, igpt, imu] = GAUSS_DS[imu, n_quad_angs - 1]
-
-    if weights is None:
-        weights = GAUSS_WTS[0:n_quad_angs, n_quad_angs - 1]
-
-    ssa = ssa or tau
-    g = g or tau
-
     # outputs
     flux_up_jac = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order="F")
     broadband_up = np.full([ncol, nlay + 1], np.nan, dtype=np.float64, order="F")
@@ -254,6 +207,9 @@ def sw_solver_noscat(
 
 
 def sw_solver_2stream(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
     tau: npt.NDArray[np.float64],
     ssa: npt.NDArray[np.float64],
     g: npt.NDArray[np.float64],
@@ -261,8 +217,8 @@ def sw_solver_2stream(
     sfc_alb_dir: npt.NDArray[np.float64],
     sfc_alb_dif: npt.NDArray[np.float64],
     inc_flux_dir: npt.NDArray[np.float64],
+    inc_flux_dif: npt.NDArray[np.float64],
     top_at_1: bool = True,
-    inc_flux_dif: Optional[npt.NDArray[np.float64]] = None,
     has_dif_bc: bool = False,
     do_broadband: bool = True,
 ) -> Tuple[
@@ -298,15 +254,6 @@ def sw_solver_2stream(
             broadband_dn: Broadband downward fluxes with shape (ncol, nlay+1)
             broadband_dir: Broadband direct fluxes with shape (ncol, nlay+1)
     """
-    ncol, nlay, ngpt = tau.shape
-
-    if len(sfc_alb_dir.shape) == 1:
-        sfc_alb_dir = np.stack([sfc_alb_dir] * ngpt).T
-    if len(sfc_alb_dif.shape) == 1:
-        sfc_alb_dif = np.stack([sfc_alb_dif] * ngpt).T
-
-    if inc_flux_dif is None:
-        inc_flux_dif = np.zeros((ncol, ngpt), dtype=np.float64)
 
     # outputs
     flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
