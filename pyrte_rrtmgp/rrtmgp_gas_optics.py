@@ -185,9 +185,7 @@ class BaseGasOpticsAccessor:
             gas_values, dim=pd.Index(gas_name_map.keys(), name="gas"), coords="minimal"
         )
 
-        col_dry = self.get_col_dry(
-            gas_values.sel(gas="h2o"), atmosphere[pres_level_var], latitude=None
-        )
+        col_dry = self.get_col_dry(gas_values.sel(gas="h2o"), atmosphere, latitude=None)
 
         gas_values = gas_values * col_dry
         gas_values = xr.concat(
@@ -279,8 +277,8 @@ class BaseGasOpticsAccessor:
             self._dataset["temp_ref"],  # temp_ref
             self._dataset["press_ref_trop"],  # press_ref_trop (scalar)
             self._dataset["vmr_ref"].sel(absorber_ext=gas_order),
-            atmosphere["pres_layer"],  # play
-            atmosphere["temp_layer"],  # tlay
+            atmosphere[atmosphere.mapping.get_var("pres_layer")],  # play
+            atmosphere[atmosphere.mapping.get_var("temp_layer")],  # tlay
             gases_columns.sel(gas=gas_order),  # col_gas
             input_core_dims=[
                 [],  # ncol
@@ -331,6 +329,10 @@ class BaseGasOpticsAccessor:
                 "gases_columns": gases_columns,
             }
         )
+
+        interpolation_results.attrs["dataset_mapping"] = atmosphere.attrs[
+            "dataset_mapping"
+        ]
 
         return interpolation_results
 
@@ -462,25 +464,25 @@ class BaseGasOpticsAccessor:
                 ["minor_absorber_intervals_upper"],  # idx_minor_scaling_upper
                 ["minor_absorber_intervals_lower"],  # kminor_start_lower
                 ["minor_absorber_intervals_upper"],  # kminor_start_upper
-                ["site", "layer"],  # tropopause_mask
-                ["temp_interp", "site", "layer", "flavor"],  # column_mix
+                [site_dim, layer_dim],  # tropopause_mask
+                ["temp_interp", site_dim, layer_dim, "flavor"],  # column_mix
                 [
                     "eta_interp",
                     "press_interp",
                     "temp_interp",
-                    "site",
-                    "layer",
+                    site_dim,
+                    layer_dim,
                     "flavor",
                 ],  # fmajor
-                ["eta_interp", "temp_interp", "site", "layer", "flavor"],  # fminor
+                ["eta_interp", "temp_interp", site_dim, layer_dim, "flavor"],  # fminor
                 [site_dim, layer_dim],  # pres_layer
                 [site_dim, layer_dim],  # temp_layer
-                ["site", "layer", "gas"],  # gases_columns
-                ["pair", "site", "layer", "flavor"],  # eta_index
-                ["site", "layer"],  # temperature_index
-                ["site", "layer"],  # pressure_index
+                [site_dim, layer_dim, "gas"],  # gases_columns
+                ["pair", site_dim, layer_dim, "flavor"],  # eta_index
+                [site_dim, layer_dim],  # temperature_index
+                [site_dim, layer_dim],  # pressure_index
             ],
-            output_core_dims=[["site", "layer", "gpt"]],
+            output_core_dims=[[site_dim, layer_dim, "gpt"]],
             vectorize=True,
             dask="allowed",
         )
@@ -592,30 +594,39 @@ class BaseGasOpticsAccessor:
 
     @staticmethod
     def get_col_dry(
-        vmr_h2o: xr.DataArray, plev: xr.DataArray, latitude: xr.DataArray | None = None
+        vmr_h2o: xr.DataArray,
+        atmosphere: xr.Dataset,
+        latitude: xr.DataArray | None = None,
     ) -> xr.DataArray:
         """Calculate the dry column of the atmosphere.
 
         Args:
             vmr_h2o: Water vapor volume mixing ratio
-            plev: Pressure levels
+            atmosphere: Dataset containing atmospheric conditions
             latitude: Latitude of the location
 
         Returns:
             DataArray containing dry column of the atmosphere
         """
+        site_dim = atmosphere.mapping.get_dim("site")
+        level_dim = atmosphere.mapping.get_dim("level")
+        layer_dim = atmosphere.mapping.get_dim("layer")
+        pres_level_var = atmosphere.mapping.get_var("pres_level")
+
+        plev = atmosphere[pres_level_var]
+
         # Convert latitude to g0 DataArray
         if latitude is not None:
             g0 = xr.DataArray(
                 HELMERT1 - HELMERT2 * np.cos(2.0 * np.pi * latitude / 180.0),
-                dims=["site"],
-                coords={"site": plev.site},
+                dims=[site_dim],
+                coords={site_dim: plev.site},
             )
         else:
             g0 = xr.full_like(plev.isel(level=0), HELMERT1)
 
         # Calculate pressure difference between layers
-        delta_plev = np.abs(plev.diff(dim="level")).rename({"level": "layer"})
+        delta_plev = np.abs(plev.diff(dim=level_dim)).rename({level_dim: layer_dim})
 
         # Calculate factors using xarray operations
         fact = 1.0 / (1.0 + vmr_h2o)
@@ -688,6 +699,7 @@ class BaseGasOpticsAccessor:
         else:
             output_ds = gas_optics
             output_ds.attrs["problem_type"] = problem_type
+            output_ds.mapping.set_mapping(variable_mapping)
             return output_ds
 
 
@@ -735,23 +747,20 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         Returns:
             DataArray containing surface emissivity values
         """
-        if "surface_emissivity" not in atmosphere.data_vars:
+        surface_emissivity_var = atmosphere.mapping.get_var("surface_emissivity")
+        site_dim = atmosphere.mapping.get_dim("site")
+
+        if surface_emissivity_var not in atmosphere.data_vars:
             # Add surface emissivity directly to atmospheric conditions
             return xr.DataArray(
-                np.ones(
-                    (
-                        atmosphere.sizes["site"],
-                        atmosphere.sizes["gpt"],
-                    )
-                ),
-                dims=["site", "gpt"],
+                np.ones((atmosphere.sizes[site_dim],)),
+                dims=[site_dim],
                 coords={
-                    "site": atmosphere.site,
-                    "gpt": atmosphere.gpt,
+                    site_dim: atmosphere[site_dim],
                 },
             )
         else:
-            return atmosphere["surface_emissivity"]
+            return atmosphere[surface_emissivity_var]
 
     def compute_planck(
         self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset
@@ -776,8 +785,8 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         # Check if the top layer is at the first level
         top_at_1 = atmosphere[layer_dim][0] < atmosphere[layer_dim][-1]
 
-        ncol = atmosphere.sizes["site"]
-        nlay = atmosphere.sizes["layer"]
+        ncol = atmosphere.sizes[site_dim]
+        nlay = atmosphere.sizes[layer_dim]
         nbnd = self._dataset.sizes["bnd"]
         ngpt = self._dataset.sizes["gpt"]
         nflav = self.flavors_sets.sizes["flavor"]
@@ -830,14 +839,14 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                     "eta_interp",
                     "press_interp",
                     "temp_interp",
-                    "site",
-                    "layer",
+                    site_dim,
+                    layer_dim,
                     "flavor",
                 ],  # fmajor
-                ["pair", "site", "layer", "flavor"],  # jeta
-                ["site", "layer"],  # tropo
-                ["site", "layer"],  # jtemp
-                ["site", "layer"],  # jpress
+                ["pair", site_dim, layer_dim, "flavor"],  # jeta
+                [site_dim, layer_dim],  # tropo
+                [site_dim, layer_dim],  # jtemp
+                [site_dim, layer_dim],  # jpress
                 ["pair", "bnd"],  # band_lims_gpt
                 ["temperature", "mixing_fraction", "pressure_interp", "gpt"],  # pfracin
                 [],  # temp_ref_min
@@ -940,6 +949,9 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         Returns:
             Dataset containing solar zenith angles, surface albedos and solar angle mask
         """
+        site_dim = atmosphere.mapping.get_dim("site")
+        layer_dim = atmosphere.mapping.get_dim("layer")
+
         solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
         surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
         surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
@@ -954,7 +966,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
             1.0,
         )
-        solar_zenith_angle = mu0.broadcast_like(atmosphere.layer).rename(
+        solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename(
             "solar_zenith_angle"
         )
 
@@ -1001,10 +1013,13 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             dim=pd.Index(["lower", "upper"], name="rayl_bound"),
         )
 
+        site_dim = gas_interpolation_data.mapping.get_dim("site")
+        layer_dim = gas_interpolation_data.mapping.get_dim("layer")
+
         tau_rayleigh = xr.apply_ufunc(
             compute_tau_rayleigh,
-            gas_interpolation_data.sizes["site"],
-            gas_interpolation_data.sizes["layer"],
+            gas_interpolation_data.sizes[site_dim],
+            gas_interpolation_data.sizes[layer_dim],
             self._dataset.sizes["bnd"],
             self._dataset.sizes["gpt"],
             gas_interpolation_data.sizes["gas"],
@@ -1036,14 +1051,14 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 ["pair", "bnd"],  # band_lims_gpt
                 ["temperature", "mixing_fraction", "gpt", "rayl_bound"],  # krayl
                 [],  # idx_h2o
-                ["site", "layer"],  # col_dry
-                ["site", "layer", "gas"],  # col_gas
-                ["eta_interp", "temp_interp", "site", "layer", "flavor"],  # fminor
-                ["pair", "site", "layer", "flavor"],  # jeta
-                ["site", "layer"],  # tropo
-                ["site", "layer"],  # jtemp
+                [site_dim, layer_dim],  # col_dry
+                [site_dim, layer_dim, "gas"],  # col_gas
+                ["eta_interp", "temp_interp", site_dim, layer_dim, "flavor"],  # fminor
+                ["pair", site_dim, layer_dim, "flavor"],  # jeta
+                [site_dim, layer_dim],  # tropo
+                [site_dim, layer_dim],  # jtemp
             ],
-            output_core_dims=[["site", "layer", "gpt"]],
+            output_core_dims=[[site_dim, layer_dim, "gpt"]],
             vectorize=True,
             dask="allowed",
         )

@@ -12,14 +12,14 @@ class RTESolver:
     GAUSS_WTS = GAUSS_WTS
 
     def _compute_quadrature(
-        self, ncol: int, ngpt: int, nmus: int
+        self, problem_ds: xr.Dataset, site_dim: str, nmus: int
     ) -> tuple[xr.DataArray, xr.DataArray]:
         """Compute quadrature weights and secants for radiative transfer calculations.
 
         Args:
-            ncol: Number of atmospheric columns.
-            ngpt: Number of g-points (spectral points).
-            nmus: Number of quadrature angles.
+            problem_ds: Dataset containing the problem specification
+            site_dim: Name of the site dimension in the dataset
+            nmus: Number of quadrature angles to use
 
         Returns:
             tuple containing:
@@ -28,17 +28,19 @@ class RTESolver:
                 weights (xr.DataArray): Quadrature weights with dimension [n_quad_angs].
         """
         n_quad_angs: int = nmus
+        ncol = problem_ds.sizes[site_dim]
+        ngpt = problem_ds.sizes["gpt"]
 
-        # Create DataArray for ds with proper dimensions and coordinates
+        # Extract quadrature secants for the specified number of angles
         ds: xr.DataArray = xr.DataArray(
             self.GAUSS_DS[0:n_quad_angs, n_quad_angs - 1],
             dims=["n_quad_angs"],
             coords={"n_quad_angs": range(n_quad_angs)},
         )
-        # Broadcast to full shape
-        ds = ds.expand_dims({"site": ncol, "gpt": ngpt})
+        # Expand dimensions to match problem size
+        ds = ds.expand_dims({site_dim: ncol, "gpt": ngpt})
 
-        # Create DataArray for weights
+        # Extract quadrature weights for the specified number of angles
         weights: xr.DataArray = xr.DataArray(
             self.GAUSS_WTS[0:n_quad_angs, n_quad_angs - 1],
             dims=["n_quad_angs"],
@@ -75,22 +77,27 @@ class RTESolver:
                 - lw_flux_up: Spectrally resolved upward flux
                 - lw_flux_down: Spectrally resolved downward flux
         """
+
+        site_dim = problem_ds.mapping.get_dim("site")
+        layer_dim = problem_ds.mapping.get_dim("layer")
+        level_dim = problem_ds.mapping.get_dim("level")
+
+        surface_emissivity_var = problem_ds.mapping.get_var("surface_emissivity")
+
         nmus: int = 1
-        top_at_1: bool = problem_ds["layer"][0] < problem_ds["layer"][-1]
+        top_at_1: bool = problem_ds[layer_dim][0] < problem_ds[layer_dim][-1]
 
         if "incident_flux" not in problem_ds:
             incident_flux: xr.DataArray = xr.zeros_like(problem_ds["surface_source"])
         else:
             incident_flux = problem_ds["incident_flux"]
 
-        if "gpt" not in problem_ds["surface_emissivity"].dims:
-            problem_ds["surface_emissivity"] = problem_ds[
-                "surface_emissivity"
+        if "gpt" not in problem_ds[surface_emissivity_var].dims:
+            problem_ds[surface_emissivity_var] = problem_ds[
+                surface_emissivity_var
             ].expand_dims({"gpt": problem_ds.sizes["gpt"]}, axis=1)
 
-        ds, weights = self._compute_quadrature(
-            problem_ds.sizes["site"], problem_ds.sizes["gpt"], nmus
-        )
+        ds, weights = self._compute_quadrature(problem_ds, site_dim, nmus)
         ssa: xr.DataArray = (
             problem_ds["ssa"] if "ssa" in problem_ds else problem_ds["tau"].copy()
         )
@@ -106,8 +113,8 @@ class RTESolver:
             solver_flux_down,
         ) = xr.apply_ufunc(
             lw_solver_noscat,
-            problem_ds.sizes["site"],
-            problem_ds.sizes["layer"],
+            problem_ds.sizes[site_dim],
+            problem_ds.sizes[layer_dim],
             problem_ds.sizes["gpt"],
             ds,
             weights,
@@ -116,7 +123,7 @@ class RTESolver:
             g,
             problem_ds["layer_source"],
             problem_ds["level_source"],
-            problem_ds["surface_emissivity"],
+            problem_ds[surface_emissivity_var],
             problem_ds["surface_source"],
             problem_ds["surface_source_jacobian"],
             incident_flux,
@@ -125,24 +132,24 @@ class RTESolver:
                 [],
                 [],
                 [],
-                ["site", "gpt", "n_quad_angs"],  # ds
+                [site_dim, "gpt", "n_quad_angs"],  # ds
                 ["n_quad_angs"],  # weights
-                ["site", "layer", "gpt"],  # tau
-                ["site", "layer", "gpt"],  # ssa
-                ["site", "layer", "gpt"],  # g
-                ["site", "layer", "gpt"],  # lay_source
-                ["site", "level", "gpt"],  # lev_source
-                ["site", "gpt"],  # sfc_emis
-                ["site", "gpt"],  # sfc_src
-                ["site", "gpt"],  # sfc_src_jac
-                ["site", "gpt"],  # inc_flux
+                [site_dim, layer_dim, "gpt"],  # tau
+                [site_dim, layer_dim, "gpt"],  # ssa
+                [site_dim, layer_dim, "gpt"],  # g
+                [site_dim, layer_dim, "gpt"],  # lay_source
+                [site_dim, level_dim, "gpt"],  # lev_source
+                [site_dim, "gpt"],  # sfc_emis
+                [site_dim, "gpt"],  # sfc_src
+                [site_dim, "gpt"],  # sfc_src_jac
+                [site_dim, "gpt"],  # inc_flux
             ],
             output_core_dims=[
-                ["site", "level"],  # solver_flux_up_jacobian
-                ["site", "level"],  # solver_flux_up_broadband
-                ["site", "level"],  # solver_flux_down_broadband
-                ["site", "level", "gpt"],  # solver_flux_up
-                ["site", "level", "gpt"],  # solver_flux_down
+                [site_dim, level_dim],  # solver_flux_up_jacobian
+                [site_dim, level_dim],  # solver_flux_up_broadband
+                [site_dim, level_dim],  # solver_flux_down_broadband
+                [site_dim, level_dim, "gpt"],  # solver_flux_up
+                [site_dim, level_dim, "gpt"],  # solver_flux_down
             ],
             vectorize=True,
             dask="allowed",
@@ -194,8 +201,12 @@ class RTESolver:
         else:
             incident_flux_dif = problem_ds["incident_flux_dif"]
 
+        site_dim = problem_ds.mapping.get_dim("site")
+        layer_dim = problem_ds.mapping.get_dim("layer")
+        level_dim = problem_ds.mapping.get_dim("level")
+
         # Determine vertical orientation
-        top_at_1 = problem_ds["layer"][0] < problem_ds["layer"][-1]
+        top_at_1 = problem_ds[layer_dim][0] < problem_ds[layer_dim][-1]
 
         # Call solver
         (
@@ -207,13 +218,13 @@ class RTESolver:
             solver_flux_dir,
         ) = xr.apply_ufunc(
             sw_solver_2stream,
-            problem_ds.sizes["site"],
-            problem_ds.sizes["layer"],
+            problem_ds.sizes[site_dim],
+            problem_ds.sizes[layer_dim],
             problem_ds.sizes["gpt"],
             problem_ds["tau"],
             problem_ds["ssa"],
             problem_ds["g"],
-            problem_ds["solar_zenith_angle"],
+            problem_ds[problem_ds.mapping.get_var("solar_zenith_angle")],
             problem_ds["surface_albedo_direct"],
             problem_ds["surface_albedo_diffuse"],
             problem_ds["toa_source"],
@@ -223,22 +234,22 @@ class RTESolver:
                 [],
                 [],
                 [],
-                ["site", "layer", "gpt"],  # tau
-                ["site", "layer", "gpt"],  # ssa
-                ["site", "layer", "gpt"],  # g
-                ["site", "layer"],  # mu0
-                ["site", "gpt"],  # sfc_alb_dir
-                ["site", "gpt"],  # sfc_alb_dif
-                ["site", "gpt"],  # inc_flux_dir
-                ["site", "gpt"],  # inc_flux_dif
+                [site_dim, layer_dim, "gpt"],  # tau
+                [site_dim, layer_dim, "gpt"],  # ssa
+                [site_dim, layer_dim, "gpt"],  # g
+                [site_dim, layer_dim],  # mu0
+                [site_dim, "gpt"],  # sfc_alb_dir
+                [site_dim, "gpt"],  # sfc_alb_dif
+                [site_dim, "gpt"],  # inc_flux_dir
+                [site_dim, "gpt"],  # inc_flux_dif
             ],
             output_core_dims=[
-                ["site", "level", "gpt"],  # solver_flux_up_broadband
-                ["site", "level", "gpt"],  # solver_flux_down_broadband
-                ["site", "level", "gpt"],  # solver_flux_dir_broadband
-                ["site", "level"],  # solver_flux_up
-                ["site", "level"],  # solver_flux_down
-                ["site", "level"],  # solver_flux_dir
+                [site_dim, level_dim, "gpt"],  # solver_flux_up_broadband
+                [site_dim, level_dim, "gpt"],  # solver_flux_down_broadband
+                [site_dim, level_dim, "gpt"],  # solver_flux_dir_broadband
+                [site_dim, level_dim],  # solver_flux_up
+                [site_dim, level_dim],  # solver_flux_down
+                [site_dim, level_dim],  # solver_flux_dir
             ],
             vectorize=True,
             dask="allowed",
