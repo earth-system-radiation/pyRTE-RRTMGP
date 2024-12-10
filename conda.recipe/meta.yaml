@@ -41,14 +41,10 @@ requirements:
 test:
   imports:
     - pyrte_rrtmgp
-  requires:
-    - numpy>=1.21
-    - pytest>=7.4
-    - xarray >=2023.5.0
-    - netcdf4 >=1.5.7
-    - requests>=2.4.0
   commands:
-    - pyrte_rrtmgp run_tests
+    - pip check
+  requires:
+    - pip
 
 about:
   summary: A Python interface to the RTE+RRTMGP Fortran software package.
