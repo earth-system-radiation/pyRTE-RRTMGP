@@ -4,7 +4,13 @@ version = "0.0.6"
 description = "A Python interface to the RTE+RRTMGP Fortran software package."
 readme = "README.md"
 requires-python = ">=3.7"
-dependencies = ["numpy>=2.0.0", "xarray>=2023.5.0", "netcdf4>=1.5.7", "requests>=2.4.0"]
+dependencies = [
+  "numpy>=2.0.0",
+  "xarray>=2023.5.0",
+  "netcdf4>=1.5.7",
+  "requests>=2.4.0",
+  "pytest>=6.0.0"
+]
 classifiers = [
   "Development Status :: 4 - Beta",
   "License :: OSI Approved :: MIT License",
@@ -18,19 +24,24 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 
+[project.optional-dependencies]
+test = [
+  "pytest>=6.0.0", 
+  "numpy>=2.0.0", 
+  "xarray>=2023.5.0", 
+  "netcdf4>=1.5.7", 
+  "requests>=2.4.0"
+]
+
+[project.scripts]
+pyrte_rrtmgp = "pyrte_rrtmgp.cli:main"
 
 [build-system]
 requires = ["scikit-build-core>=0.3.3", "pybind11"]
 build-backend = "scikit_build_core.build"
 
-
-[project.optional-dependencies]
-test = ["pytest", "numpy>=2.0.0", "xarray>=2023.5.0", "netcdf4>=1.5.7", "requests>=2.4.0"]
-
-
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
-
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -39,7 +50,6 @@ xfail_strict = true
 log_cli_level = "INFO"
 filterwarnings = ["error"]
 testpaths = ["tests"]
-
 
 [tool.cibuildwheel]
 test-command = "pytest {project}/tests"

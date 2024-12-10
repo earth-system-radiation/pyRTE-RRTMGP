@@ -185,8 +185,10 @@ Once built, the module will be located in a folder called `pyrte_rrtmgp`
 
 <!-- end-setup-section -->
 
-## Pytest Setup Instructions
+## Running Tests
 
-* Go to the 'tests' folder: `cd tests/`
-* Install the test prerequisites (if you haven't already) by running `pip3 install -r requirements-test.txt`
-* Run `pytest tests`
+After installing the package, you can run the tests by executing the following command:
+
+```bash
+pyrte_rrtmgp run_tests
+```
