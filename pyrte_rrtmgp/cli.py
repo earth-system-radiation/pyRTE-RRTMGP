@@ -1,14 +1,22 @@
+import argparse
+import os
 import sys
 import subprocess
-import argparse
 
 
 def run_tests():
     """Run tests using pytest."""
+    package_root = os.path.dirname(os.path.abspath(__file__))
+    tests_path = os.path.join(package_root, "tests")
+
+    if not os.path.exists(tests_path):
+        print(f"Error: Test directory '{tests_path}' does not exist.")
+        sys.exit(1)
+
     try:
         print("Running tests...")
         result = subprocess.run(
-            [sys.executable, "-m", "pytest", "pyrte_rrtmgp/tests"],
+            [sys.executable, "-m", "pytest", tests_path],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
