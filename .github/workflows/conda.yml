@@ -51,4 +51,4 @@ jobs:
         run: conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
 
       - name: Test
-        run: pytest tests
+        run: pyrte_rrtmgp run_tests
