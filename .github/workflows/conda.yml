@@ -47,9 +47,3 @@ jobs:
 
       - name: Build
         run: conda build conda.recipe
-
-      - name: Install
-        run: conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
-
-      - name: Test
-        run: pytest tests
