@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest, macos-latest]
         python-version: ["3.12"]
 
     runs-on: ${{ matrix.platform }}
@@ -48,15 +48,8 @@ jobs:
       - name: Build
         run: conda build conda.recipe
 
-      - name: Install Local Package
-        run: conda install --use-local pyrte_rrtmgp
+      - name: Install
+        run: conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
 
-      - name: Verify Installation
-        run: |
-          conda list pyrte_rrtmgp
-          which pyrte_rrtmgp
-
-      - name: Activate Environment and Run Tests
-        run: |
-          conda activate test  # Replace 'test' with your conda environment name
-          pyrte_rrtmgp run_tests
+      - name: Test
+        run: pytest tests
