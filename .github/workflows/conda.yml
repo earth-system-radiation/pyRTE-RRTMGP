@@ -40,6 +40,8 @@ jobs:
           miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
+          auto-activate-base: true
+          activate-environment: ""
 
       - name: Prepare
         run: conda install conda-build conda-verify pytest
@@ -47,7 +49,9 @@ jobs:
       - name: Build
         run: conda build conda.recipe
 
-      - name: Run pyrte_rrtmgp Tests
+      - name: Install Local Package
+        run: conda install --use-local pyrte_rrtmgp
+
+      - name: Activate Environment and Run Tests
         run: |
-          conda install --use-local pyrte_rrtmgp
           pyrte_rrtmgp run_tests
