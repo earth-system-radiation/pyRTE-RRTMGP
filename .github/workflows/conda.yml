@@ -41,7 +41,6 @@ jobs:
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
           auto-activate-base: true
-          activate-environment: ""
 
       - name: Prepare
         run: conda install conda-build conda-verify pytest
