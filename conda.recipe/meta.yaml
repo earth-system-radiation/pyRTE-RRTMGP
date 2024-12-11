@@ -21,8 +21,8 @@ requirements:
     - m2w64-gcc-fortran   # [win]
     - libuv==1.44.2
     - cmake==3.26.4
-    - git==2.44.0
-    - make==4.3
+    - git
+    - make
 
   host:
     - python

@@ -36,7 +36,7 @@ include(ExternalProject REQUIRED)
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
     set(BUILD_COMMAND_STRING "set FC=%CMAKE_Fortran_COMPILER% && cd build && nmake /A")
 else()
-    set(BUILD_COMMAND_STRING "FC=${CMAKE_Fortran_COMPILER} make -C build -j ${N}")
+    set(BUILD_COMMAND_STRING "FC=${CMAKE_Fortran_COMPILER} FCFLAGS='-fPIC' make -C build -j ${N}")
 endif()
 
 ExternalProject_Add(
