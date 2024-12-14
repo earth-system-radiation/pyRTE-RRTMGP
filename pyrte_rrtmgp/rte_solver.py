@@ -109,8 +109,8 @@ class RTESolver:
             solver_flux_up_jacobian,
             solver_flux_up_broadband,
             solver_flux_down_broadband,
-            solver_flux_up,
-            solver_flux_down,
+            _,
+            _,
         ) = xr.apply_ufunc(
             lw_solver_noscat,
             problem_ds.sizes[site_dim],
@@ -158,10 +158,8 @@ class RTESolver:
         return xr.Dataset(
             {
                 "lw_flux_up_jacobian": solver_flux_up_jacobian,
-                "lw_flux_up_broadband": solver_flux_up_broadband,
-                "lw_flux_down_broadband": solver_flux_down_broadband,
-                "lw_flux_up": solver_flux_up,
-                "lw_flux_down": solver_flux_down,
+                "lw_flux_up": solver_flux_up_broadband,
+                "lw_flux_down": solver_flux_down_broadband,
             }
         )
 
@@ -210,12 +208,12 @@ class RTESolver:
 
         # Call solver
         (
+            _,
+            _,
+            _,
             solver_flux_up_broadband,
             solver_flux_down_broadband,
             solver_flux_dir_broadband,
-            solver_flux_up,
-            solver_flux_down,
-            solver_flux_dir,
         ) = xr.apply_ufunc(
             sw_solver_2stream,
             problem_ds.sizes[site_dim],
@@ -244,12 +242,12 @@ class RTESolver:
                 [site_dim, "gpt"],  # inc_flux_dif
             ],
             output_core_dims=[
-                [site_dim, level_dim, "gpt"],  # solver_flux_up_broadband
-                [site_dim, level_dim, "gpt"],  # solver_flux_down_broadband
-                [site_dim, level_dim, "gpt"],  # solver_flux_dir_broadband
-                [site_dim, level_dim],  # solver_flux_up
-                [site_dim, level_dim],  # solver_flux_down
-                [site_dim, level_dim],  # solver_flux_dir
+                [site_dim, level_dim, "gpt"],  # solver_flux_up
+                [site_dim, level_dim, "gpt"],  # solver_flux_down
+                [site_dim, level_dim, "gpt"],  # solver_flux_dir
+                [site_dim, level_dim],  # solver_flux_up_broadband
+                [site_dim, level_dim],  # solver_flux_down_broadband
+                [site_dim, level_dim],  # solver_flux_dir_broadband
             ],
             vectorize=True,
             dask="allowed",
@@ -258,12 +256,9 @@ class RTESolver:
         # Construct output dataset
         fluxes = xr.Dataset(
             {
-                "sw_flux_up_broadband": solver_flux_up_broadband,
-                "sw_flux_down_broadband": solver_flux_down_broadband,
-                "sw_flux_dir_broadband": solver_flux_dir_broadband,
-                "sw_flux_up": solver_flux_up,
-                "sw_flux_down": solver_flux_down,
-                "sw_flux_dir": solver_flux_dir,
+                "sw_flux_up": solver_flux_up_broadband,
+                "sw_flux_down": solver_flux_down_broadband,
+                "sw_flux_dir": solver_flux_dir_broadband,
             }
         )
 
