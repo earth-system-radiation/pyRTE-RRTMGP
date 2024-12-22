@@ -367,7 +367,7 @@ def pade_eval(iband=None, nbnd=None, nrads=None, m=None, n=None, irad=None, re=N
         return pade_eval_1(iband, nbnd, nrads, m, n, irad, re, pade_coeffs)
 
 
-def compute_cloud_optics(lwp, iwp, rel, rei, cloud_optics):
+def compute_cloud_optics(lwp, iwp, rel, rei, cloud_optics, lw=True):
     """
     Compute cloud optical properties for liquid and ice clouds.
     
@@ -450,12 +450,16 @@ def compute_cloud_optics(lwp, iwp, rel, rei, cloud_optics):
         )
 
     # Combine liquid and ice contributions
-    tau = ltau + itau
-    taussa = ltaussa + itaussa
-    taussag = ltaussag + itaussag
+    if lw:
+        tau = (ltau - ltaussa) + (itau - itaussa)
+        return tau
+    else:
+        tau = ltau + itau
+        taussa = ltaussa + itaussa
+        taussag = ltaussag + itaussag
     
-    # Calculate derived quantities
-    ssa = np.divide(taussa, tau, out=np.zeros_like(tau), where=tau > np.finfo(float).eps)
-    g = np.divide(taussag, taussa, out=np.zeros_like(tau), where=taussa > np.finfo(float).eps)
+        # Calculate derived quantities
+        ssa = np.divide(taussa, tau, out=np.zeros_like(tau), where=tau > np.finfo(float).eps)
+        g = np.divide(taussag, taussa, out=np.zeros_like(tau), where=taussa > np.finfo(float).eps)
     
-    return tau, ssa, g
+        return tau, ssa, g
