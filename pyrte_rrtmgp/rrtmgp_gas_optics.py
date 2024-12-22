@@ -676,8 +676,9 @@ class BaseGasOpticsAccessor:
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
         sources = self.compute_sources(atmosphere, gas_interpolation_data)
         boundary_conditions = self.compute_boundary_conditions(atmosphere)
+        gas_data = self._dataset["bnd_limits_gpt"].to_dataset()
 
-        gas_optics = xr.merge([sources, problem, boundary_conditions])
+        gas_optics = xr.merge([sources, problem, boundary_conditions, gas_data])
 
         # Add problem type to dataset attributes
         if problem_type == "absorption" and self.is_internal:
@@ -758,6 +759,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                 coords={
                     site_dim: atmosphere[site_dim],
                 },
+                name=surface_emissivity_var
             )
         else:
             return atmosphere[surface_emissivity_var]
