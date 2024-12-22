@@ -84,7 +84,7 @@ class RTESolver:
         surface_emissivity_var = problem_ds.mapping.get_var("surface_emissivity")
 
         nmus: int = 1
-        top_at_1: bool = problem_ds[layer_dim][0] < problem_ds[layer_dim][-1]
+        top_at_1: bool = problem_ds["layer_source"][0,0,0] < problem_ds["layer_source"][-1,-1,-1]
 
         if "incident_flux" not in problem_ds:
             incident_flux: xr.DataArray = xr.zeros_like(problem_ds["surface_source"])
