@@ -20,7 +20,7 @@ def compute_profiles(SST, ncol, nlay):
     z_trop = 15000.0
     z_top = 70.0e3
     g1 = 3.6478
-    g2 = 0.83209 
+    g2 = 0.83209
     g3 = 11.3515
     o3_min = 1e-13
     g = 9.79764
@@ -32,62 +32,67 @@ def compute_profiles(SST, ncol, nlay):
     gamma = 6.7e-3
     q_0 = 0.01864  # for 300 K SST
 
-    # Initialize arrays
-    p_lay = np.zeros((ncol, nlay))
-    t_lay = np.zeros((ncol, nlay))
-    q_lay = np.zeros((ncol, nlay))
-    o3 = np.zeros((ncol, nlay))
-    p_lev = np.zeros((ncol, nlay+1))
-    t_lev = np.zeros((ncol, nlay+1))
-
     # Initial calculations
-    Tv0 = (1.0 + 0.608*q_0) * SST
+    Tv0 = (1.0 + 0.608 * q_0) * SST
 
     # Split resolution above and below RCE tropopause (15 km or about 125 hPa)
-    z_lev = np.zeros(nlay+1)
+    z_lev = np.zeros(nlay + 1)
     z_lev[0] = 0.0
-    z_lev[1:nlay//2+1] = 2.0 * z_trop/nlay * np.arange(1, nlay//2+1)
-    z_lev[nlay//2+1:] = z_trop + 2.0 * (z_top - z_trop)/nlay * np.arange(1, nlay//2+1)
+    z_lev[1 : nlay // 2 + 1] = 2.0 * z_trop / nlay * np.arange(1, nlay // 2 + 1)
+    z_lev[nlay // 2 + 1 :] = (
+        z_trop + 2.0 * (z_top - z_trop) / nlay * np.arange(1, nlay // 2 + 1)
+    )
     z_lay = 0.5 * (z_lev[:-1] + z_lev[1:])
 
-    # Layer calculations
-    for ilay in range(nlay):
-        for icol in range(ncol):
-            z = z_lay[ilay]
-            if z > z_trop:
-                q = q_t
-                T = SST - gamma*z_trop/(1.0 + 0.608*q_0)
-                Tv = (1.0 + 0.608*q) * T
-                p = p0 * (Tv/Tv0)**(g/(Rd*gamma)) * np.exp(-((g*(z-z_trop))/(Rd*Tv)))
-            else:
-                q = q_0 * np.exp(-z/z_q1) * np.exp(-(z/z_q2)**2)
-                T = SST - gamma*z / (1.0 + 0.608*q)
-                Tv = (1.0 + 0.608*q) * T
-                p = p0 * (Tv/Tv0)**(g/(Rd*gamma))
+    # Layer calculations with broadcasting
+    z_lay_bc = z_lay[np.newaxis, :]
+    z_lev_bc = z_lev[np.newaxis, :]
 
-            p_lay[icol,ilay] = p
-            t_lay[icol,ilay] = T
-            q_lay[icol,ilay] = q
-            p_hpa = p_lay[icol,ilay] / 100.0
-            o3[icol,ilay] = max(o3_min, g1 * p_hpa**g2 * np.exp(-p_hpa/g3) * 1.0e-6)
+    q_lay = np.where(
+        z_lay_bc > z_trop,
+        q_t,
+        q_0 * np.exp(-z_lay_bc / z_q1) * np.exp(-((z_lay_bc / z_q2) ** 2)),
+    )
+    t_lay = np.where(
+        z_lay_bc > z_trop,
+        SST - gamma * z_trop / (1.0 + 0.608 * q_0),
+        SST - gamma * z_lay_bc / (1.0 + 0.608 * q_lay),
+    )
+    Tv_lay = (1.0 + 0.608 * q_lay) * t_lay
+    p_lay = np.where(
+        z_lay_bc > z_trop,
+        p0 * (Tv_lay / Tv0) ** (g / (Rd * gamma)) * np.exp(-((g * (z_lay_bc - z_trop)) / (Rd * Tv_lay))),
+        p0 * (Tv_lay / Tv0) ** (g / (Rd * gamma)),
+    )
 
-    # Level calculations
-    for ilay in range(nlay+1):
-        for icol in range(ncol):
-            z = z_lev[ilay]
-            if z > z_trop:
-                q = q_t
-                T = SST - gamma*z_trop/(1.0 + 0.608*q_0)
-                Tv = (1.0 + 0.608*q) * T
-                p = p0 * (Tv/Tv0)**(g/(Rd*gamma)) * np.exp(-((g*(z-z_trop))/(Rd*Tv)))
-            else:
-                q = q_0 * np.exp(-z/z_q1) * np.exp(-(z/z_q2)**2)
-                T = SST - gamma*z / (1.0 + 0.608*q)
-                Tv = (1.0 + 0.608*q) * T
-                p = p0 * (Tv/Tv0)**(g/(Rd*gamma))
+    p_hpa = p_lay / 100.0
+    o3 = np.maximum(o3_min, g1 * p_hpa**g2 * np.exp(-p_hpa / g3) * 1.0e-6)
 
-            p_lev[icol,ilay] = p
-            t_lev[icol,ilay] = T
+    # Level calculations with broadcasting
+    q_lev = np.where(
+        z_lev_bc > z_trop,
+        q_t,
+        q_0 * np.exp(-z_lev_bc / z_q1) * np.exp(-((z_lev_bc / z_q2) ** 2)),
+    )
+    t_lev = np.where(
+        z_lev_bc > z_trop,
+        SST - gamma * z_trop / (1.0 + 0.608 * q_0),
+        SST - gamma * z_lev_bc / (1.0 + 0.608 * q_lev),
+    )
+    Tv_lev = (1.0 + 0.608 * q_lev) * t_lev
+    p_lev = np.where(
+        z_lev_bc > z_trop,
+        p0 * (Tv_lev / Tv0) ** (g / (Rd * gamma)) * np.exp(-((g * (z_lev_bc - z_trop)) / (Rd * Tv_lev))),
+        p0 * (Tv_lev / Tv0) ** (g / (Rd * gamma)),
+    )
+
+    # Repeat profiles for each column
+    p_lay = np.repeat(p_lay, ncol, axis=0)
+    t_lay = np.repeat(t_lay, ncol, axis=0)
+    q_lay = np.repeat(q_lay, ncol, axis=0)
+    o3 = np.repeat(o3, ncol, axis=0)
+    p_lev = np.repeat(p_lev, ncol, axis=0)
+    t_lev = np.repeat(t_lev, ncol, axis=0)
 
     return p_lay, t_lay, p_lev, t_lev, q_lay, o3
 
