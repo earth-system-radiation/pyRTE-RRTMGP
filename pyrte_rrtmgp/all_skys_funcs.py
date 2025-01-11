@@ -4,7 +4,16 @@ import numpy as np
 import xarray as xr
 from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
-import pandas as pd
+from pyrte_rrtmgp.kernels.rte import (
+    increment_1scalar_by_1scalar,
+    increment_1scalar_by_2stream,
+    increment_2stream_by_1scalar,
+    increment_2stream_by_2stream,
+    inc_1scalar_by_1scalar_bybnd,
+    inc_1scalar_by_2stream_bybnd,
+    inc_2stream_by_1scalar_bybnd,
+    inc_2stream_by_2stream_bybnd,
+)
 
 rte_rrtmgp_dir = download_rrtmgp_data()
 
@@ -468,3 +477,125 @@ def compute_cloud_optics(lwp, iwp, rel, rei, cloud_optics, lw=True):
         g = np.divide(taussag, taussa, out=np.zeros_like(tau), where=taussa > np.finfo(float).eps)
     
         return tau, ssa, g
+
+
+def combine_optical_props(op1, op2):
+    """
+    Combines two sets of optical properties, modifying op1 in place.
+    
+    Args:
+        op1: First set of optical properties, will be modified.
+        op2: Second set of optical properties to add.
+    """
+    ncol = op2.sizes["site"]
+    nlay = op2.sizes["layer"]
+    ngpt = op2.sizes["gpt"]
+    
+    # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
+    is_1stream_1 = hasattr(op1, 'tau') and not hasattr(op1, 'ssa')
+    is_1stream_2 = hasattr(op2, 'tau') and not hasattr(op2, 'ssa')
+    
+    # Check if the g-points are equal between the two datasets
+    gpoints_equal = op1.sizes['gpt'] == op2.sizes['gpt']
+    
+    if gpoints_equal:
+        if is_1stream_1:
+            if is_1stream_2:
+                # 1-stream by 1-stream
+                increment_1scalar_by_1scalar(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op1.tau.values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+            else:
+                # 1-stream by 2-stream
+                increment_1scalar_by_2stream(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op1.tau.values,
+                    op1.ssa.values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+        else:  # 2-stream output
+            if is_1stream_2:
+                # 2-stream by 1-stream
+                increment_2stream_by_1scalar(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op2.ssa.values,
+                    op1.tau.values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+                op2['ssa'] = (('site', 'layer', 'gpt'), op2.ssa.values)
+            else:
+                # 2-stream by 2-stream
+                increment_2stream_by_2stream(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op2.ssa.values,
+                    op2.g.values,
+                    op1.tau.values,
+                    op1.ssa.values,
+                    op1.g.values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+                op2['ssa'] = (('site', 'layer', 'gpt'), op2.ssa.values)
+                op2['g'] = (('site', 'layer', 'gpt'), op2.g.values)
+    
+    else:
+        # By-band increment (when op2's ngpt equals op1's nband)
+        if op2.sizes['bnd'] != op1.sizes['gpt']:
+            raise ValueError("Incompatible g-point structures for by-band increment")
+            
+        if is_1stream_1:
+            if is_1stream_2:
+                # 1-stream by 1-stream by band
+                inc_1scalar_by_1scalar_bybnd(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op1.tau.values,
+                    op2.sizes['bnd'],
+                    op2["bnd_limits_gpt"].values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+            else:
+                # 1-stream by 2-stream by band
+                inc_1scalar_by_2stream_bybnd(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op1.tau.values,
+                    op1.ssa.values,
+                    op2.sizes['bnd'],
+                    op2["bnd_limits_gpt"].values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+        else:
+            if is_1stream_2:
+                # 2-stream by 1-stream by band
+                inc_2stream_by_1scalar_bybnd(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op2.ssa.values,
+                    op1.tau.values,
+                    op2.sizes['bnd'],
+                    op2["bnd_limits_gpt"].values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+                op2['ssa'] = (('site', 'layer', 'gpt'), op2.ssa.values)
+            else:
+                # 2-stream by 2-stream by band
+                inc_2stream_by_2stream_bybnd(
+                    ncol, nlay, ngpt,
+                    op2.tau.values,
+                    op2.ssa.values,
+                    op2.g.values,
+                    op1.tau.values,
+                    op1.ssa.values,
+                    op1.g.values,
+                    op2.sizes['bnd'],
+                    op2["bnd_limits_gpt"].values
+                )
+                op2['tau'] = (('site', 'layer', 'gpt'), op2.tau.values)
+                op2['ssa'] = (('site', 'layer', 'gpt'), op2.ssa.values)
+                op2['g'] = (('site', 'layer', 'gpt'), op2.g.values)

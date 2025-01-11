@@ -662,6 +662,8 @@ class BaseGasOpticsAccessor:
         """
         # Create and validate gas mapping
         gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
+        # gas_mapping = {k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)}
+        # self._gas_names = [k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)]
 
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
