@@ -135,9 +135,17 @@ class BaseGasOpticsAccessor:
         """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
 
+        min_press = self._dataset["press_ref"].min().item()
+
         min_index = np.argmin(atmosphere[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
-        atmosphere[pres_level_var][:, min_index] = min_press
+        
+        # Replace values smaller than min_press with min_press at min_index
+        atmosphere[pres_level_var][:, min_index] = xr.where(
+            atmosphere[pres_level_var][:, min_index] < min_press,
+            min_press,
+            atmosphere[pres_level_var][:, min_index]
+        )
 
         if not inplace:
             return atmosphere
@@ -662,13 +670,16 @@ class BaseGasOpticsAccessor:
         """
         # Create and validate gas mapping
         gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
-        # gas_mapping = {k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)}
-        # self._gas_names = [k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)]
+        gas_mapping = {k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)}
+        self._gas_names = [k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)]
 
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
         # Set mapping in accessor
         atmosphere.mapping.set_mapping(variable_mapping)
+
+        pres_layer_var = atmosphere.mapping.get_var("pres_layer")
+        top_at_1 = atmosphere[pres_layer_var].values[0, 0] < atmosphere[pres_layer_var].values[0, -1]
 
         # Modify pressure levels to avoid division by zero, runs inplace
         self._initialize_pressure_levels(atmosphere)
@@ -698,9 +709,11 @@ class BaseGasOpticsAccessor:
         if add_to_input:
             atmosphere.update(gas_optics)
             atmosphere.attrs["problem_type"] = problem_type
+            atmosphere.attrs["top_at_1"] = top_at_1
         else:
             output_ds = gas_optics
             output_ds.attrs["problem_type"] = problem_type
+            output_ds.attrs["top_at_1"] = top_at_1
             output_ds.mapping.set_mapping(variable_mapping)
             return output_ds
 
@@ -786,7 +799,8 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         surface_temperature_var = atmosphere.mapping.get_var("surface_temperature")
 
         # Check if the top layer is at the first level
-        top_at_1 = atmosphere[layer_dim][0] < atmosphere[layer_dim][-1]
+        pres_layer_var = atmosphere.mapping.get_var("pres_layer")
+        top_at_1 = atmosphere[pres_layer_var].values[0, 0] < atmosphere[pres_layer_var].values[0, -1]
 
         ncol = atmosphere.sizes[site_dim]
         nlay = atmosphere.sizes[layer_dim]
