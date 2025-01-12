@@ -139,7 +139,6 @@ class BaseGasOpticsAccessor:
 
         min_index = np.argmin(atmosphere[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
-
         # Replace values smaller than min_press with min_press at min_index
         atmosphere[pres_level_var][:, min_index] = xr.where(
             atmosphere[pres_level_var][:, min_index] < min_press,
