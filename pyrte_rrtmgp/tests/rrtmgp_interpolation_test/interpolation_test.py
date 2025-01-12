@@ -1,23 +1,27 @@
 #!/usr/bin/env python3
 import json
-import numpy as np
-import pyrte_rrtmgp.pyrte_rrtmgp as py
 import os
 import zipfile
 
+import numpy as np
+
+import pyrte_rrtmgp.pyrte_rrtmgp as py
+
+
 def load_json_file(file_path):
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         return json.load(f)
+
 
 def test_rrtmgp_interpolation(request):
     path = os.path.dirname(request.path)
 
     input_data = None
     output_data = None
-    with zipfile.ZipFile(f'{path}/interpolation_test_data.zip') as myzip:
-        with myzip.open('input.json') as input_data_file:
+    with zipfile.ZipFile(f"{path}/interpolation_test_data.zip") as myzip:
+        with myzip.open("input.json") as input_data_file:
             input_data = json.load(input_data_file)
-        with myzip.open('output.json') as output_data_file:
+        with myzip.open("output.json") as output_data_file:
             output_data = json.load(output_data_file)
 
     assert input_data is not None and output_data is not None
@@ -36,4 +40,4 @@ def test_rrtmgp_interpolation(request):
     py.rrtmgp_interpolation(*args)
 
     for key in output_data:
-        assert(np.allclose(output_data[key] - input_data[key], 0.))
+        assert np.allclose(output_data[key] - input_data[key], 0.0)

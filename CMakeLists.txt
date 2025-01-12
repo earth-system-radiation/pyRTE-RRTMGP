@@ -62,21 +62,21 @@ pybind11_add_module(${TARGET_NAME} ${SOURCES})
 
 add_dependencies(${TARGET_NAME} rte-rrtmgp)
 
-target_include_directories(${TARGET_NAME} PUBLIC 
+target_include_directories(${TARGET_NAME} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/rte-kernels/api/
     ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/rrtmgp-kernels/api/
 )
 
-target_link_directories(${TARGET_NAME} PUBLIC 
+target_link_directories(${TARGET_NAME} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/build
 )
 
-target_link_libraries(${TARGET_NAME} PUBLIC 
+target_link_libraries(${TARGET_NAME} PUBLIC
     rrtmgp
     rte
 )
 
-target_compile_definitions(${TARGET_NAME} PRIVATE 
+target_compile_definitions(${TARGET_NAME} PRIVATE
     VERSION_INFO=${VERSION_INFO}
     DBL_EPSILON=5.8e-2
     DCMAKE_LIBRARY_OUTPUT_DIRECTORY=pyrte_rrtmgp

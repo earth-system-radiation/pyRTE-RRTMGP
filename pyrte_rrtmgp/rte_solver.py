@@ -77,7 +77,6 @@ class RTESolver:
                 - lw_flux_up: Spectrally resolved upward flux
                 - lw_flux_down: Spectrally resolved downward flux
         """
-
         site_dim = problem_ds.mapping.get_dim("site")
         layer_dim = problem_ds.mapping.get_dim("layer")
         level_dim = problem_ds.mapping.get_dim("level")

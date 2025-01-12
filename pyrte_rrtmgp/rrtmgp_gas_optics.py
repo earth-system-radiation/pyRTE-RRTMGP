@@ -8,7 +8,6 @@ import numpy.typing as npt
 import pandas as pd
 import xarray as xr
 
-from pyrte_rrtmgp import data_validation
 from pyrte_rrtmgp.constants import (
     AVOGAD,
     HELMERT1,
@@ -949,7 +948,6 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         Returns:
             Dataset containing solar zenith angles, surface albedos and solar angle mask
         """
-        site_dim = atmosphere.mapping.get_dim("site")
         layer_dim = atmosphere.mapping.get_dim("layer")
 
         solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")

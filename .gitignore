@@ -159,3 +159,6 @@ cython_debug/
 *.tmp
 *.temp
 *.db
+
+# Pre-commit
+.pre-commit-config.yaml.cache

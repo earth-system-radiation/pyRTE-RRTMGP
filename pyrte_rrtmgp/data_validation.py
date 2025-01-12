@@ -1,5 +1,5 @@
 from dataclasses import asdict, dataclass
-from typing import Dict, Optional, Set, Union
+from typing import Dict, Optional, Set
 
 import xarray as xr
 
