@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 import json
-import numpy as np
-import pyrte_rrtmgp.pyrte_rrtmgp as py
 import os
+
+import numpy as np
+
+import pyrte_rrtmgp.pyrte_rrtmgp as py
+
 
 def test_lw_solver(request):
     path = os.path.dirname(request.path)
-    with open(f'{path}/lw_solver_input.json', 'r') as f:
+    with open(f"{path}/lw_solver_input.json", "r") as f:
         data = json.load(f)
 
     for key in data:
@@ -21,4 +24,4 @@ def test_lw_solver(request):
 
     test_data = np.load(f"{path}/lw_solver_output.npy")
 
-    assert(np.allclose(test_data - data['broadband_up'], 0.))
+    assert np.allclose(test_data - data["broadband_up"], 0.0)

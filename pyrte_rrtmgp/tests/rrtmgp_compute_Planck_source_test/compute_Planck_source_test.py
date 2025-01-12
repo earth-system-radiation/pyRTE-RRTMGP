@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import json
-import numpy as np
-import pyrte_rrtmgp.pyrte_rrtmgp as py
 import os
 import zipfile
+
+import numpy as np
+
+import pyrte_rrtmgp.pyrte_rrtmgp as py
+
 
 def test_rrtmgp_compute_Planck_source(request):
 
@@ -11,10 +14,10 @@ def test_rrtmgp_compute_Planck_source(request):
 
     input_data = None
     output_data = None
-    with zipfile.ZipFile(f'{path}/compute_Planck_source_test_data.zip') as myzip:
-        with myzip.open('compute_Planck_source_input.json') as input_data_file:
+    with zipfile.ZipFile(f"{path}/compute_Planck_source_test_data.zip") as myzip:
+        with myzip.open("compute_Planck_source_input.json") as input_data_file:
             input_data = json.load(input_data_file)
-        with myzip.open('compute_Planck_source_output.json') as output_data_file:
+        with myzip.open("compute_Planck_source_output.json") as output_data_file:
             output_data = json.load(output_data_file)
 
     for key in input_data:
@@ -31,4 +34,4 @@ def test_rrtmgp_compute_Planck_source(request):
     py.rrtmgp_compute_Planck_source(*args)
 
     for key in output_data:
-        assert(np.allclose(output_data[key] - input_data[key], 0.))
+        assert np.allclose(output_data[key] - input_data[key], 0.0)

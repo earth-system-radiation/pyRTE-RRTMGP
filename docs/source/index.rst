@@ -44,5 +44,3 @@ in planetary atmospheres. RTE+RRTMGP is described in a
 .. * :ref:`genindex`
 .. * :ref:`modindex`
 .. * :ref:`search`
-
-

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import json
 
+
 def parse_value(value):
     # Handle NaN
-    if 'NaN' in value:
-        res = float('nan')
+    if "NaN" in value:
+        res = float("nan")
     # Handle bool
-    elif value in ['T', 'F']:
-        res = True if value == 'T' else False
+    elif value in ["T", "F"]:
+        res = True if value == "T" else False
     # Handle float
     elif "." in value:
         res = float(value)
@@ -20,12 +21,13 @@ def parse_value(value):
             res = value
     return res
 
+
 def load_data_from_file(file_path):
     data = {}
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         for line in file:
-            parts = line.split(':')
-            assert(len(parts) == 2)
+            parts = line.split(":")
+            assert len(parts) == 2
             key = parts[0].strip()
             values = parts[1].strip().split()
             if len(values) == 1:
@@ -34,8 +36,9 @@ def load_data_from_file(file_path):
                 data[key] = [float(val) for val in values]
     return data
 
-file_path = 'fortran_data_input.txt'
+
+file_path = "fortran_data_input.txt"
 data = load_data_from_file(file_path)
 
-with open('input.json', 'w') as f:
+with open("input.json", "w") as f:
     json.dump(data, f)

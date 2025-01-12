@@ -1,7 +1,7 @@
 import argparse
 import os
-import sys
 import subprocess
+import sys
 
 
 def run_tests():
@@ -32,9 +32,7 @@ def run_tests():
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="pyRTE-RRTMGP command line interface"
-    )
+    parser = argparse.ArgumentParser(description="pyRTE-RRTMGP command line interface")
     subparsers = parser.add_subparsers(
         dest="command",
         help="Available commands",

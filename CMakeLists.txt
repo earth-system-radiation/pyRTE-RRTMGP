@@ -42,8 +42,9 @@ endif()
 ExternalProject_Add(
     rte-rrtmgp
     GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
-    GIT_TAG v1.8
-    GIT_SHALLOW TRUE
+    GIT_TAG 06ea8284071b80d393ff8df659a2ef4b4bfb2aa8
+    GIT_CONFIG "advice.detachedHead=false"
+    # GIT_SHALLOW TRUE
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE TRUE
@@ -61,21 +62,21 @@ pybind11_add_module(${TARGET_NAME} ${SOURCES})
 
 add_dependencies(${TARGET_NAME} rte-rrtmgp)
 
-target_include_directories(${TARGET_NAME} PUBLIC 
+target_include_directories(${TARGET_NAME} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/rte-kernels/api/
     ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/rrtmgp-kernels/api/
 )
 
-target_link_directories(${TARGET_NAME} PUBLIC 
+target_link_directories(${TARGET_NAME} PUBLIC
     ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/build
 )
 
-target_link_libraries(${TARGET_NAME} PUBLIC 
+target_link_libraries(${TARGET_NAME} PUBLIC
     rrtmgp
     rte
 )
 
-target_compile_definitions(${TARGET_NAME} PRIVATE 
+target_compile_definitions(${TARGET_NAME} PRIVATE
     VERSION_INFO=${VERSION_INFO}
     DBL_EPSILON=5.8e-2
     DCMAKE_LIBRARY_OUTPUT_DIRECTORY=pyrte_rrtmgp
