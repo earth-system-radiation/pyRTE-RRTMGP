@@ -139,12 +139,12 @@ class BaseGasOpticsAccessor:
 
         min_index = np.argmin(atmosphere[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
-        
+
         # Replace values smaller than min_press with min_press at min_index
         atmosphere[pres_level_var][:, min_index] = xr.where(
             atmosphere[pres_level_var][:, min_index] < min_press,
             min_press,
-            atmosphere[pres_level_var][:, min_index]
+            atmosphere[pres_level_var][:, min_index],
         )
 
         if not inplace:
@@ -670,8 +670,8 @@ class BaseGasOpticsAccessor:
         """
         # Create and validate gas mapping
         gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
-        gas_mapping = {k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)}
-        self._gas_names = [k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)]
+        # gas_mapping = {k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)}
+        # self._gas_names = [k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)]
 
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
@@ -679,7 +679,10 @@ class BaseGasOpticsAccessor:
         atmosphere.mapping.set_mapping(variable_mapping)
 
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
-        top_at_1 = atmosphere[pres_layer_var].values[0, 0] < atmosphere[pres_layer_var].values[0, -1]
+        top_at_1 = (
+            atmosphere[pres_layer_var].values[0, 0]
+            < atmosphere[pres_layer_var].values[0, -1]
+        )
 
         # Modify pressure levels to avoid division by zero, runs inplace
         self._initialize_pressure_levels(atmosphere)
@@ -773,7 +776,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                 coords={
                     site_dim: atmosphere[site_dim],
                 },
-                name=surface_emissivity_var
+                name=surface_emissivity_var,
             )
         else:
             return atmosphere[surface_emissivity_var]
@@ -800,7 +803,10 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
 
         # Check if the top layer is at the first level
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
-        top_at_1 = atmosphere[pres_layer_var].values[0, 0] < atmosphere[pres_layer_var].values[0, -1]
+        top_at_1 = (
+            atmosphere[pres_layer_var].values[0, 0]
+            < atmosphere[pres_layer_var].values[0, -1]
+        )
 
         ncol = atmosphere.sizes[site_dim]
         nlay = atmosphere.sizes[layer_dim]

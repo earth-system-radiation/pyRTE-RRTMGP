@@ -91,13 +91,18 @@ class RTESolver:
         else:
             incident_flux = problem_ds["incident_flux"]
 
-        if "gpt" not in problem_ds[surface_emissivity_var].dims or site_dim not in problem_ds[surface_emissivity_var].dims:
+        if (
+            "gpt" not in problem_ds[surface_emissivity_var].dims
+            or site_dim not in problem_ds[surface_emissivity_var].dims
+        ):
             expand_dims = {}
             if "gpt" not in problem_ds[surface_emissivity_var].dims:
                 expand_dims["gpt"] = problem_ds.sizes["gpt"]
             if site_dim not in problem_ds[surface_emissivity_var].dims:
                 expand_dims[site_dim] = problem_ds.sizes[site_dim]
-            problem_ds[surface_emissivity_var] = problem_ds[surface_emissivity_var].expand_dims(expand_dims)
+            problem_ds[surface_emissivity_var] = problem_ds[
+                surface_emissivity_var
+            ].expand_dims(expand_dims)
 
         ds, weights = self._compute_quadrature(problem_ds, site_dim, nmus)
         ssa: xr.DataArray = (

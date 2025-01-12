@@ -4,18 +4,18 @@ import numpy as np
 import numpy.typing as npt
 
 from pyrte_rrtmgp.pyrte_rrtmgp import (
-    rte_lw_solver_2stream,
-    rte_lw_solver_noscat,
-    rte_sw_solver_2stream,
-    rte_sw_solver_noscat,
-    rte_increment_1scalar_by_1scalar,
-    rte_increment_1scalar_by_2stream,
-    rte_increment_2stream_by_1scalar,
-    rte_increment_2stream_by_2stream,
     rte_inc_1scalar_by_1scalar_bybnd,
     rte_inc_1scalar_by_2stream_bybnd,
     rte_inc_2stream_by_1scalar_bybnd,
     rte_inc_2stream_by_2stream_bybnd,
+    rte_increment_1scalar_by_1scalar,
+    rte_increment_1scalar_by_2stream,
+    rte_increment_2stream_by_1scalar,
+    rte_increment_2stream_by_2stream,
+    rte_lw_solver_2stream,
+    rte_lw_solver_noscat,
+    rte_sw_solver_2stream,
+    rte_sw_solver_noscat,
 )
 
 
@@ -340,6 +340,7 @@ def increment_1scalar_by_1scalar(
 
     rte_increment_1scalar_by_1scalar(*args)
 
+
 def increment_1scalar_by_2stream(
     ncol: int,
     nlay: int,
@@ -369,6 +370,7 @@ def increment_1scalar_by_2stream(
 
     rte_increment_1scalar_by_2stream(*args)
 
+
 def increment_2stream_by_1scalar(
     ncol: int,
     nlay: int,
@@ -397,6 +399,7 @@ def increment_2stream_by_1scalar(
     ]
 
     rte_increment_2stream_by_1scalar(*args)
+
 
 def increment_2stream_by_2stream(
     ncol: int,
@@ -436,6 +439,7 @@ def increment_2stream_by_2stream(
 
     rte_increment_2stream_by_2stream(*args)
 
+
 def inc_1scalar_by_1scalar_bybnd(
     ncol: int,
     nlay: int,
@@ -467,6 +471,7 @@ def inc_1scalar_by_1scalar_bybnd(
     ]
 
     rte_inc_1scalar_by_1scalar_bybnd(*args)
+
 
 def inc_1scalar_by_2stream_bybnd(
     ncol: int,
@@ -503,6 +508,7 @@ def inc_1scalar_by_2stream_bybnd(
 
     rte_inc_1scalar_by_2stream_bybnd(*args)
 
+
 def inc_2stream_by_1scalar_bybnd(
     ncol: int,
     nlay: int,
@@ -537,6 +543,7 @@ def inc_2stream_by_1scalar_bybnd(
     ]
 
     rte_inc_2stream_by_1scalar_bybnd(*args)
+
 
 def inc_2stream_by_2stream_bybnd(
     ncol: int,
