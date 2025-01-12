@@ -97,20 +97,46 @@ Currently, the following functions are available in the `pyrte_rrtmgp` package:
 
 <!-- end-rrtmgp-functions-section -->
 
-## Setup Instructions
+## Installing pyRTE-RRTMGP
 
 > **Note**:
 > The code in this repository is a work in progress. The Python API is not yet stable and is subject to change.
 
-<!-- start-setup-section -->
+### Installing with Conda (recommended)
+
+<!-- start-installation-section -->
+
+pyRTE-RRTMGP is available as a [conda package for Linux (x86_64)](https://anaconda.org/conda-forge/pyrte_rrtmgp). You can install it from the `conda-forge` channel:
+
+```bash
+conda install -c conda-forge pyrte_rrtmgp
+```
+
+This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
+
+After installing the package, you can import it in your Python code:
+
+```python
+import pyrte_rrtmgp
+```
+
+For platforms other than Linux for x64 processors, you can build the package from source using the instructions below.
+
+<!-- end-installation-section -->
+
+<!-- start-local-build-section -->
+
+## Building Locally
 
 ### Prerequisites
 
-pyRTE-RRTMGP is built on install time. Building the package requires a compatible Fortran compiler, a C++ compiler and CMake to be installed on your system. The package is compatible with POSIX systems and is tested on Linux and macOS using the GNU Fortran compiler (gfortran) and the GNU C++ compiler (g++). The package should also work with the Intel Fortran compiler (ifort) but was not tested with it. If you use ``conda``, the system packages are installed automatically. If you use ``pip``, you need to install those packages yourself (see below).
+If you are using a system other than Linux (x86_64) or want to build the package from source, you need to have a compatible Fortran compiler, a C++ compiler and CMake installed on your system. 
+
+pyRTE-RRTMGP is compatible with POSIX systems and is tested on Linux and macOS using the GNU Fortran compiler (gfortran) and the GNU C++ compiler (g++). The package should also work with the Intel Fortran compiler (ifort) but was not tested with it. If you use ``conda``, the system packages are installed automatically. If you use ``pip``, you need to install those packages yourself (see below).
 
 The package source code is hosted [on GitHub](https://github.com/earth-system-radiation/pyRTE-RRTMGP). The easiest way to install pyRTE-RRTMGP is to use `git`. You can install git from [here](https://git-scm.com/downloads).
 
-### Installation with conda (recommended)
+### Building Locally with Conda (recommended)
 
 Using conda is the recommended method because conda will take care of the system dependencies for you.
 
@@ -161,7 +187,7 @@ Using conda is the recommended method because conda will take care of the system
 
     Note: This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
 
-### Installation with pip
+### Building Locally with Pip
 
 You also have the option to build and install the package with pip. This should work with macOS and Linux systems but requires you to install the system dependencies manually.
 
@@ -183,10 +209,12 @@ For development purposes, you can install the package in editable mode: ``pip in
 
 Once built, the module will be located in a folder called `pyrte_rrtmgp`
 
-<!-- end-setup-section -->
+<!-- end-local-build-section -->
 
-## Pytest Setup Instructions
+## Running Tests
 
-* Go to the 'tests' folder: `cd tests/`
-* Install the test prerequisites (if you haven't already) by running `pip3 install -r requirements-test.txt`
-* Run `pytest tests`
+After installing the package, you can run the tests by executing the following command:
+
+```bash
+pyrte_rrtmgp run_tests
+```

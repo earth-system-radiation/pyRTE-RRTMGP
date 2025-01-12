@@ -40,15 +40,10 @@ jobs:
           miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
+          auto-activate-base: true
 
       - name: Prepare
         run: conda install conda-build conda-verify pytest
 
       - name: Build
         run: conda build conda.recipe
-
-      - name: Install
-        run: conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
-
-      - name: Test
-        run: pytest tests
