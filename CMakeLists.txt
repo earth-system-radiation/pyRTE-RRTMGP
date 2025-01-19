@@ -41,10 +41,11 @@ endif()
 
 ExternalProject_Add(
     rte-rrtmgp
-    GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
-    GIT_TAG 06ea8284071b80d393ff8df659a2ef4b4bfb2aa8
-    GIT_CONFIG "advice.detachedHead=false"
-    # GIT_SHALLOW TRUE
+    GIT_REPOSITORY https://github.com/sehnem/rte-rrtmgp.git
+    # GIT_TAG 06ea8284071b80d393ff8df659a2ef4b4bfb2aa8
+    # GIT_CONFIG "advice.detachedHead=false"
+    GIT_TAG test-fix-binds
+    GIT_SHALLOW TRUE
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE TRUE
