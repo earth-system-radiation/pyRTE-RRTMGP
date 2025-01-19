@@ -197,215 +197,6 @@ def compute_clouds(cloud_optics, ncol, nlay, p_lay, t_lay):
     )
 
 
-def compute_all_from_table(
-    ncol,
-    nlay,
-    nbnd,
-    mask,
-    lwp,
-    re,
-    nsteps,
-    step_size,
-    offset,
-    tau_table,
-    ssa_table,
-    asy_table,
-):
-    """
-    Compute optical properties from lookup tables.
-
-    Args:
-        ncol (int): Number of columns
-        nlay (int): Number of layers
-        nbnd (int): Number of bands
-        mask (ndarray): Boolean mask array (ncol, nlay)
-        lwp (ndarray): Liquid water path array (ncol, nlay)
-        re (ndarray): Effective radius array (ncol, nlay)
-        nsteps (int): Number of steps in lookup tables
-        step_size (float): Step size for interpolation
-        offset (float): Offset for interpolation
-        tau_table (ndarray): Optical depth table (nsteps, nbnd)
-        ssa_table (ndarray): Single scattering albedo table (nsteps, nbnd)
-        asy_table (ndarray): Asymmetry parameter table (nsteps, nbnd)
-
-    Returns:
-        tuple: Arrays of optical properties (tau, taussa, taussag) each with shape (ncol, nlay, nbnd)
-    """
-    import numpy as np
-
-    # Initialize output arrays
-    tau = np.zeros((ncol, nlay, nbnd))
-    taussa = np.zeros((ncol, nlay, nbnd))
-    taussag = np.zeros((ncol, nlay, nbnd))
-
-    for ibnd in range(nbnd):
-        for ilay in range(nlay):
-            for icol in range(ncol):
-                if mask[icol, ilay]:
-                    # Calculate interpolation indices and weights
-                    index = min(
-                        int(np.floor((re[icol, ilay] - offset) / step_size)), nsteps - 2
-                    )
-                    fint = (re[icol, ilay] - offset) / step_size - index
-
-                    # Interpolate optical properties
-                    t = lwp[icol, ilay] * (
-                        tau_table[index, ibnd]
-                        + fint * (tau_table[index + 1, ibnd] - tau_table[index, ibnd])
-                    )
-
-                    ts = t * (
-                        ssa_table[index, ibnd]
-                        + fint * (ssa_table[index + 1, ibnd] - ssa_table[index, ibnd])
-                    )
-
-                    taussag[icol, ilay, ibnd] = ts * (
-                        asy_table[index, ibnd]
-                        + fint * (asy_table[index + 1, ibnd] - asy_table[index, ibnd])
-                    )
-
-                    taussa[icol, ilay, ibnd] = ts
-                    tau[icol, ilay, ibnd] = t
-
-    return tau, taussa, taussag
-
-
-def compute_all_from_pade(
-    ncol,
-    nlay,
-    nbnd,
-    nsizes,
-    mask,
-    lwp,
-    re,
-    m_ext,
-    n_ext,
-    re_bounds_ext,
-    coeffs_ext,
-    m_ssa,
-    n_ssa,
-    re_bounds_ssa,
-    coeffs_ssa,
-    m_asy,
-    n_asy,
-    re_bounds_asy,
-    coeffs_asy,
-):
-    """Compute optical properties using Pade approximants.
-
-    Args:
-        ncol (int): Number of columns
-        nlay (int): Number of layers
-        nbnd (int): Number of bands
-        nsizes (int): Number of size regimes
-        mask (ndarray): Boolean mask array (ncol, nlay)
-        lwp (ndarray): Liquid water path array (ncol, nlay)
-        re (ndarray): Effective radius array (ncol, nlay)
-        m_ext, n_ext (int): Orders of Pade approximant for extinction
-        re_bounds_ext (ndarray): Size regime boundaries for extinction
-        coeffs_ext (ndarray): Pade coefficients for extinction
-        m_ssa, n_ssa (int): Orders of Pade approximant for single scattering albedo
-        re_bounds_ssa (ndarray): Size regime boundaries for single scattering albedo
-        coeffs_ssa (ndarray): Pade coefficients for single scattering albedo
-        m_asy, n_asy (int): Orders of Pade approximant for asymmetry parameter
-        re_bounds_asy (ndarray): Size regime boundaries for asymmetry parameter
-        coeffs_asy (ndarray): Pade coefficients for asymmetry parameter
-
-    Returns:
-        tuple: Arrays of optical properties (tau, taussa, taussag) each with shape (ncol, nlay, nbnd)
-    """
-    import numpy as np
-
-    # Initialize output arrays
-    tau = np.zeros((ncol, nlay, nbnd))
-    taussa = np.zeros((ncol, nlay, nbnd))
-    taussag = np.zeros((ncol, nlay, nbnd))
-
-    for ibnd in range(nbnd):
-        for ilay in range(nlay):
-            for icol in range(ncol):
-                if mask[icol, ilay]:
-                    # Find index into size regime table
-                    # This works only if there are precisely three size regimes (four bounds) and it's
-                    # previously guaranteed that size_bounds(1) <= size <= size_bounds(4)
-
-                    irad = min(
-                        int(
-                            np.floor(
-                                (re[icol, ilay] - re_bounds_ext[1]) / re_bounds_ext[2]
-                            )
-                        )
-                        + 1,
-                        2,
-                    )
-                    t = lwp[icol, ilay] * pade_eval(
-                        ibnd,
-                        nbnd,
-                        nsizes,
-                        m_ext,
-                        n_ext,
-                        irad,
-                        re[icol, ilay],
-                        coeffs_ext,
-                    )
-
-                    irad = min(
-                        int(
-                            np.floor(
-                                (re[icol, ilay] - re_bounds_ssa[1]) / re_bounds_ssa[2]
-                            )
-                        )
-                        + 1,
-                        2,
-                    )
-                    # Pade approximants for co-albedo can sometimes be negative
-                    ts = t * (
-                        1.0
-                        - max(
-                            0.0,
-                            pade_eval(
-                                ibnd,
-                                nbnd,
-                                nsizes,
-                                m_ssa,
-                                n_ssa,
-                                irad,
-                                re[icol, ilay],
-                                coeffs_ssa,
-                            ),
-                        )
-                    )
-
-                    irad = min(
-                        int(
-                            np.floor(
-                                (re[icol, ilay] - re_bounds_asy[1]) / re_bounds_asy[2]
-                            )
-                        )
-                        + 1,
-                        2,
-                    )
-                    taussag[icol, ilay, ibnd] = ts * pade_eval(
-                        ibnd,
-                        nbnd,
-                        nsizes,
-                        m_asy,
-                        n_asy,
-                        irad,
-                        re[icol, ilay],
-                        coeffs_asy,
-                    )
-
-                    taussa[icol, ilay, ibnd] = ts
-                    tau[icol, ilay, ibnd] = t
-                else:
-                    tau[icol, ilay, ibnd] = 0.0
-                    taussa[icol, ilay, ibnd] = 0.0
-                    taussag[icol, ilay, ibnd] = 0.0
-
-    return tau, taussa, taussag
-
-
 def pade_eval_nbnd(nbnd, nrads, m, n, irad, re, pade_coeffs):
     """
     Evaluate Padé approximant of order [m/n] for multiple bands.
@@ -522,20 +313,20 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
 
     # Validate particle sizes are within bounds
     if np.any(
-        (cloud_properties.rel[liq_mask] < cloud_optics.radliq_lwr.values)
-        | (cloud_properties.rel[liq_mask] > cloud_optics.radliq_upr.values)
+        (cloud_properties.rel.where(liq_mask) < cloud_optics.radliq_lwr.values)
+        | (cloud_properties.rel.where(liq_mask) > cloud_optics.radliq_upr.values)
     ):
         raise ValueError("Cloud optics: liquid effective radius is out of bounds")
 
     if np.any(
-        (cloud_properties.rei[ice_mask] < cloud_optics.radice_lwr.values)
-        | (cloud_properties.rei[ice_mask] > cloud_optics.radice_upr.values)
+        (cloud_properties.rei.where(ice_mask) < cloud_optics.radice_lwr.values)
+        | (cloud_properties.rei.where(ice_mask) > cloud_optics.radice_upr.values)
     ):
         raise ValueError("Cloud optics: ice effective radius is out of bounds")
 
     # Check for negative water paths
-    if np.any(cloud_properties.lwp[liq_mask] < 0) or np.any(
-        cloud_properties.iwp[ice_mask] < 0
+    if np.any(cloud_properties.lwp.where(liq_mask) < 0) or np.any(
+        cloud_properties.iwp.where(ice_mask) < 0
     ):
         raise ValueError(
             "Cloud optics: negative lwp or iwp where clouds are supposed to be"
@@ -548,21 +339,6 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         # Liquid phase
         step_size = (cloud_optics.radliq_upr - cloud_optics.radliq_lwr) / (
             cloud_optics.sizes["nsize_liq"] - 1
-        )
-
-        old_ltau, old_ltaussa, old_ltaussag = compute_all_from_table(
-            ncol,
-            nlay,
-            nbnd,
-            liq_mask,
-            cloud_properties.lwp,
-            cloud_properties.rel,
-            cloud_optics.sizes["nsize_liq"],
-            step_size.values,
-            cloud_optics.radliq_lwr.values,
-            cloud_optics.lut_extliq.T,
-            cloud_optics.lut_ssaliq.T,
-            cloud_optics.lut_asyliq.T,
         )
 
         ltau, ltaussa, ltaussag = compute_cld_from_table(
@@ -585,20 +361,6 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
             cloud_optics.sizes["nsize_ice"] - 1
         )
         ice_roughness = 1
-        old_itau, old_itaussa, old_itaussag = compute_all_from_table(
-            ncol,
-            nlay,
-            nbnd,
-            ice_mask,
-            cloud_properties.iwp,
-            cloud_properties.rei,
-            cloud_optics.sizes["nsize_ice"],
-            step_size.values,
-            cloud_optics.radice_lwr.values,
-            cloud_optics.lut_extice[ice_roughness, :, :].T,
-            cloud_optics.lut_ssaice[ice_roughness, :, :].T,
-            cloud_optics.lut_asyice[ice_roughness, :, :].T,
-        )
 
         itau, itaussa, itaussag = compute_cld_from_table(
             ncol,
@@ -626,8 +388,8 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
             nbnd,
             nsizereg,
             liq_mask,
-            lwp,
-            rel,
+            cloud_properties.lwp,
+            cloud_properties.rel,
             cloud_optics.pade_sizreg_extliq,
             cloud_optics.pade_sizreg_ssaliq,
             cloud_optics.pade_sizreg_asyliq,
@@ -643,14 +405,14 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         )
 
         # Ice phase
-        itau, itaussa, itaussag = compute_all_from_pade(
+        itau, itaussa, itaussag = compute_cld_from_pade(
             ncol,
             nlay,
             nbnd,
             nsizereg,
             ice_mask,
-            iwp,
-            rei,
+            cloud_properties.iwp,
+            cloud_properties.rei,
             cloud_optics.pade_sizreg_extice,
             cloud_optics.pade_sizreg_ssaice,
             cloud_optics.pade_sizreg_asyice,
