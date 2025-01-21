@@ -1929,27 +1929,27 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         int nlay,
         int nbnd,
         int nsizes,
-        py::array_t<Bool>  mask,
+        py::array_t<Bool> mask,
         py::array_t<Float> lwp,
         py::array_t<Float> re,
-        py::array_t<Float> re_bounds_ext,
-        py::array_t<Float> re_bounds_ssa,
-        py::array_t<Float> re_bounds_asy,
         int m_ext,
         int n_ext,
+        py::array_t<Float> re_bounds_ext,
         py::array_t<Float> coeffs_ext,
         int m_ssa,
         int n_ssa,
+        py::array_t<Float> re_bounds_ssa,
         py::array_t<Float> coeffs_ssa,
         int m_asy,
         int n_asy,
+        py::array_t<Float> re_bounds_asy,
         py::array_t<Float> coeffs_asy,
         py::array_t<Float> tau,
         py::array_t<Float> taussa,
         py::array_t<Float> taussag
     ) {
         if (ncol <= 0 || nlay <= 0 || nbnd <= 0 || nsizes <= 0) {
-            throw std::runtime_error("ncol, nlay, nbnd and nsteps must be positive integers");
+            throw std::runtime_error("ncol, nlay, nbnd and nsizes must be positive integers");
         }
 
         if (m_ext <= 0 || n_ext <= 0) {
@@ -1998,17 +1998,17 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             reinterpret_cast<Bool*>(buf_mask.ptr),
             reinterpret_cast<Float*>(buf_lwp.ptr),
             reinterpret_cast<Float*>(buf_re.ptr),
-            reinterpret_cast<Float*>(buf_re_bounds_ext.ptr),
-            reinterpret_cast<Float*>(buf_re_bounds_ssa.ptr),
-            reinterpret_cast<Float*>(buf_re_bounds_asy.ptr),
             m_ext,
             n_ext,
+            reinterpret_cast<Float*>(buf_re_bounds_ext.ptr),
             reinterpret_cast<Float*>(buf_coeffs_ext.ptr),
             m_ssa,
             n_ssa,
+            reinterpret_cast<Float*>(buf_re_bounds_ssa.ptr),
             reinterpret_cast<Float*>(buf_coeffs_ssa.ptr),
             m_asy,
             n_asy,
+            reinterpret_cast<Float*>(buf_re_bounds_asy.ptr),
             reinterpret_cast<Float*>(buf_coeffs_asy.ptr),
             reinterpret_cast<Float*>(buf_tau.ptr),
             reinterpret_cast<Float*>(buf_taussa.ptr),
