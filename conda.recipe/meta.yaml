@@ -16,9 +16,10 @@ requirements:
   build:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - gfortran_linux-64   # [linux]
-    - gfortran_osx-64     # [osx]
-    - m2w64-gcc-fortran   # [win]
+    - gfortran_linux-64     # [linux]
+    - gfortran_osx-64      # [osx and x86_64]
+    - gfortran_osx-arm64   # [osx and arm64]
+    - m2w64-gcc-fortran    # [win]
     - libuv==1.44.2
     - cmake==3.26.4
     - git
