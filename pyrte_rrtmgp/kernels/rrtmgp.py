@@ -474,10 +474,10 @@ def compute_cld_from_table(
     ncol: int,
     nlay: int,
     nbnd: int,
-    nsteps: int,
     mask: npt.NDArray[np.bool_],
     lwp: npt.NDArray[np.float64],
     re: npt.NDArray[np.float64],
+    nsteps: int,
     step_size: float,
     offset: float,
     tau_table: npt.NDArray[np.float64],
@@ -495,10 +495,10 @@ def compute_cld_from_table(
         ncol: Number of atmospheric columns
         nlay: Number of atmospheric layers
         nbnd: Number of spectral bands
-        nsteps: Number of steps in the lookup tables
         mask: Cloud mask with shape (ncol, nlay)
         lwp: Liquid water path with shape (ncol, nlay)
         re: Effective radius with shape (ncol, nlay)
+        nsteps: Number of steps in the lookup tables
         step_size: Step size for the lookup tables
         offset: Offset for the lookup tables
         tau_table: Optical depth lookup table with shape (nsteps, nbnd)

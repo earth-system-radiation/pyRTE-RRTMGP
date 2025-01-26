@@ -1,5 +1,3 @@
-import os
-
 import numpy as np
 import xarray as xr
 
@@ -21,9 +19,9 @@ rte_rrtmgp_dir = download_rrtmgp_data()
 
 
 def compute_profiles(SST, ncol, nlay):
-    """
-    Construct profiles of pressure, temperature, humidity, and ozone
-    following the RCEMIP protocol for a surface temperature of 300K.
+    """Construct profiles of pressure, temperature, humidity, and ozone.
+
+    Following the RCEMIP protocol for a surface temperature of 300K.
     Based on Python implementation by Chiel van Heerwardeen.
     """
     # Constants
@@ -112,7 +110,7 @@ def compute_profiles(SST, ncol, nlay):
 
 
 def expand_to_2d(value, ncol, nlay, name=None):
-    """Expand scalar or 1D array to 2D array with shape (ncol, nlay)"""
+    """Expand scalar or 1D array to 2D array with shape (ncol, nlay)."""
     value = np.asarray(value)
 
     if value.ndim == 0:  # Scalar input
@@ -155,12 +153,18 @@ def create_gas_dataset(gas_values, ncol, nlay):
 
 
 def compute_clouds(cloud_optics, ncol, nlay, p_lay, t_lay):
-    """
-    Compute cloud properties for radiative transfer calculations.
+    """Compute cloud properties for radiative transfer calculations.
+
+    Args:
+        cloud_optics: Dataset containing cloud optics data
+        ncol: Number of columns
+        nlay: Number of layers
+        p_lay: Pressure profile
+        t_lay: Temperature profile
     """
     # Get min/max radii values for liquid and ice
     rel_val = 0.5 * (cloud_optics["radliq_lwr"] + cloud_optics["radliq_upr"])
-    rei_val = 0.5 * (cloud_optics["radice_lwr"] + cloud_optics["radice_upr"])
+    rei_val = 0.5 * (cloud_optics["diamice_lwr"] + cloud_optics["diamice_upr"])
 
     # Initialize arrays
     cloud_mask = np.zeros((ncol, nlay), dtype=bool)
@@ -276,9 +280,19 @@ def pade_eval(
     re=None,
     pade_coeffs=None,
 ):
-    """
-    Unified interface for Padé approximant evaluation.
+    """Unified interface for Padé approximant evaluation.
+
     Calls either pade_eval_nbnd or pade_eval_1 based on whether iband is provided.
+
+    Args:
+        iband: Band index
+        nbnd: Number of bands
+        nrads: Number of radii
+        m: Order of numerator
+        n: Order of denominator
+        irad: Radius index
+        re: Effective radius
+        pade_coeffs: Coefficients array
     """
     if iband is None:
         return pade_eval_nbnd(nbnd, nrads, m, n, irad, re, pade_coeffs)
@@ -319,8 +333,8 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         raise ValueError("Cloud optics: liquid effective radius is out of bounds")
 
     if np.any(
-        (cloud_properties.rei.where(ice_mask) < cloud_optics.radice_lwr.values)
-        | (cloud_properties.rei.where(ice_mask) > cloud_optics.radice_upr.values)
+        (cloud_properties.rei.where(ice_mask) < cloud_optics.diamice_lwr.values)
+        | (cloud_properties.rei.where(ice_mask) > cloud_optics.diamice_upr.values)
     ):
         raise ValueError("Cloud optics: ice effective radius is out of bounds")
 
@@ -345,10 +359,10 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
             ncol,
             nlay,
             nbnd,
-            cloud_optics.sizes["nsize_liq"],
             liq_mask,
             cloud_properties.lwp,
             cloud_properties.rel,
+            cloud_optics.sizes["nsize_liq"],
             step_size.values,
             cloud_optics.radliq_lwr.values,
             cloud_optics.lut_extliq,
@@ -448,8 +462,7 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
 
 
 def combine_optical_props(op1, op2):
-    """
-    Combines two sets of optical properties, modifying op1 in place.
+    """Combine two sets of optical properties, modifying op1 in place.
 
     Args:
         op1: First set of optical properties, will be modified.
