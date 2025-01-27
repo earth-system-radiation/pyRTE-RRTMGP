@@ -371,7 +371,7 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         )
 
         # Ice phase
-        step_size = (cloud_optics.radice_upr - cloud_optics.radice_lwr) / (
+        step_size = (cloud_optics.diamice_upr - cloud_optics.diamice_lwr) / (
             cloud_optics.sizes["nsize_ice"] - 1
         )
         ice_roughness = 1
@@ -380,12 +380,12 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
             ncol,
             nlay,
             nbnd,
-            cloud_optics.sizes["nsize_ice"],
             ice_mask,
             cloud_properties.iwp,
             cloud_properties.rei,
+            cloud_optics.sizes["nsize_ice"],
             step_size.values,
-            cloud_optics.radice_lwr.values,
+            cloud_optics.diamice_lwr.values,
             cloud_optics.lut_extice[ice_roughness, :, :].T,
             cloud_optics.lut_ssaice[ice_roughness, :, :].T,
             cloud_optics.lut_asyice[ice_roughness, :, :].T,
