@@ -33,6 +33,8 @@ endif()
 
 include(ExternalProject REQUIRED)
 
+set(FFLAGS "-ffree-line-length-none -m64 -std=f2008 -march=native -fbounds-check -fmodule-private -fimplicit-none -finit-real=nan")
+
 ExternalProject_Add(
     rte-rrtmgp
     GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
@@ -41,9 +43,15 @@ ExternalProject_Add(
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
     CMAKE_ARGS
         -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
+        -DCMAKE_Fortran_FLAGS=${FFLAGS}
+        -DRTE_ENABLE_SP=OFF
+        -DKERNEL_MODE=default
         -DBUILD_TESTING=OFF
+        -DFAILURE_THRESHOLD=7.e-4
+        -DCMAKE_BUILD_TYPE=Release
         -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/
     BUILD_IN_SOURCE TRUE
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --target all --parallel
     INSTALL_COMMAND ${CMAKE_COMMAND} --install .
 )
 
