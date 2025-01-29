@@ -36,8 +36,8 @@ include(ExternalProject REQUIRED)
 ExternalProject_Add(
     rte-rrtmgp
     GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
-    GIT_TAG develop
-    GIT_SHALLOW TRUE
+    GIT_TAG 2089773eea532aebbdf6cfa0ede79d7a710d082d
+    # GIT_SHALLOW TRUE
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
     CMAKE_ARGS
         -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
