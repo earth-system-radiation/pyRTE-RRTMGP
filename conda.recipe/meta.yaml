@@ -17,7 +17,8 @@ requirements:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
     - gfortran_linux-64   # [linux]
-    - gfortran_osx-64     # [osx]
+    - gfortran_osx-64     # [osx and not arm64]
+    - gfortran_osx-arm64  # [osx and arm64]
     - m2w64-gcc-fortran   # [win]
     - libuv==1.44.2
     - cmake==3.26.4
