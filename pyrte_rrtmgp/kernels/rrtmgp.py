@@ -4,7 +4,6 @@ import numpy as np
 import numpy.typing as npt
 
 from pyrte_rrtmgp.pyrte_rrtmgp import (
-    rrtmgp_compute_cld_from_pade,
     rrtmgp_compute_cld_from_table,
     rrtmgp_compute_Planck_source,
     rrtmgp_compute_tau_absorption,
@@ -535,93 +534,5 @@ def compute_cld_from_table(
     ]
 
     rrtmgp_compute_cld_from_table(*args)
-
-    return tau, taussa, taussag
-
-
-def compute_cld_from_pade(
-    ncol: int,
-    nlay: int,
-    nbnd: int,
-    nsizes: int,
-    mask: npt.NDArray[np.bool_],
-    lwp: npt.NDArray[np.float64],
-    re: npt.NDArray[np.float64],
-    re_bounds_ext: npt.NDArray[np.float64],
-    re_bounds_ssa: npt.NDArray[np.float64],
-    re_bounds_asy: npt.NDArray[np.float64],
-    m_ext: int,
-    n_ext: int,
-    coeffs_ext: npt.NDArray[np.float64],
-    m_ssa: int,
-    n_ssa: int,
-    coeffs_ssa: npt.NDArray[np.float64],
-    m_asy: int,
-    n_asy: int,
-    coeffs_asy: npt.NDArray[np.float64],
-) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """Compute cloud optical properties using Padé approximants.
-
-    This function computes cloud optical properties (optical depth, single scattering
-    albedo, and asymmetry parameter) using Padé approximant coefficients.
-
-    Args:
-        ncol: Number of atmospheric columns
-        nlay: Number of atmospheric layers
-        nbnd: Number of spectral bands
-        nsizes: Number of size bins
-        mask: Cloud mask with shape (ncol, nlay)
-        lwp: Liquid water path with shape (ncol, nlay)
-        re: Effective radius with shape (ncol, nlay)
-        re_bounds_ext: Extinction coefficient size bounds with shape (nsizes + 1,)
-        re_bounds_ssa: Single scattering albedo size bounds with shape (nsizes + 1,)
-        re_bounds_asy: Asymmetry parameter size bounds with shape (nsizes + 1,)
-        m_ext: Numerator order for extinction coefficient Padé approximant
-        n_ext: Denominator order for extinction coefficient Padé approximant
-        coeffs_ext: Extinction coefficient Padé coefficients with shape (nbnd, nsizes, m_ext + n_ext)
-        m_ssa: Numerator order for single scattering albedo Padé approximant
-        n_ssa: Denominator order for single scattering albedo Padé approximant
-        coeffs_ssa: Single scattering albedo Padé coefficients with shape (nbnd, nsizes, m_ssa + n_ssa)
-        m_asy: Numerator order for asymmetry parameter Padé approximant
-        n_asy: Denominator order for asymmetry parameter Padé approximant
-        coeffs_asy: Asymmetry parameter Padé coefficients with shape (nbnd, nsizes, m_asy + n_asy)
-
-    Returns:
-        Tuple containing:
-            - tau: Cloud optical depth with shape (ncol, nlay, nbnd)
-            - taussa: Product of tau and single scattering albedo with shape (ncol, nlay, nbnd)
-            - taussag: Product of taussa and asymmetry parameter with shape (ncol, nlay, nbnd)
-    """
-    # Initialize output arrays
-    tau = np.zeros((ncol, nlay, nbnd), dtype=np.float64, order="F")
-    taussa = np.zeros((ncol, nlay, nbnd), dtype=np.float64, order="F")
-    taussag = np.zeros((ncol, nlay, nbnd), dtype=np.float64, order="F")
-
-    args = [
-        ncol,
-        nlay,
-        nbnd,
-        nsizes,
-        np.asfortranarray(mask),
-        np.asfortranarray(lwp),
-        np.asfortranarray(re),
-        np.asfortranarray(re_bounds_ext),
-        np.asfortranarray(re_bounds_ssa),
-        np.asfortranarray(re_bounds_asy),
-        m_ext,
-        n_ext,
-        np.asfortranarray(coeffs_ext),
-        m_ssa,
-        n_ssa,
-        np.asfortranarray(coeffs_ssa),
-        m_asy,
-        n_asy,
-        np.asfortranarray(coeffs_asy),
-        tau,
-        taussa,
-        taussag,
-    ]
-
-    rrtmgp_compute_cld_from_pade(*args)
 
     return tau, taussa, taussag

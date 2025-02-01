@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 
-from pyrte_rrtmgp.kernels.rrtmgp import compute_cld_from_pade, compute_cld_from_table
+from pyrte_rrtmgp.kernels.rrtmgp import compute_cld_from_table
 from pyrte_rrtmgp.kernels.rte import (
     inc_1scalar_by_1scalar_bybnd,
     inc_1scalar_by_2stream_bybnd,
@@ -201,105 +201,6 @@ def compute_clouds(cloud_optics, ncol, nlay, p_lay, t_lay):
     )
 
 
-def pade_eval_nbnd(nbnd, nrads, m, n, irad, re, pade_coeffs):
-    """
-    Evaluate Padé approximant of order [m/n] for multiple bands.
-
-    Args:
-        nbnd (int): Number of bands
-        nrads (int): Number of radii
-        m (int): Order of numerator
-        n (int): Order of denominator
-        irad (int): Radius index
-        re (float): Effective radius
-        pade_coeffs (ndarray): Coefficients array with shape (nbnd, nrads, m+n+1)
-
-    Returns:
-        ndarray: Evaluated Padé approximant for each band
-    """
-    pade_eval = np.zeros(nbnd)
-
-    for iband in range(nbnd):
-        # Calculate denominator
-        denom = pade_coeffs[iband, irad, n + m]
-        for i in range(n + m - 1, m, -1):
-            denom = pade_coeffs[iband, irad, i] + re * denom
-        denom = 1.0 + re * denom
-
-        # Calculate numerator
-        numer = pade_coeffs[iband, irad, m]
-        for i in range(m - 1, 0, -1):
-            numer = pade_coeffs[iband, irad, i] + re * numer
-        numer = pade_coeffs[iband, irad, 0] + re * numer
-
-        pade_eval[iband] = numer / denom
-
-    return pade_eval
-
-
-def pade_eval_1(iband, nbnd, nrads, m, n, irad, re, pade_coeffs):
-    """
-    Evaluate Padé approximant of order [m/n] for a single band.
-
-    Args:
-        iband (int): Band index
-        nbnd (int): Number of bands
-        nrads (int): Number of radii
-        m (int): Order of numerator
-        n (int): Order of denominator
-        irad (int): Radius index
-        re (float): Effective radius
-        pade_coeffs (ndarray): Coefficients array with shape (nbnd, nrads, m+n+1)
-
-    Returns:
-        float: Evaluated Padé approximant for the specified band
-    """
-    # Calculate denominator
-    denom = pade_coeffs[iband, irad, n + m]
-    for i in range(n + m - 1, m, -1):
-        denom = pade_coeffs[iband, irad, i] + re * denom
-    denom = 1.0 + re * denom
-
-    # Calculate numerator
-    numer = pade_coeffs[iband, irad, m]
-    for i in range(m - 1, 0, -1):
-        numer = pade_coeffs[iband, irad, i] + re * numer
-    numer = pade_coeffs[iband, irad, 0] + re * numer
-
-    return numer / denom
-
-
-# Create a unified interface similar to Fortran's interface
-def pade_eval(
-    iband=None,
-    nbnd=None,
-    nrads=None,
-    m=None,
-    n=None,
-    irad=None,
-    re=None,
-    pade_coeffs=None,
-):
-    """Unified interface for Padé approximant evaluation.
-
-    Calls either pade_eval_nbnd or pade_eval_1 based on whether iband is provided.
-
-    Args:
-        iband: Band index
-        nbnd: Number of bands
-        nrads: Number of radii
-        m: Order of numerator
-        n: Order of denominator
-        irad: Radius index
-        re: Effective radius
-        pade_coeffs: Coefficients array
-    """
-    if iband is None:
-        return pade_eval_nbnd(nbnd, nrads, m, n, irad, re, pade_coeffs)
-    else:
-        return pade_eval_1(iband, nbnd, nrads, m, n, irad, re, pade_coeffs)
-
-
 def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
     """
     Compute cloud optical properties for liquid and ice clouds.
@@ -320,9 +221,7 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
     ice_mask = cloud_properties.iwp > 0
 
     # Check if cloud optics data is initialized
-    if not hasattr(cloud_optics, "lut_extliq") and not hasattr(
-        cloud_optics, "pade_extliq"
-    ):
+    if not hasattr(cloud_optics, "extliq"):
         raise ValueError("Cloud optics: no data has been initialized")
 
     # Validate particle sizes are within bounds
@@ -348,98 +247,48 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
 
     nbnd = cloud_optics.sizes["nband"]
 
-    # Compute optical properties using lookup tables if available
-    if hasattr(cloud_optics, "lut_extliq"):
-        # Liquid phase
-        step_size = (cloud_optics.radliq_upr - cloud_optics.radliq_lwr) / (
-            cloud_optics.sizes["nsize_liq"] - 1
-        )
+    # Compute optical properties using lookup tables
+    # Liquid phase
+    step_size = (cloud_optics.radliq_upr - cloud_optics.radliq_lwr) / (
+        cloud_optics.sizes["nsize_liq"] - 1
+    )
 
-        ltau, ltaussa, ltaussag = compute_cld_from_table(
-            ncol,
-            nlay,
-            nbnd,
-            liq_mask,
-            cloud_properties.lwp,
-            cloud_properties.rel,
-            cloud_optics.sizes["nsize_liq"],
-            step_size.values,
-            cloud_optics.radliq_lwr.values,
-            cloud_optics.lut_extliq,
-            cloud_optics.lut_ssaliq,
-            cloud_optics.lut_asyliq,
-        )
+    ltau, ltaussa, ltaussag = compute_cld_from_table(
+        ncol,
+        nlay,
+        nbnd,
+        liq_mask,
+        cloud_properties.lwp,
+        cloud_properties.rel,
+        cloud_optics.sizes["nsize_liq"],
+        step_size.values,
+        cloud_optics.radliq_lwr.values,
+        cloud_optics.lut_extliq,
+        cloud_optics.lut_ssaliq,
+        cloud_optics.lut_asyliq,
+    )
 
-        # Ice phase
-        step_size = (cloud_optics.diamice_upr - cloud_optics.diamice_lwr) / (
-            cloud_optics.sizes["nsize_ice"] - 1
-        )
-        ice_roughness = 1
+    # Ice phase
+    step_size = (cloud_optics.diamice_upr - cloud_optics.diamice_lwr) / (
+        cloud_optics.sizes["nsize_ice"] - 1
+    )
+    ice_roughness = 1
 
-        itau, itaussa, itaussag = compute_cld_from_table(
-            ncol,
-            nlay,
-            nbnd,
-            ice_mask,
-            cloud_properties.iwp,
-            cloud_properties.rei,
-            cloud_optics.sizes["nsize_ice"],
-            step_size.values,
-            cloud_optics.diamice_lwr.values,
-            cloud_optics.lut_extice[ice_roughness, :, :].T,
-            cloud_optics.lut_ssaice[ice_roughness, :, :].T,
-            cloud_optics.lut_asyice[ice_roughness, :, :].T,
-        )
+    itau, itaussa, itaussag = compute_cld_from_table(
+        ncol,
+        nlay,
+        nbnd,
+        ice_mask,
+        cloud_properties.iwp,
+        cloud_properties.rei,
+        cloud_optics.sizes["nsize_ice"],
+        step_size.values,
+        cloud_optics.diamice_lwr.values,
+        cloud_optics.lut_extice[ice_roughness, :, :].T,
+        cloud_optics.lut_ssaice[ice_roughness, :, :].T,
+        cloud_optics.lut_asyice[ice_roughness, :, :].T,
+    )
 
-    # Otherwise use Pade approximants
-    else:
-        nsizereg = cloud_optics.pade_extliq.shape[1]
-
-        # Liquid phase
-        ltau, ltaussa, ltaussag = compute_cld_from_pade(
-            ncol,
-            nlay,
-            nbnd,
-            nsizereg,
-            liq_mask,
-            cloud_properties.lwp,
-            cloud_properties.rel,
-            cloud_optics.pade_sizreg_extliq,
-            cloud_optics.pade_sizreg_ssaliq,
-            cloud_optics.pade_sizreg_asyliq,
-            2,
-            3,
-            cloud_optics.pade_extliq,
-            2,
-            2,
-            cloud_optics.pade_ssaliq,
-            2,
-            2,
-            cloud_optics.pade_asyliq,
-        )
-
-        # Ice phase
-        itau, itaussa, itaussag = compute_cld_from_pade(
-            ncol,
-            nlay,
-            nbnd,
-            nsizereg,
-            ice_mask,
-            cloud_properties.iwp,
-            cloud_properties.rei,
-            cloud_optics.pade_sizreg_extice,
-            cloud_optics.pade_sizreg_ssaice,
-            cloud_optics.pade_sizreg_asyice,
-            2,
-            3,
-            cloud_optics.pade_extice,
-            2,
-            2,
-            cloud_optics.pade_ssaice,
-            2,
-            2,
-            cloud_optics.pade_asyice,
-        )
 
     # Combine liquid and ice contributions
     if lw:
