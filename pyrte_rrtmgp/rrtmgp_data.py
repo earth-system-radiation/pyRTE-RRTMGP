@@ -8,7 +8,7 @@ from typing import Union
 import requests
 
 # URL of the file to download
-REF = "main"  # Can be a tag (e.g. "v1.8.2") or branch name (e.g. "main")
+REF = "v1.9"  # Can be a tag (e.g. "v1.8.2") or branch name (e.g. "main")
 DATA_URL = f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/{'tags' if REF.startswith('v') else 'heads'}/{REF}.tar.gz"
 
 
