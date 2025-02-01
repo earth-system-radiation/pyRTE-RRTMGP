@@ -2,13 +2,12 @@
 #include <pybind11/numpy.h>
 
 namespace fortran {
-#include "rte_types.h"
 #include "rte_kernels.h"
 #include "rrtmgp_kernels.h"
 }
 
-using fortran::Float;
-using fortran::Bool;
+using Bool = signed char;
+using Float = double;
 
 namespace py = pybind11;
 
@@ -1552,7 +1551,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> fmajor,
         py::array_t<Float> fminor,
         py::array_t<Float> col_mix,
-        py::array_t<Bool> tropo,
+        py::array_t<bool> tropo,
         py::array_t<int> jeta,
         py::array_t<int> jpress
     ) {
@@ -2002,7 +2001,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             ncol,
             nlay,
             nbnd,
-            reinterpret_cast<Bool*>(buf_mask.ptr),
+            reinterpret_cast<int*>(buf_mask.ptr),
             reinterpret_cast<Float*>(buf_lwp.ptr),
             reinterpret_cast<Float*>(buf_re.ptr),
             nsteps,
