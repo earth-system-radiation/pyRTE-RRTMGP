@@ -472,7 +472,7 @@ def compute_tau_rayleigh(
 def compute_cld_from_table(
     ncol: int,
     nlay: int,
-    nbnd: int,
+    ngpt: int,
     mask: npt.NDArray[np.bool_],
     lwp: npt.NDArray[np.float64],
     re: npt.NDArray[np.float64],
@@ -500,25 +500,25 @@ def compute_cld_from_table(
         nsteps: Number of steps in the lookup tables
         step_size: Step size for the lookup tables
         offset: Offset for the lookup tables
-        tau_table: Optical depth lookup table with shape (nsteps, nbnd)
-        ssa_table: Single scattering albedo lookup table with shape (nsteps, nbnd)
-        asy_table: Asymmetry parameter lookup table with shape (nsteps, nbnd)
+        tau_table: Optical depth lookup table with shape (nsteps, ngpt)
+        ssa_table: Single scattering albedo lookup table with shape (nsteps, ngpt)
+        asy_table: Asymmetry parameter lookup table with shape (nsteps, ngpt)
 
     Returns:
         Tuple containing:
-            - tau: Cloud optical depth with shape (ncol, nlay, nbnd)
-            - taussa: Product of tau and single scattering albedo with shape (ncol, nlay, nbnd)
-            - taussag: Product of taussa and asymmetry parameter with shape (ncol, nlay, nbnd)
+            - tau: Cloud optical depth with shape (ncol, nlay, ngpt)
+            - taussa: Product of tau and single scattering albedo with shape (ncol, nlay, ngpt)
+            - taussag: Product of taussa and asymmetry parameter with shape (ncol, nlay, ngpt)
     """
     # Initialize output arrays
-    tau = np.zeros((ncol, nlay, nbnd), dtype=np.float64, order="F")
-    taussa = np.zeros((ncol, nlay, nbnd), dtype=np.float64, order="F")
-    taussag = np.zeros((ncol, nlay, nbnd), dtype=np.float64, order="F")
+    tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
+    taussa = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
+    taussag = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
     args = [
         ncol,
         nlay,
-        nbnd,
+        ngpt,
         np.asfortranarray(mask),
         np.asfortranarray(lwp),
         np.asfortranarray(re),

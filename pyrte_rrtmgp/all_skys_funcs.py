@@ -244,8 +244,7 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         raise ValueError(
             "Cloud optics: negative lwp or iwp where clouds are supposed to be"
         )
-
-    nbnd = cloud_optics.sizes["nband"]
+    ngpt = cloud_optics.sizes.get("gpt", cloud_optics.sizes["nband"])
 
     # Compute optical properties using lookup tables
     # Liquid phase
@@ -256,16 +255,16 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
     ltau, ltaussa, ltaussag = compute_cld_from_table(
         ncol,
         nlay,
-        nbnd,
+        ngpt,
         liq_mask,
         cloud_properties.lwp,
         cloud_properties.rel,
         cloud_optics.sizes["nsize_liq"],
         step_size.values,
         cloud_optics.radliq_lwr.values,
-        cloud_optics.lut_extliq,
-        cloud_optics.lut_ssaliq,
-        cloud_optics.lut_asyliq,
+        cloud_optics.extliq.T,
+        cloud_optics.ssaliq.T,
+        cloud_optics.asyliq.T,
     )
 
     # Ice phase
@@ -277,16 +276,16 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
     itau, itaussa, itaussag = compute_cld_from_table(
         ncol,
         nlay,
-        nbnd,
+        ngpt,
         ice_mask,
         cloud_properties.iwp,
         cloud_properties.rei,
         cloud_optics.sizes["nsize_ice"],
         step_size.values,
         cloud_optics.diamice_lwr.values,
-        cloud_optics.lut_extice[ice_roughness, :, :].T,
-        cloud_optics.lut_ssaice[ice_roughness, :, :].T,
-        cloud_optics.lut_asyice[ice_roughness, :, :].T,
+        cloud_optics.extice[ice_roughness, :, :].T,
+        cloud_optics.ssaice[ice_roughness, :, :].T,
+        cloud_optics.asyice[ice_roughness, :, :].T,
     )
 
 
