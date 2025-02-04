@@ -49,7 +49,7 @@ addopts = ["-ra", "--showlocals", "--strict-markers", "--strict-config"]
 xfail_strict = true
 log_cli_level = "INFO"
 filterwarnings = ["error"]
-testpaths = ["tests"]
+testpaths = ["pyrte_rrtmgp/tests"]
 
 [tool.cibuildwheel]
 test-command = "pytest {project}/tests"
