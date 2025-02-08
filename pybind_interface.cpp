@@ -2001,7 +2001,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             ncol,
             nlay,
             ngpt,
-            reinterpret_cast<int*>(buf_mask.ptr),
+            reinterpret_cast<Bool*>(buf_mask.ptr),
             reinterpret_cast<Float*>(buf_lwp.ptr),
             reinterpret_cast<Float*>(buf_re.ptr),
             nsteps,
