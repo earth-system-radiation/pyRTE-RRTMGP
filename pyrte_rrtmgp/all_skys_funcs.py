@@ -288,7 +288,6 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         cloud_optics.asyice[ice_roughness, :, :].T,
     )
 
-
     # Combine liquid and ice contributions
     if lw:
         tau = (ltau - ltaussa) + (itau - itaussa)
