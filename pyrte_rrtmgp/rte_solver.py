@@ -84,17 +84,25 @@ class RTESolver:
         surface_emissivity_var = problem_ds.mapping.get_var("surface_emissivity")
 
         nmus: int = 1
-        top_at_1: bool = problem_ds[layer_dim][0] < problem_ds[layer_dim][-1]
+        top_at_1: bool = problem_ds.attrs["top_at_1"]
 
         if "incident_flux" not in problem_ds:
             incident_flux: xr.DataArray = xr.zeros_like(problem_ds["surface_source"])
         else:
             incident_flux = problem_ds["incident_flux"]
 
-        if "gpt" not in problem_ds[surface_emissivity_var].dims:
+        if (
+            "gpt" not in problem_ds[surface_emissivity_var].dims
+            or site_dim not in problem_ds[surface_emissivity_var].dims
+        ):
+            expand_dims = {}
+            if "gpt" not in problem_ds[surface_emissivity_var].dims:
+                expand_dims["gpt"] = problem_ds.sizes["gpt"]
+            if site_dim not in problem_ds[surface_emissivity_var].dims:
+                expand_dims[site_dim] = problem_ds.sizes[site_dim]
             problem_ds[surface_emissivity_var] = problem_ds[
                 surface_emissivity_var
-            ].expand_dims({"gpt": problem_ds.sizes["gpt"]}, axis=1)
+            ].expand_dims(expand_dims)
 
         ds, weights = self._compute_quadrature(problem_ds, site_dim, nmus)
         ssa: xr.DataArray = (
@@ -108,8 +116,8 @@ class RTESolver:
             solver_flux_up_jacobian,
             solver_flux_up_broadband,
             solver_flux_down_broadband,
-            solver_flux_up,
-            solver_flux_down,
+            _,
+            _,
         ) = xr.apply_ufunc(
             lw_solver_noscat,
             problem_ds.sizes[site_dim],
@@ -157,10 +165,8 @@ class RTESolver:
         return xr.Dataset(
             {
                 "lw_flux_up_jacobian": solver_flux_up_jacobian,
-                "lw_flux_up_broadband": solver_flux_up_broadband,
-                "lw_flux_down_broadband": solver_flux_down_broadband,
-                "lw_flux_up": solver_flux_up,
-                "lw_flux_down": solver_flux_down,
+                "lw_flux_up": solver_flux_up_broadband,
+                "lw_flux_down": solver_flux_down_broadband,
             }
         )
 
@@ -205,16 +211,16 @@ class RTESolver:
         level_dim = problem_ds.mapping.get_dim("level")
 
         # Determine vertical orientation
-        top_at_1 = problem_ds[layer_dim][0] < problem_ds[layer_dim][-1]
+        top_at_1: bool = problem_ds.attrs["top_at_1"]
 
         # Call solver
         (
+            _,
+            _,
+            _,
             solver_flux_up_broadband,
             solver_flux_down_broadband,
             solver_flux_dir_broadband,
-            solver_flux_up,
-            solver_flux_down,
-            solver_flux_dir,
         ) = xr.apply_ufunc(
             sw_solver_2stream,
             problem_ds.sizes[site_dim],
@@ -243,12 +249,12 @@ class RTESolver:
                 [site_dim, "gpt"],  # inc_flux_dif
             ],
             output_core_dims=[
-                [site_dim, level_dim, "gpt"],  # solver_flux_up_broadband
-                [site_dim, level_dim, "gpt"],  # solver_flux_down_broadband
-                [site_dim, level_dim, "gpt"],  # solver_flux_dir_broadband
-                [site_dim, level_dim],  # solver_flux_up
-                [site_dim, level_dim],  # solver_flux_down
-                [site_dim, level_dim],  # solver_flux_dir
+                [site_dim, level_dim, "gpt"],  # solver_flux_up
+                [site_dim, level_dim, "gpt"],  # solver_flux_down
+                [site_dim, level_dim, "gpt"],  # solver_flux_dir
+                [site_dim, level_dim],  # solver_flux_up_broadband
+                [site_dim, level_dim],  # solver_flux_down_broadband
+                [site_dim, level_dim],  # solver_flux_dir_broadband
             ],
             vectorize=True,
             dask="allowed",
@@ -257,12 +263,9 @@ class RTESolver:
         # Construct output dataset
         fluxes = xr.Dataset(
             {
-                "sw_flux_up_broadband": solver_flux_up_broadband,
-                "sw_flux_down_broadband": solver_flux_down_broadband,
-                "sw_flux_dir_broadband": solver_flux_dir_broadband,
-                "sw_flux_up": solver_flux_up,
-                "sw_flux_down": solver_flux_down,
-                "sw_flux_dir": solver_flux_dir,
+                "sw_flux_up": solver_flux_up_broadband,
+                "sw_flux_down": solver_flux_down_broadband,
+                "sw_flux_dir": solver_flux_dir_broadband,
             }
         )
 

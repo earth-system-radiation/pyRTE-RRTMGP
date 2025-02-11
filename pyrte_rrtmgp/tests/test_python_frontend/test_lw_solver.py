@@ -47,9 +47,5 @@ def test_lw_solver_noscat():
     fluxes = solver.solve(atmosphere, add_to_input=False)
 
     # Compare results with reference data
-    assert np.isclose(
-        fluxes["lw_flux_up_broadband"], ref_flux_up, atol=ERROR_TOLERANCE
-    ).all()
-    assert np.isclose(
-        fluxes["lw_flux_down_broadband"], ref_flux_down, atol=ERROR_TOLERANCE
-    ).all()
+    assert np.isclose(fluxes["lw_flux_up"], ref_flux_up, atol=ERROR_TOLERANCE).all()
+    assert np.isclose(fluxes["lw_flux_down"], ref_flux_down, atol=ERROR_TOLERANCE).all()

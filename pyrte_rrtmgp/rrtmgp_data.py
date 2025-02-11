@@ -8,8 +8,8 @@ from typing import Union
 import requests
 
 # URL of the file to download
-TAG = "v1.8.2"
-DATA_URL = f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/tags/{TAG}.tar.gz"
+REF = "v1.9"  # Can be a tag (e.g. "v1.8.2") or branch name (e.g. "main")
+DATA_URL = f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/{'tags' if REF.startswith('v') else 'heads'}/{REF}.tar.gz"
 
 
 def get_cache_dir() -> str:
@@ -51,10 +51,10 @@ def download_rrtmgp_data() -> str:
     cache_dir = get_cache_dir()
 
     # Path to the downloaded file
-    file_path = os.path.join(cache_dir, f"{TAG}.tar.gz")
+    file_path = os.path.join(cache_dir, f"{REF}.tar.gz")
 
     # Path to the file containing the checksum of the downloaded file
-    checksum_file_path = os.path.join(cache_dir, f"{TAG}.tar.gz.sha256")
+    checksum_file_path = os.path.join(cache_dir, f"{REF}.tar.gz.sha256")
 
     # Download the file if it doesn't exist or if the checksum doesn't match
     if not os.path.exists(file_path) or (
@@ -77,7 +77,11 @@ def download_rrtmgp_data() -> str:
     with tarfile.open(file_path) as tar:
         tar.extractall(path=cache_dir, filter="data")
 
-    return os.path.join(cache_dir, f"rrtmgp-data-{TAG[1:]}")
+    # Handle both tag and branch names in the extracted directory name
+    # For tags like "v1.8.2", remove the "v" prefix
+    # For branches like "main", use as-is
+    ref_dirname = REF[1:] if REF.startswith("v") else REF
+    return os.path.join(cache_dir, f"rrtmgp-data-{ref_dirname}")
 
 
 def _get_file_checksum(filepath: Union[str, Path], mode: str = "r") -> str:
