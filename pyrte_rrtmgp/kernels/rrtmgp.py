@@ -192,7 +192,7 @@ def compute_planck_source(
             - sfc_src_jac: Surface emission Jacobian with shape (ncol, ngpt)
     """
     sfc_lay = nlay if top_at_1 else 1
-    gpoint_bands = []
+    gpoint_bands = np.ndarray((ngpt), dtype=np.int32, order="F")
     totplnk_delta = (temp_ref_max - temp_ref_min) / (nPlanckTemp - 1)
 
     # Initialize output arrays

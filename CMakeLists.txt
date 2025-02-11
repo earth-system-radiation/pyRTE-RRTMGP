@@ -33,23 +33,25 @@ endif()
 
 include(ExternalProject REQUIRED)
 
-if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
-    set(BUILD_COMMAND_STRING "set FC=%CMAKE_Fortran_COMPILER% && cd build && nmake /A")
-else()
-    set(BUILD_COMMAND_STRING "FC=${CMAKE_Fortran_COMPILER} FCFLAGS='-fPIC' make -C build -j ${N}")
-endif()
-
 ExternalProject_Add(
     rte-rrtmgp
-    GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
-    GIT_TAG 06ea8284071b80d393ff8df659a2ef4b4bfb2aa8
-    GIT_CONFIG "advice.detachedHead=false"
-    # GIT_SHALLOW TRUE
+    # For development only
+    GIT_REPOSITORY https://github.com/makepath-alex/rte-rrtmgp.git
+    GIT_TAG use-cbool-dev
+    GIT_SHALLOW TRUE
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
-    CONFIGURE_COMMAND ""
+    CMAKE_ARGS
+        -DCMAKE_Fortran_COMPILER=${CMAKE_Fortran_COMPILER}
+        -DCMAKE_Fortran_FLAGS=${FFLAGS}
+        -DRTE_ENABLE_SP=OFF
+        -DKERNEL_MODE=default
+        -DBUILD_TESTING=OFF
+        -DFAILURE_THRESHOLD=7.e-4
+        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/
     BUILD_IN_SOURCE TRUE
-    BUILD_COMMAND eval ${BUILD_COMMAND_STRING}
-    INSTALL_COMMAND ""
+    BUILD_COMMAND ${CMAKE_COMMAND} --build . --target all --parallel
+    INSTALL_COMMAND ${CMAKE_COMMAND} --install .
 )
 
 # Compile C bindings
@@ -68,7 +70,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
 )
 
 target_link_directories(${TARGET_NAME} PUBLIC
-    ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/build
+    ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/lib/
 )
 
 target_link_libraries(${TARGET_NAME} PUBLIC
