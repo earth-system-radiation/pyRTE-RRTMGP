@@ -2,12 +2,13 @@
 #include <pybind11/numpy.h>
 
 namespace fortran {
+#include "rte_types.h"
 #include "rte_kernels.h"
 #include "rrtmgp_kernels.h"
 }
 
-using Bool = signed char;
-using Float = double;
+using fortran::Float;
+using fortran::Bool;
 
 namespace py = pybind11;
 
@@ -1551,7 +1552,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> fmajor,
         py::array_t<Float> fminor,
         py::array_t<Float> col_mix,
-        py::array_t<bool> tropo,
+        py::array_t<Bool> tropo,
         py::array_t<int> jeta,
         py::array_t<int> jpress
     ) {
@@ -1959,7 +1960,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
     [](
         int ncol,
         int nlay,
-        int ngpt,
+        int nbnd,
         py::array_t<Bool>  mask,
         py::array_t<Float> lwp,
         py::array_t<Float> re,
@@ -1973,19 +1974,19 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<Float> taussa,
         py::array_t<Float> taussag
     ) {
-        if (ncol <= 0 || nlay <= 0 || ngpt <= 0 || nsteps <= 0) {
-            throw std::runtime_error("ncol, nlay, ngpt and nsteps must be positive integers");
+        if (ncol <= 0 || nlay <= 0 || nbnd <= 0 || nsteps <= 0) {
+            throw std::runtime_error("ncol, nlay, nbnd and nsteps must be positive integers");
         }
 
         if (mask.size()      != ncol * nlay)        throw std::runtime_error("Invalid size for input array 'mask'");
         if (lwp.size()       != ncol * nlay)        throw std::runtime_error("Invalid size for input array 'lwp'");
         if (re.size()        != ncol * nlay)        throw std::runtime_error("Invalid size for input array 're'");
-        if (tau_table.size() != nsteps * ngpt)      throw std::runtime_error("Invalid size for input array 'tau_table'");
-        if (ssa_table.size() != nsteps * ngpt)      throw std::runtime_error("Invalid size for input array 'ssa_table'");
-        if (asy_table.size() != nsteps * ngpt)      throw std::runtime_error("Invalid size for input array 'asy_table'");
-        if (tau.size()       != ncol * nlay * ngpt) throw std::runtime_error("Invalid size for input array 'tau'");
-        if (taussa.size()    != ncol * nlay * ngpt) throw std::runtime_error("Invalid size for input array 'taussa'");
-        if (taussag.size()   != ncol * nlay * ngpt) throw std::runtime_error("Invalid size for input array 'taussag'");
+        if (tau_table.size() != nsteps * nbnd)      throw std::runtime_error("Invalid size for input array 'tau_table'");
+        if (ssa_table.size() != nsteps * nbnd)      throw std::runtime_error("Invalid size for input array 'ssa_table'");
+        if (asy_table.size() != nsteps * nbnd)      throw std::runtime_error("Invalid size for input array 'asy_table'");
+        if (tau.size()       != ncol * nlay * nbnd) throw std::runtime_error("Invalid size for input array 'tau'");
+        if (taussa.size()    != ncol * nlay * nbnd) throw std::runtime_error("Invalid size for input array 'taussa'");
+        if (taussag.size()   != ncol * nlay * nbnd) throw std::runtime_error("Invalid size for input array 'taussag'");
 
         py::buffer_info buf_mask      = mask.request();
         py::buffer_info buf_lwp       = lwp.request();
@@ -2000,7 +2001,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         fortran::rrtmgp_compute_cld_from_table(
             ncol,
             nlay,
-            ngpt,
+            nbnd,
             reinterpret_cast<Bool*>(buf_mask.ptr),
             reinterpret_cast<Float*>(buf_lwp.ptr),
             reinterpret_cast<Float*>(buf_re.ptr),
