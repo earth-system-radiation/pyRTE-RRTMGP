@@ -1922,3 +1922,4 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             reinterpret_cast<Float*>(buf_taussag.ptr)
         );
     });
+}
