@@ -1665,7 +1665,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         py::array_t<int> jpress,
         py::array_t<Float> tau
     ) {
-        if (ncol <= 0 || nlay <= 0 || nband <= 0 || ngpt <= 0 || ngas <= 0 || nflav <= 0 || neta <= 0 || 
+        if (ncol <= 0 || nlay <= 0 || nband <= 0 || ngpt <= 0 || ngas <= 0 || nflav <= 0 || neta <= 0 ||
             npres <= 0 || ntemp <= 0 || nminorlower < 0 || nminorklower < 0 || nminorupper < 0 || nminorkupper < 0) {
             throw std::runtime_error("All input dimensions must be positive integers or zero when appropriate.");
         }
