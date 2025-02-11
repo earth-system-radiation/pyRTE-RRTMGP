@@ -703,9 +703,9 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             nlay,
             ngpt,
             reinterpret_cast<Float*>(buf_tau_inout.ptr),
-            reinterpret_cast<const Float*>(buf_tau_in.ptr),
+            reinterpret_cast<Float*>(buf_tau_in.ptr),
             nbnd,
-            reinterpret_cast<const int*>(buf_band_lims_gpoint.ptr)
+            reinterpret_cast<int*>(buf_band_lims_gpoint.ptr)
         );
     });
 
@@ -1605,17 +1605,17 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             temp_ref_min,
             temp_ref_delta,
             press_ref_trop_log,
-            reinterpret_cast<Float *>(buf_vmr_ref.ptr),
-            reinterpret_cast<Float *>(buf_play.ptr),
-            reinterpret_cast<Float *>(buf_tlay.ptr),
-            reinterpret_cast<Float *>(buf_col_gas.ptr),
-            reinterpret_cast<int *>(buf_jtemp.ptr),
-            reinterpret_cast<Float *>(buf_fmajor.ptr),
-            reinterpret_cast<Float *>(buf_fminor.ptr),
-            reinterpret_cast<Float *>(buf_col_mix.ptr),
-            reinterpret_cast<int *>(buf_tropo.ptr),
-            reinterpret_cast<int *>(buf_jeta.ptr),
-            reinterpret_cast<int *>(buf_jpress.ptr)
+            reinterpret_cast<Float*>(buf_vmr_ref.ptr),
+            reinterpret_cast<Float*>(buf_play.ptr),
+            reinterpret_cast<Float*>(buf_tlay.ptr),
+            reinterpret_cast<Float*>(buf_col_gas.ptr),
+            reinterpret_cast<int*>(buf_jtemp.ptr),
+            reinterpret_cast<Float*>(buf_fmajor.ptr),
+            reinterpret_cast<Float*>(buf_fminor.ptr),
+            reinterpret_cast<Float*>(buf_col_mix.ptr),
+            reinterpret_cast<Bool*>(buf_tropo.ptr),
+            reinterpret_cast<int*>(buf_jeta.ptr),
+            reinterpret_cast<int*>(buf_jpress.ptr)
         );
     });
 
@@ -1750,17 +1750,17 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             reinterpret_cast<Float*>(buf_kminor_upper.ptr),
             reinterpret_cast<int*>(buf_minor_limits_gpt_lower.ptr),
             reinterpret_cast<int*>(buf_minor_limits_gpt_upper.ptr),
-            reinterpret_cast<int*>(buf_minor_scales_with_density_lower.ptr),
-            reinterpret_cast<int*>(buf_minor_scales_with_density_upper.ptr),
-            reinterpret_cast<int*>(buf_scale_by_complement_lower.ptr),
-            reinterpret_cast<int*>(buf_scale_by_complement_upper.ptr),
+            reinterpret_cast<Bool*>(buf_minor_scales_with_density_lower.ptr),
+            reinterpret_cast<Bool*>(buf_minor_scales_with_density_upper.ptr),
+            reinterpret_cast<Bool*>(buf_scale_by_complement_lower.ptr),
+            reinterpret_cast<Bool*>(buf_scale_by_complement_upper.ptr),
             reinterpret_cast<int*>(buf_idx_minor_lower.ptr),
             reinterpret_cast<int*>(buf_idx_minor_upper.ptr),
             reinterpret_cast<int*>(buf_idx_minor_scaling_lower.ptr),
             reinterpret_cast<int*>(buf_idx_minor_scaling_upper.ptr),
             reinterpret_cast<int*>(buf_kminor_start_lower.ptr),
             reinterpret_cast<int*>(buf_kminor_start_upper.ptr),
-            reinterpret_cast<int*>(buf_tropo.ptr),
+            reinterpret_cast<Bool*>(buf_tropo.ptr),
             reinterpret_cast<Float*>(buf_col_mix.ptr),
             reinterpret_cast<Float*>(buf_fmajor.ptr),
             reinterpret_cast<Float*>(buf_fminor.ptr),
@@ -1863,7 +1863,7 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             sfc_lay,
             reinterpret_cast<Float*>(buf_fmajor.ptr),
             reinterpret_cast<int*>(buf_jeta.ptr),
-            reinterpret_cast<int*>(buf_tropo.ptr),
+            reinterpret_cast<Bool*>(buf_tropo.ptr),
             reinterpret_cast<int*>(buf_jtemp.ptr),
             reinterpret_cast<int*>(buf_jpress.ptr),
             reinterpret_cast<int*>(buf_gpoint_bands.ptr),
@@ -1942,17 +1942,17 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
             neta,
             npres,
             ntemp,
-            reinterpret_cast<int*> (buf_gpoint_flavor.ptr),
-            reinterpret_cast<int*> (buf_band_lims_gpt.ptr),
-            reinterpret_cast<Float*> (buf_krayl.ptr),
+            reinterpret_cast<int*>(buf_gpoint_flavor.ptr),
+            reinterpret_cast<int*>(buf_band_lims_gpt.ptr),
+            reinterpret_cast<Float*>(buf_krayl.ptr),
             idx_h2o,
-            reinterpret_cast<Float*> (buf_col_dry.ptr),
-            reinterpret_cast<Float*> (buf_col_gas.ptr),
-            reinterpret_cast<Float*> (buf_fminor.ptr),
-            reinterpret_cast<int*> (buf_jeta.ptr),
-            reinterpret_cast<int*> (buf_tropo.ptr),
-            reinterpret_cast<int*> (buf_jtemp.ptr),
-            reinterpret_cast<Float*> (buf_tau_rayleigh.ptr)
+            reinterpret_cast<Float*>(buf_col_dry.ptr),
+            reinterpret_cast<Float*>(buf_col_gas.ptr),
+            reinterpret_cast<Float*>(buf_fminor.ptr),
+            reinterpret_cast<int*>(buf_jeta.ptr),
+            reinterpret_cast<Bool*>(buf_tropo.ptr),
+            reinterpret_cast<int*>(buf_jtemp.ptr),
+            reinterpret_cast<Float*>(buf_tau_rayleigh.ptr)
         );
     });
 
