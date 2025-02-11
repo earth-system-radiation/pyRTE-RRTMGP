@@ -84,7 +84,7 @@ def interpolation(
     fmajor = np.ndarray([2, 2, 2, ncol, nlay, nflav], dtype=np.float64, order="F")
     fminor = np.ndarray([2, 2, ncol, nlay, nflav], dtype=np.float64, order="F")
     col_mix = np.ndarray([2, ncol, nlay, nflav], dtype=np.float64, order="F")
-    tropo = np.ndarray([ncol, nlay], dtype=np.int32, order="F")
+    tropo = np.ndarray([ncol, nlay], dtype=np.bool_, order="F")
     jeta = np.ndarray([2, ncol, nlay, nflav], dtype=np.int32, order="F")
     jpress = np.ndarray([ncol, nlay], dtype=np.int32, order="F")
 

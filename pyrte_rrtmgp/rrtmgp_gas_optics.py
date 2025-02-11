@@ -98,8 +98,8 @@ class BaseGasOpticsAccessor:
         self.is_internal = is_internal
 
         # Get the gas names from the dataset
-        self._gas_names: tuple[str, ...] = self.extract_names(
-            self._dataset["gas_names"].values
+        self._gas_names: tuple[str, ...] = tuple(
+            self.extract_names(self._dataset["gas_names"].values)
         )
 
         if selected_gases is not None:
@@ -135,9 +135,17 @@ class BaseGasOpticsAccessor:
         """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
 
+        min_press = self._dataset["press_ref"].min().item()
+
         min_index = np.argmin(atmosphere[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
-        atmosphere[pres_level_var][:, min_index] = min_press
+
+        # Replace values smaller than min_press with min_press at min_index
+        atmosphere[pres_level_var][:, min_index] = xr.where(
+            atmosphere[pres_level_var][:, min_index] < min_press,
+            min_press,
+            atmosphere[pres_level_var][:, min_index],
+        )
 
         if not inplace:
             return atmosphere
@@ -360,19 +368,47 @@ class BaseGasOpticsAccessor:
         ngas = gas_interpolation_data["gas"].size
         nflav = self.flavors_sets["flavor"].size
 
-        nminorlower = self._dataset["minor_scales_with_density_lower"].size
-        nminorupper = self._dataset["minor_scales_with_density_upper"].size
-        nminorklower = self._dataset["contributors_lower"].size
-        nminorkupper = self._dataset["contributors_upper"].size
-
         minor_gases_lower = self.extract_names(self._dataset["minor_gases_lower"].data)
         minor_gases_upper = self.extract_names(self._dataset["minor_gases_upper"].data)
-        # check if the index is correct
-        idx_minor_lower = self.get_idx_minor(minor_gases_lower)
-        idx_minor_upper = self.get_idx_minor(minor_gases_upper)
 
-        scaling_gas_lower = self.extract_names(self._dataset["scaling_gas_lower"].data)
-        scaling_gas_upper = self.extract_names(self._dataset["scaling_gas_upper"].data)
+        lower_gases_mask = np.isin(minor_gases_lower, self._gas_names)
+        upper_gases_mask = np.isin(minor_gases_upper, self._gas_names)
+
+        # TODO: Hardcoded 16, but shouldn't it be nbnd?
+        upper_gases_mask_expanded = np.repeat(upper_gases_mask, 16)
+        lower_gases_mask_expanded = np.repeat(lower_gases_mask, 16)
+
+        reduced_dataset = self._dataset.isel(
+            contributors_lower=lower_gases_mask_expanded
+        )
+        reduced_dataset = reduced_dataset.isel(
+            contributors_upper=upper_gases_mask_expanded
+        )
+        reduced_dataset = reduced_dataset.isel(
+            minor_absorber_intervals_lower=lower_gases_mask
+        )
+        reduced_dataset = reduced_dataset.isel(
+            minor_absorber_intervals_upper=upper_gases_mask
+        )
+
+        minor_gases_lower_reduced = minor_gases_lower[lower_gases_mask]
+        minor_gases_upper_reduced = minor_gases_upper[upper_gases_mask]
+
+        nminorlower = reduced_dataset.sizes["minor_absorber_intervals_lower"]
+        nminorupper = reduced_dataset.sizes["minor_absorber_intervals_upper"]
+        nminorklower = reduced_dataset.sizes["contributors_lower"]
+        nminorkupper = reduced_dataset.sizes["contributors_upper"]
+
+        # check if the index is correct
+        idx_minor_lower = self.get_idx_minor(minor_gases_lower_reduced)
+        idx_minor_upper = self.get_idx_minor(minor_gases_upper_reduced)
+
+        scaling_gas_lower = self.extract_names(
+            reduced_dataset["scaling_gas_lower"].data
+        )
+        scaling_gas_upper = self.extract_names(
+            reduced_dataset["scaling_gas_upper"].data
+        )
 
         idx_minor_scaling_lower = self.get_idx_minor(scaling_gas_lower)
         idx_minor_scaling_upper = self.get_idx_minor(scaling_gas_upper)
@@ -397,22 +433,22 @@ class BaseGasOpticsAccessor:
             nminorkupper,
             self._selected_gas_names_ext.index("h2o"),
             self.gpoint_flavor,
-            self._dataset["bnd_limits_gpt"],
-            self._dataset["kmajor"],
-            self._dataset["kminor_lower"],
-            self._dataset["kminor_upper"],
-            self._dataset["minor_limits_gpt_lower"],
-            self._dataset["minor_limits_gpt_upper"],
-            self._dataset["minor_scales_with_density_lower"],
-            self._dataset["minor_scales_with_density_upper"],
-            self._dataset["scale_by_complement_lower"],
-            self._dataset["scale_by_complement_upper"],
+            reduced_dataset["bnd_limits_gpt"],
+            reduced_dataset["kmajor"],
+            reduced_dataset["kminor_lower"],
+            reduced_dataset["kminor_upper"],
+            reduced_dataset["minor_limits_gpt_lower"],
+            reduced_dataset["minor_limits_gpt_upper"],
+            reduced_dataset["minor_scales_with_density_lower"],
+            reduced_dataset["minor_scales_with_density_upper"],
+            reduced_dataset["scale_by_complement_lower"],
+            reduced_dataset["scale_by_complement_upper"],
             idx_minor_lower,
             idx_minor_upper,
             idx_minor_scaling_lower,
             idx_minor_scaling_upper,
-            self._dataset["kminor_start_lower"],
-            self._dataset["kminor_start_upper"],
+            reduced_dataset["kminor_start_lower"],
+            reduced_dataset["kminor_start_upper"],
             gas_interpolation_data["tropopause_mask"],
             gas_interpolation_data["column_mix"],
             gas_interpolation_data["fmajor"],
@@ -588,7 +624,9 @@ class BaseGasOpticsAccessor:
         Returns:
             Tuple of decoded and cleaned names
         """
-        output = tuple(gas.tobytes().decode().strip().split("_")[0] for gas in names)
+        output = np.array(
+            [gas.tobytes().decode().strip().split("_")[0] for gas in names]
+        )
         return output
 
     @staticmethod
@@ -662,11 +700,23 @@ class BaseGasOpticsAccessor:
         """
         # Create and validate gas mapping
         gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
+        gas_mapping = {
+            k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)
+        }
+        self._gas_names = [
+            k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)
+        ]
 
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
         # Set mapping in accessor
         atmosphere.mapping.set_mapping(variable_mapping)
+
+        pres_layer_var = atmosphere.mapping.get_var("pres_layer")
+        top_at_1 = (
+            atmosphere[pres_layer_var].values[0, 0]
+            < atmosphere[pres_layer_var].values[0, -1]
+        )
 
         # Modify pressure levels to avoid division by zero, runs inplace
         self._initialize_pressure_levels(atmosphere)
@@ -675,8 +725,9 @@ class BaseGasOpticsAccessor:
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
         sources = self.compute_sources(atmosphere, gas_interpolation_data)
         boundary_conditions = self.compute_boundary_conditions(atmosphere)
+        gas_data = self._dataset["bnd_limits_gpt"].to_dataset()
 
-        gas_optics = xr.merge([sources, problem, boundary_conditions])
+        gas_optics = xr.merge([sources, problem, boundary_conditions, gas_data])
 
         # Add problem type to dataset attributes
         if problem_type == "absorption" and self.is_internal:
@@ -695,9 +746,11 @@ class BaseGasOpticsAccessor:
         if add_to_input:
             atmosphere.update(gas_optics)
             atmosphere.attrs["problem_type"] = problem_type
+            atmosphere.attrs["top_at_1"] = top_at_1
         else:
             output_ds = gas_optics
             output_ds.attrs["problem_type"] = problem_type
+            output_ds.attrs["top_at_1"] = top_at_1
             output_ds.mapping.set_mapping(variable_mapping)
             return output_ds
 
@@ -757,6 +810,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                 coords={
                     site_dim: atmosphere[site_dim],
                 },
+                name=surface_emissivity_var,
             )
         else:
             return atmosphere[surface_emissivity_var]
@@ -782,7 +836,11 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         surface_temperature_var = atmosphere.mapping.get_var("surface_temperature")
 
         # Check if the top layer is at the first level
-        top_at_1 = atmosphere[layer_dim][0] < atmosphere[layer_dim][-1]
+        pres_layer_var = atmosphere.mapping.get_var("pres_layer")
+        top_at_1 = (
+            atmosphere[pres_layer_var].values[0, 0]
+            < atmosphere[pres_layer_var].values[0, -1]
+        )
 
         ncol = atmosphere.sizes[site_dim]
         nlay = atmosphere.sizes[layer_dim]
