@@ -38,8 +38,8 @@ set(FFLAGS "-ffree-line-length-none -m64 -std=f2008 -march=native -fbounds-check
 ExternalProject_Add(
     rte-rrtmgp
     # For development only
-    GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
-    GIT_TAG main
+    GIT_REPOSITORY https://github.com/makepath-alex/rte-rrtmgp.git
+    GIT_TAG better-header-placement-dev
     GIT_SHALLOW TRUE
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
     CMAKE_ARGS
@@ -67,8 +67,7 @@ pybind11_add_module(${TARGET_NAME} ${SOURCES})
 add_dependencies(${TARGET_NAME} rte-rrtmgp)
 
 target_include_directories(${TARGET_NAME} PUBLIC
-    ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/rte-kernels/api/
-    ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/rrtmgp-kernels/api/
+    ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/include/
 )
 
 target_link_directories(${TARGET_NAME} PUBLIC
