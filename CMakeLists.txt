@@ -33,11 +33,13 @@ endif()
 
 include(ExternalProject REQUIRED)
 
+set(FFLAGS "-ffree-line-length-none -m64 -std=f2008 -march=native -fbounds-check -fmodule-private -fimplicit-none -finit-real=nan")
+
 ExternalProject_Add(
     rte-rrtmgp
     # For development only
-    GIT_REPOSITORY https://github.com/makepath-alex/rte-rrtmgp.git
-    GIT_TAG use-cbool-dev
+    GIT_REPOSITORY https://github.com/earth-system-radiation/rte-rrtmgp.git
+    GIT_TAG main
     GIT_SHALLOW TRUE
     SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp
     CMAKE_ARGS
@@ -47,7 +49,7 @@ ExternalProject_Add(
         -DKERNEL_MODE=default
         -DBUILD_TESTING=OFF
         -DFAILURE_THRESHOLD=7.e-4
-        -DCMAKE_BUILD_TYPE=Release
+        -DCMAKE_BUILD_TYPE=Debug
         -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/rte-rrtmgp/
     BUILD_IN_SOURCE TRUE
     BUILD_COMMAND ${CMAKE_COMMAND} --build . --target all --parallel
