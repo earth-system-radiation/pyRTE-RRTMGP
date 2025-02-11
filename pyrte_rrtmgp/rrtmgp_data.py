@@ -8,7 +8,7 @@ from typing import Union
 import requests
 
 # URL of the file to download
-TAG = "v1.8.2"
+TAG = "v1.9"
 DATA_URL = f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/tags/{TAG}.tar.gz"
 
 
