@@ -438,7 +438,7 @@ def compute_tau_rayleigh(
     # Initialize output array
     tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
-    ngas = ngas - 1 # Fortran uses index 0 here
+    ngas = ngas - 1  # Fortran uses index 0 here
 
     args = [
         ncol,
