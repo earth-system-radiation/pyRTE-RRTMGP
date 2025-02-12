@@ -6,6 +6,8 @@ if (NOT UNIX)
     set(CMAKE_Fortran_COMPILER "${FC}")
 endif()
 
+set(rte-rrtmgp_DIR "ENV{CONDA_PREFIX}/lib/rte-rrtmgp/cmake/")
+
 enable_language(Fortran)
 
 project(rte-rrtmgp)
@@ -25,6 +27,8 @@ elseif(APPLE)
     endif()
 endif()
 
+find_package(rte-rrtmgp REQUIRED)
+
 # Compile Python bindings with pybind11
 find_package(pybind11 REQUIRED)
 
@@ -34,6 +38,7 @@ set(SOURCES ${CMAKE_SOURCE_DIR}/pybind_interface.cpp)
 
 pybind11_add_module(${TARGET_NAME} ${SOURCES})
 
+# TODO: This is outdated, fix it
 if(APPLE)
     # On macOS, explicitly link against gfortran runtime
     if(APPLE_ARM)
@@ -47,13 +52,9 @@ target_include_directories(${TARGET_NAME} PUBLIC
     $ENV{CONDA_PREFIX}/include
 )
 
-target_link_directories(${TARGET_NAME} PUBLIC
-    $ENV{CONDA_PREFIX}/lib
-)
-
 target_link_libraries(${TARGET_NAME} PUBLIC
-    $ENV{CONDA_PREFIX}/lib/librte.so
-    $ENV{CONDA_PREFIX}/lib/librrtmgp.so
+    rte-rrtmgp::rte
+    rte-rrtmgp::rrtmgp
     gfortran
 )
 
