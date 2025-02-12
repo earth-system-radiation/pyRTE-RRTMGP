@@ -59,11 +59,3 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
 
 # The install directory is the output (wheel) directory
 install(TARGETS ${TARGET_NAME} DESTINATION ${OUTPUT_DIRECTORY})
-
-file(GLOB DLL_FILES
-    $ENV{CONDA_PREFIX}/Library/bin/libgcc_s_seh-1.dll
-    $ENV{CONDA_PREFIX}/Library/bin/libgfortran-5.dll
-    $ENV{CONDA_PREFIX}/Library/bin/libstdc++-6.dll
-)
-
-install(FILES ${DLL_FILES} DESTINATION ${OUTPUT_DIRECTORY})
