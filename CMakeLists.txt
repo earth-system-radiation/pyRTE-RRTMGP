@@ -52,8 +52,8 @@ target_link_directories(${TARGET_NAME} PUBLIC
 )
 
 target_link_libraries(${TARGET_NAME} PUBLIC
-    $ENV{CONDA_PREFIX}/lib/librte.a
-    $ENV{CONDA_PREFIX}/lib/librrtmgp.a
+    $ENV{CONDA_PREFIX}/lib/librte.so
+    $ENV{CONDA_PREFIX}/lib/librrtmgp.so
     gfortran
 )
 
