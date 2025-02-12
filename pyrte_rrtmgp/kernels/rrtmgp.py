@@ -435,7 +435,7 @@ def compute_tau_rayleigh(
           (ntemp, neta, ngpt, 2)
         idx_h2o: Index of water vapor
         col_dry: Dry air column amounts with shape (ncol, nlay)
-        col_gas: Gas concentrations with shape (ncol, nlay, ngas + 1)
+        col_gas: Gas concentrations with shape (ncol, nlay, ngas)
         fminor: Minor gas interpolation weights
         jeta: Eta interpolation indices
         tropo: Troposphere mask with shape (ncol, nlay)
