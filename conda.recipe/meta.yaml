@@ -11,29 +11,31 @@ build:
 
 requirements:
   build:
-    - {{ compiler('c') }}    # [unix]
-    - {{ compiler('cxx') }}  # [unix]
+    - gcc_linux-64        # [linux]
+    - gxx_linux-64        # [linux]
     - gfortran_linux-64   # [linux]
-    - gfortran_osx-64     # [osx and not arm64]
+    - clang_osx-64        # [osx and x86_64]
+    - clangxx_osx-64      # [osx and x86_64]
+    - gfortran_osx-64     # [osx and x86_64]
+    - clang_osx-arm64     # [osx and arm64]
+    - clangxx_osx-arm64   # [osx and arm64]
     - gfortran_osx-arm64  # [osx and arm64]
-    - m2w64-gcc-fortran   # [win]
-    # - gcc_impl_win-64=13.2.0       # [win]
-    # - gfortran_impl_win-64=13.2.0  # [win]
-    # - libgomp=13.2.0               # [win]
-    # - libgcc=13.2.0                # [win]
-    - libuv==1.44.2
-    - cmake==3.26.4
-    - git==2.44.0
+    - gcc_win-64          # [win]
+    - gxx_win-64          # [win]
+    - gfortran_win-64     # [win]
+    - libuv ==1.44.2
+    - cmake =3.26.4
+    - git ==2.44.0
     - ninja
-    - rte-rrtmgp ==0.0.1
 
   host:
     - python
     - pip
+    - libstdcxx-ng
+    - libgcc-ng
     - scikit-build-core
     - pybind11 >=2.10.0
-    - numpy >=1.21.0
-    - pytest >=7.4
+    - rte-rrtmgp ==v1.9.0
 
   run:
     - python
@@ -42,6 +44,7 @@ requirements:
     - netcdf4 >=1.5.7
     - requests >=2.4.0
     - pytest >=7.4
+    - rte-rrtmgp ==v1.9.0
 
 test:
   imports:
@@ -52,6 +55,7 @@ test:
     - xarray >=2023.5.0
     - netcdf4 >=1.5.7
     - requests >=2.4.0
+    - rte-rrtmgp ==v1.9.0
   commands:
     - pyrte_rrtmgp run_tests
 
