@@ -11,18 +11,21 @@ build:
 
 requirements:
   build:
-    - python
-    - {{ compiler('c') }}
-    - {{ compiler('cxx') }}
+    # - {{ compiler('c') }}    # [unix]
+    # - {{ compiler('cxx') }}  # [unix]
     - gfortran_linux-64   # [linux]
     - gfortran_osx-64     # [osx and not arm64]
     - gfortran_osx-arm64  # [osx and arm64]
     - m2w64-gcc-fortran   # [win]
+    # - gcc_impl_win-64=13.2.0       # [win]
+    # - gfortran_impl_win-64=13.2.0  # [win]
+    # - libgomp=13.2.0               # [win]
+    # - libgcc=13.2.0                # [win]
     - libuv==1.44.2
     - cmake==3.26.4
-    - git
-    - make
-    - liblief==0.14.1  # Ensure compatibility with conda-build
+    - git==2.44.0
+    - ninja
+    - rte-rrtmgp
 
   host:
     - python
