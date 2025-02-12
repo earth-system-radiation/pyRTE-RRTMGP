@@ -373,9 +373,19 @@ class BaseGasOpticsAccessor:
         lower_gases_mask = np.isin(minor_gases_lower, self._gas_names)
         upper_gases_mask = np.isin(minor_gases_upper, self._gas_names)
 
-        # TODO: Hardcoded 16, but shouldn't it be nbnd?
-        upper_gases_mask_expanded = np.repeat(upper_gases_mask, 16)
-        lower_gases_mask_expanded = np.repeat(lower_gases_mask, 16)
+        lower_gpt_sizes = (
+            (self._dataset["minor_limits_gpt_lower"].diff(dim="pair") + 1)
+            .transpose()
+            .values[0]
+        )
+        upper_gpt_sizes = (
+            (self._dataset["minor_limits_gpt_upper"].diff(dim="pair") + 1)
+            .transpose()
+            .values[0]
+        )
+
+        upper_gases_mask_expanded = np.repeat(upper_gases_mask, upper_gpt_sizes)
+        lower_gases_mask_expanded = np.repeat(lower_gases_mask, lower_gpt_sizes)
 
         reduced_dataset = self._dataset.isel(
             contributors_lower=lower_gases_mask_expanded
@@ -412,6 +422,13 @@ class BaseGasOpticsAccessor:
         idx_minor_scaling_lower = self.get_idx_minor(scaling_gas_lower)
         idx_minor_scaling_upper = self.get_idx_minor(scaling_gas_upper)
 
+        kminor_start_lower = self._dataset["kminor_start_lower"].isel(
+            minor_absorber_intervals_lower=slice(nminorlower)
+        )
+        kminor_start_upper = self._dataset["kminor_start_upper"].isel(
+            minor_absorber_intervals_upper=slice(nminorupper)
+        )
+
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         temp_layer_var = atmosphere.mapping.get_var("temp_layer")
 
@@ -446,8 +463,8 @@ class BaseGasOpticsAccessor:
             idx_minor_upper,
             idx_minor_scaling_lower,
             idx_minor_scaling_upper,
-            reduced_dataset["kminor_start_lower"],
-            reduced_dataset["kminor_start_upper"],
+            kminor_start_lower,
+            kminor_start_upper,
             gas_interpolation_data["tropopause_mask"],
             gas_interpolation_data["column_mix"],
             gas_interpolation_data["fmajor"],
