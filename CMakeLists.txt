@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.18...3.26)
 
+if (NOT UNIX)
+    set(FC "$ENV{CONDA_PREFIX}/Library/bin/x86_64-w64-mingw32-gfortran.exe")
+    string(REPLACE "\\" "/" FC "${FC}")
+    set(CMAKE_Fortran_COMPILER "${FC}")
+endif()
+
 enable_language(Fortran)
 
 project(rte-rrtmgp)
