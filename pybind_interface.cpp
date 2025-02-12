@@ -1774,7 +1774,6 @@ PYBIND11_MODULE(pyrte_rrtmgp, m) {
         );
     });
 
-
     m.def("rrtmgp_compute_Planck_source",
     [](
         int ncol,

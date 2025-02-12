@@ -11,8 +11,8 @@ build:
 
 requirements:
   build:
-    # - {{ compiler('c') }}    # [unix]
-    # - {{ compiler('cxx') }}  # [unix]
+    - {{ compiler('c') }}    # [unix]
+    - {{ compiler('cxx') }}  # [unix]
     - gfortran_linux-64   # [linux]
     - gfortran_osx-64     # [osx and not arm64]
     - gfortran_osx-arm64  # [osx and arm64]
