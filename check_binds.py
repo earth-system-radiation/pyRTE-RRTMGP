@@ -1,9 +1,10 @@
-import re
 import argparse
+import re
+
 
 def extract_c_functions(file_paths):
     functionNames = set()
-    
+
     for filePath in file_paths:
         try:
             with open(filePath, "r", encoding="utf-8") as file:
@@ -37,17 +38,23 @@ def extract_pybind_functions(pybind_file):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Compare C function declarations with Pybind11 bindings.")
-    parser.add_argument("--c_headers", nargs="+", required=True, help="List of C header files to check.")
-    parser.add_argument("--pybind", required=True, help="Path to the Pybind11 binding file.")
+    parser = argparse.ArgumentParser(
+        description="Compare C function declarations with Pybind11 bindings."
+    )
+    parser.add_argument(
+        "--c_headers", nargs="+", required=True, help="List of C header files to check."
+    )
+    parser.add_argument(
+        "--pybind", required=True, help="Path to the Pybind11 binding file."
+    )
 
     args = parser.parse_args()
 
-    cFunctions      = extract_c_functions(args.c_headers)
+    cFunctions = extract_c_functions(args.c_headers)
     pybindFunctions = extract_pybind_functions(args.pybind)
 
     missingPyBindings = cFunctions - pybindFunctions
-    missingCBindings  = pybindFunctions - cFunctions
+    missingCBindings = pybindFunctions - cFunctions
 
     print(f"Total C functions found: {len(cFunctions)}")
     print(f"Total Py functions bound: {len(pybindFunctions)}")
