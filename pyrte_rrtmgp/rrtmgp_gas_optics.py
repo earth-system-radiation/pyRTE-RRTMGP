@@ -1029,19 +1029,6 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
         surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_dif")
 
-        usecol_values = atmosphere[solar_zenith_angle_var] < (
-            90.0 - 2.0 * np.spacing(90.0)
-        )
-        usecol_values = usecol_values.rename("solar_angle_mask")
-        mu0 = xr.where(
-            usecol_values,
-            np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
-            1.0,
-        )
-        solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename(
-            "solar_zenith_angle"
-        )
-
         if surface_albedo_dir_var not in atmosphere.data_vars:
             surface_albedo_direct = atmosphere[surface_albedo_var]
             surface_albedo_direct = surface_albedo_direct.rename(
@@ -1061,14 +1048,28 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 "surface_albedo_diffuse"
             )
 
-        return xr.merge(
-            [
-                solar_zenith_angle,
-                surface_albedo_direct,
-                surface_albedo_diffuse,
+        data_vars = [
+            surface_albedo_direct,
+            surface_albedo_diffuse,
+        ]
+
+        if solar_zenith_angle_var in atmosphere.data_vars:
+            usecol_values = atmosphere[solar_zenith_angle_var] < (
+                90.0 - 2.0 * np.spacing(90.0)
+            )
+            usecol_values = usecol_values.rename("solar_angle_mask")
+            mu0 = xr.where(
                 usecol_values,
-            ]
-        )
+                np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
+                1.0,
+            )
+            solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename(
+                "solar_zenith_angle"
+            )
+            data_vars.append(solar_zenith_angle)
+            data_vars.append(usecol_values)
+
+        return xr.merge(data_vars)
 
     def tau_rayleigh(self, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
         """Compute Rayleigh scattering optical depth.

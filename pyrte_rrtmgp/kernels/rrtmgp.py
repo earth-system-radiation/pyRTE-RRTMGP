@@ -119,7 +119,6 @@ def interpolation(
 
     rrtmgp_interpolation(*args)
 
-    tropo = tropo != 0  # Convert to boolean
     return jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress
 
 

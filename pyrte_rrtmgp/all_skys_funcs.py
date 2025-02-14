@@ -109,8 +109,11 @@ def compute_profiles(SST, ncol, nlay):
     return p_lay, t_lay, p_lev, t_lev, q_lay, o3
 
 
-def expand_to_2d(value, ncol, nlay, name=None):
+def expand_to_2d(value, ncol, nlay, name=None, dims=None):
     """Expand scalar or 1D array to 2D array with shape (ncol, nlay)."""
+    if dims is None:
+        dims = ["columns", "layers"]
+
     value = np.asarray(value)
 
     if value.ndim == 0:  # Scalar input
@@ -128,7 +131,7 @@ def expand_to_2d(value, ncol, nlay, name=None):
     else:
         raise ValueError("Invalid dimensions - must be scalar, 1D or 2D array")
 
-    return xr.DataArray(data, dims=["columns", "layers"], name=name)
+    return xr.DataArray(data, dims=dims, name=name)
 
 
 def create_gas_dataset(gas_values, ncol, nlay):
@@ -380,7 +383,7 @@ def combine_optical_props(op1, op2):
                     op2.tau.values,
                     op1.tau.values,
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values,
+                    op2["bnd_limits_gpt"].values.T,
                 )
                 op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
             else:
@@ -393,7 +396,7 @@ def combine_optical_props(op1, op2):
                     op1.tau.values,
                     op1.ssa.values,
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values,
+                    op2["bnd_limits_gpt"].values.T,
                 )
                 op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
         else:
@@ -407,7 +410,7 @@ def combine_optical_props(op1, op2):
                     op2.ssa.values,
                     op1.tau.values,
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values,
+                    op2["bnd_limits_gpt"].values.T,
                 )
                 op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
                 op2["ssa"] = (("site", "layer", "gpt"), op2.ssa.values)
@@ -424,7 +427,7 @@ def combine_optical_props(op1, op2):
                     op1.ssa.values,
                     op1.g.values,
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values,
+                    op2["bnd_limits_gpt"].values.T,
                 )
                 op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
                 op2["ssa"] = (("site", "layer", "gpt"), op2.ssa.values)
