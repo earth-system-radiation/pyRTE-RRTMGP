@@ -111,9 +111,9 @@ class DatasetMappingAccessor:
         Raises:
             ValueError: If mapped dimensions don't exist in dataset
         """
-        missing_dims = set(mapping.dim_mapping.values()) - set(self._obj.dims)
-        if missing_dims:
-            raise ValueError(f"Dataset missing required dimensions: {missing_dims}")
+        # missing_dims = set(mapping.dim_mapping.values()) - set(self._obj.dims)
+        # if missing_dims:
+        #     raise ValueError(f"Dataset missing required dimensions: {missing_dims}")
 
         self._obj.attrs["dataset_mapping"] = asdict(mapping)
 

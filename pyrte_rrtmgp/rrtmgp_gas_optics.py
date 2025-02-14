@@ -1007,11 +1007,20 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             + (sb_index - b_offset) * solar_source_sunspot
         )
 
-        total_solar_irradiance = atmosphere["total_solar_irradiance"]
-
-        toa_flux = solar_source.broadcast_like(total_solar_irradiance)
-        def_tsi = toa_flux.sum(dim="gpt")
-        return (toa_flux * (total_solar_irradiance / def_tsi)).rename("toa_source")
+        # Check if total_solar_irradiance is available in atmosphere
+        if "total_solar_irradiance" in atmosphere:
+            total_solar_irradiance = atmosphere["total_solar_irradiance"]
+            toa_flux = solar_source.broadcast_like(total_solar_irradiance)
+            def_tsi = toa_flux.sum(dim="gpt")
+            return (toa_flux * (total_solar_irradiance / def_tsi)).rename("toa_source")
+        else:
+            # Compute normalization factor
+            norm = 1.0 / solar_source.sum(dim="gpt")
+            default_tsi = self._dataset["tsi_default"]
+            # Scale solar source to default TSI
+            site_dim = atmosphere.mapping.get_dim("site")
+            toa_source = (solar_source * default_tsi * norm).rename("toa_source")
+            return toa_source.expand_dims({site_dim: atmosphere[site_dim]})
 
     def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.Dataset:
         """Compute surface and solar boundary conditions.
@@ -1057,7 +1066,12 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             usecol_values = atmosphere[solar_zenith_angle_var] < (
                 90.0 - 2.0 * np.spacing(90.0)
             )
-            usecol_values = usecol_values.rename("solar_angle_mask")
+            if layer_dim in usecol_values.dims:
+                usecol_values = usecol_values.rename("solar_angle_mask").isel(
+                    {layer_dim: 0}
+                )
+            else:
+                usecol_values = usecol_values.rename("solar_angle_mask")
             mu0 = xr.where(
                 usecol_values,
                 np.cos(np.radians(atmosphere[solar_zenith_angle_var])),

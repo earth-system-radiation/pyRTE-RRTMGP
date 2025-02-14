@@ -3,6 +3,8 @@ import xarray as xr
 
 from pyrte_rrtmgp.kernels.rrtmgp import compute_cld_from_table
 from pyrte_rrtmgp.kernels.rte import (
+    delta_scale_2str,
+    delta_scale_2str_f,
     inc_1scalar_by_1scalar_bybnd,
     inc_1scalar_by_2stream_bybnd,
     inc_2stream_by_1scalar_bybnd,
@@ -432,3 +434,49 @@ def combine_optical_props(op1, op2):
                 op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
                 op2["ssa"] = (("site", "layer", "gpt"), op2.ssa.values)
                 op2["g"] = (("site", "layer", "gpt"), op2.g.values)
+
+
+def delta_scale_optical_props(optical_props, forward_scattering=None):
+    """Apply delta scaling to 2-stream optical properties.
+
+    Args:
+        optical_props: xarray Dataset containing tau, ssa, and g variables
+        forward_scattering: Optional array of forward scattering fraction (g**2 if not provided)
+            Must have shape (ncol, nlay, ngpt) if provided
+
+    Raises:
+        ValueError: If forward_scattering array has incorrect dimensions or values outside [0,1]
+    """
+    # Get dimensions
+    ncol = optical_props.sizes["site"]
+    nlay = optical_props.sizes["layer"]
+    ngpt = optical_props.sizes["gpt"]
+
+    # Get arrays and ensure they're mutable
+    tau = optical_props.tau.values
+    ssa = optical_props.ssa.values
+    g = optical_props.g.values
+
+    if forward_scattering is not None:
+        # Validate dimensions
+        if forward_scattering.shape != (ncol, nlay, ngpt):
+            raise ValueError(
+                "delta_scale: dimension of forward_scattering doesn't match optical properties arrays"
+            )
+
+        # Validate values are in [0,1]
+        if np.any((forward_scattering < 0) | (forward_scattering > 1)):
+            raise ValueError(
+                "delta_scale: values of forward_scattering out of bounds [0,1]"
+            )
+
+        # Call kernel with forward scattering
+        delta_scale_2str_f(ncol, nlay, ngpt, tau, ssa, g, forward_scattering)
+    else:
+        # Call kernel without forward scattering
+        delta_scale_2str(ncol, nlay, ngpt, tau, ssa, g)
+
+    # Update the dataset with modified values
+    optical_props["tau"] = (("site", "layer", "gpt"), tau)
+    optical_props["ssa"] = (("site", "layer", "gpt"), ssa)
+    optical_props["g"] = (("site", "layer", "gpt"), g)
