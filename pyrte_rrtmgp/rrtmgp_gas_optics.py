@@ -1032,7 +1032,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             Dataset containing solar zenith angles, surface albedos and solar angle mask
         """
         layer_dim = atmosphere.mapping.get_dim("layer")
-
+        site_dim = atmosphere.mapping.get_dim("site")
         solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
         surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
         surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
@@ -1077,11 +1077,16 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
                 1.0,
             )
-            solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename(
-                "solar_zenith_angle"
-            )
+            solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename("mu0")
             data_vars.append(solar_zenith_angle)
             data_vars.append(usecol_values)
+        elif "mu0" in atmosphere.data_vars:
+            atmosphere["solar_angle_mask"] = xr.full_like(
+                atmosphere[site_dim], True
+            ).rename("solar_angle_mask")
+            atmosphere["mu0"] = atmosphere["mu0"].broadcast_like(atmosphere[layer_dim])
+            data_vars.append(atmosphere["mu0"])
+            data_vars.append(atmosphere["solar_angle_mask"])
 
         return xr.merge(data_vars)
 

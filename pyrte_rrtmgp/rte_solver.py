@@ -229,7 +229,7 @@ class RTESolver:
             problem_ds["tau"],
             problem_ds["ssa"],
             problem_ds["g"],
-            problem_ds[problem_ds.mapping.get_var("solar_zenith_angle")],
+            problem_ds["mu0"],
             problem_ds["surface_albedo_direct"],
             problem_ds["surface_albedo_diffuse"],
             problem_ds["toa_source"],
