@@ -20,48 +20,15 @@ from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 rte_rrtmgp_dir = download_rrtmgp_data()
 
 
-def expand_to_2d(value, ncol, nlay, name=None, dims=None):
-    """Expand scalar or 1D array to 2D array with shape (ncol, nlay)."""
-    if dims is None:
-        dims = ["columns", "layers"]
-
-    value = np.asarray(value)
-
-    if value.ndim == 0:  # Scalar input
-        data = np.full((ncol, nlay), value)
-
-    elif value.ndim == 1:  # Layer-dependent input
-        if len(value) != nlay:
-            raise ValueError(f"Layer-dependent value must have length {nlay}")
-        data = np.tile(value[np.newaxis, :], (ncol, 1))
-
-    elif value.ndim == 2:  # Full 2D specification
-        if value.shape != (ncol, nlay):
-            raise ValueError(f"2D value must have shape ({ncol}, {nlay})")
-        data = value
-    else:
-        raise ValueError("Invalid dimensions - must be scalar, 1D or 2D array")
-
-    return xr.DataArray(data, dims=dims, name=name)
-
-
-def create_gas_dataset(gas_values, ncol, nlay):
-    """Create xarray Dataset with gas concentrations.
-
-    Args:
-        gas_values (dict): Dictionary mapping gas names to concentration values
-        ncol (int): Number of columns
-        nlay (int): Number of layers
-
-    Returns:
-        xr.Dataset: Dataset containing gas concentrations as separate variables
-    """
+def create_gas_dataset(gas_values, dims):
     ds = xr.Dataset()
+
+    dim_names = list(dims.keys())
+    coords = {k: np.arange(v) for k, v in dims.items()}
 
     # Convert each gas value to 2D array and add as variable
     for gas_name, value in gas_values.items():
-        data_array = expand_to_2d(value, ncol, nlay)
-        ds[gas_name] = data_array.rename({"columns": "site", "layers": "layer"})
+        ds[gas_name] = xr.DataArray(value, dims=dim_names, coords=coords)
 
     return ds
 

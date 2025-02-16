@@ -148,8 +148,8 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
             "temp_layer": (["site", "layer"], t_lay),
             "pres_level": (["site", "level"], p_lev),
             "temp_level": (["site", "level"], t_lev),
-            "water_vapor": (["site", "layer"], q_lay),
-            "ozone": (["site", "layer"], o3),
+            "h2o": (["site", "layer"], q_lay),
+            "o3": (["site", "layer"], o3),
         },
         attrs={
             "description": "Atmospheric profiles following RCEMIP protocol",
