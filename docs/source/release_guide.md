@@ -33,7 +33,7 @@ This helps identify missing bindings, naming differences, or functions that have
 
 ## Testing Current Bindings with the New Source
 
-After running the script, a good rule of thumb is to build and test, checking for any errors that occur.  
+After running the script, a good rule of thumb is to build and test, checking for any errors that occur.
 To build, use the following commands:
 ```
 python -m venv .venv_test
@@ -64,7 +64,7 @@ cachedir: .pytest_cache
 rootdir: /data/vkm/code/makepath/columbia
 configfile: pyproject.toml
 testpaths: pyrte_rrtmgp/tests
-collected 47 items                                                                                                                                                                                                                  
+collected 47 items
 
 ...
 pyrte_rrtmgp/tests/test_exported_functions.py::test_rte_increment_nstream_by_nstream PASSED                                                                                                                                   [ 95%]
@@ -107,7 +107,7 @@ If a new function is introduced to the bindings, follow this procedure to add it
 - Implement appropriate tests for the new functionality. If a test for this functionality exists in [RTE-RRTMGP](https://github.com/earth-system-radiation/rte-rrtmgp/), the new test should mimic it.
 - Changes to functions may also require updates to input and reference data for the tests in [RRTMGP-DATA](https://github.com/earth-system-radiation/rrtmgp-data/), necessitating corresponding updates in PYRTE-RRTMGP’s tests.
 
-Example Blueprint of a Bound Function:  
+Example Blueprint of a Bound Function:
 Cbind function:
 ```c++
 void rte_sum_broadband(
