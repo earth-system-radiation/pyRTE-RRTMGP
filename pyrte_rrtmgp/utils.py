@@ -2,6 +2,28 @@ import numpy as np
 import xarray as xr
 
 
+def create_gas_dataset(gas_values, dims):
+    """Create a dataset with gas values and dimensions.
+
+    Args:
+        gas_values: Dictionary of gas values
+        dims: Dictionary of dimensions
+
+    Returns:
+        xr.Dataset: Dataset with gas values and dimensions
+    """
+    ds = xr.Dataset()
+
+    dim_names = list(dims.keys())
+    coords = {k: np.arange(v) for k, v in dims.items()}
+
+    # Convert each gas value to 2D array and add as variable
+    for gas_name, value in gas_values.items():
+        ds[gas_name] = xr.DataArray(value, dims=dim_names, coords=coords)
+
+    return ds
+
+
 def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
     """Construct atmospheric profiles following the RCEMIP protocol.
 

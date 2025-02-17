@@ -14,23 +14,6 @@ from pyrte_rrtmgp.kernels.rte import (
     increment_2stream_by_1scalar,
     increment_2stream_by_2stream,
 )
-from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
-from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
-
-rte_rrtmgp_dir = download_rrtmgp_data()
-
-
-def create_gas_dataset(gas_values, dims):
-    ds = xr.Dataset()
-
-    dim_names = list(dims.keys())
-    coords = {k: np.arange(v) for k, v in dims.items()}
-
-    # Convert each gas value to 2D array and add as variable
-    for gas_name, value in gas_values.items():
-        ds[gas_name] = xr.DataArray(value, dims=dim_names, coords=coords)
-
-    return ds
 
 
 def compute_clouds(cloud_optics, ncol, nlay, p_lay, t_lay):
