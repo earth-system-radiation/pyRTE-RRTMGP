@@ -76,8 +76,6 @@ pyrte_rrtmgp/tests/test_python_frontend/test_sw_solver.py::test_sw_solver_noscat
 
 If errors appear, there are two potential issues:
 
-TODO: ADD EXAMPLES
-
 1. **Differences in function parameters:**
 	- New parameters may have been added, or some may have been removed.
 	- Changes in dimensions.
@@ -87,6 +85,18 @@ TODO: ADD EXAMPLES
 
 2. **Differences in input and/or output data:**
 	- This can often be resolved by updating the version of the [RRTMGP-DATA](https://github.com/earth-system-radiation/rrtmgp-data/) repository.
+
+Example case: There is a change in the dimensions of the `cl_gas` parameter in `rrtmgp_compute_tau_rayleigh`, the build process for the wheel succeeds, but running pytest results in the following error:
+```
+pyrte_rrtmgp/kernels/rrtmgp.py:466: RuntimeError
+========================================================================================= short test summary info =========================================================================================
+FAILED pyrte_rrtmgp/tests/test_python_frontend/test_sw_solver.py::test_sw_solver_noscat - RuntimeError: Invalid size for input array 'col_gas'
+====================================================================================== 1 failed, 46 passed in 32.04s ======================================================================================
+```
+
+In this situation, the solution is to check the dimensions in cbind and ensure they are correctly reflected in pybind and the Python implementation. Most error cases are similar to this.
+
+If there is a difference in the outputs and everything appears to be correct, the problem is most likely in the input/output data. Check for any changes in the Fortran tests and replicate them accordingly.
 
 ## Adding New Bindings
 
