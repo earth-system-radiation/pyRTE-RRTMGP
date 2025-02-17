@@ -20,6 +20,7 @@ jobs:
       matrix:
         platform: [ubuntu-latest, macos-latest]
         python-version: ["3.11", "3.12"]
+        # when updating the tested Python versions, please also update README.md
 
     runs-on: ${{ matrix.platform }}
 
