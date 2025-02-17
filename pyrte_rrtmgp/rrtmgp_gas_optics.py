@@ -8,6 +8,7 @@ import numpy.typing as npt
 import pandas as pd
 import xarray as xr
 
+from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
 from pyrte_rrtmgp.constants import (
     AVOGAD,
     HELMERT1,
@@ -19,7 +20,6 @@ from pyrte_rrtmgp.constants import (
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
 from pyrte_rrtmgp.data_validation import (
     AtmosphericMapping,
-    GasMapping,
     create_default_mapping,
 )
 from pyrte_rrtmgp.kernels.rrtmgp import (
@@ -714,11 +714,17 @@ class BaseGasOpticsAccessor:
         Raises:
             ValueError: If problem_type is invalid
         """
-        # Create and validate gas mapping
-        gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
-        gas_mapping = {
-            k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)
-        }
+        gas_mapping = {}
+        if gas_name_map is None:
+            for gas, valid_names in DEFAULT_GAS_MAPPING.items():
+                for gas_data_name in list(atmosphere.data_vars):
+                    if gas_data_name in valid_names:
+                        gas_mapping[gas] = gas_data_name
+        else:
+            for gas in DEFAULT_GAS_MAPPING:
+                if gas in list(gas_name_map.keys()):
+                    gas_mapping[gas] = gas_name_map[gas]
+
         self._gas_names = [
             k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)
         ]

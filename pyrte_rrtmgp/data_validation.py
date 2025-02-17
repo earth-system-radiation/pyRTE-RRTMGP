@@ -5,62 +5,8 @@ import xarray as xr
 
 from pyrte_rrtmgp.config import (
     DEFAULT_DIM_MAPPING,
-    DEFAULT_GAS_MAPPING,
     DEFAULT_VAR_MAPPING,
 )
-
-
-@dataclass
-class GasMapping:
-    """Class for managing gas name mappings between standard and dataset-specific names.
-
-    Attributes:
-        _mapping: Dictionary mapping standard gas names to dataset-specific names
-        _required_gases: Set of required gas names that must be present
-    """
-
-    _mapping: Dict[str, str]
-    _required_gases: Set[str]
-
-    @classmethod
-    def create(
-        cls, gas_names: Set[str], custom_mapping: Optional[Dict[str, str]] = None
-    ) -> "GasMapping":
-        """Create a new GasMapping instance with default and custom mappings.
-
-        Args:
-            gas_names: Set of required gas names
-            custom_mapping: Optional custom mapping to override defaults
-
-        Returns:
-            New GasMapping instance
-        """
-        mapping = DEFAULT_GAS_MAPPING.copy()
-        if custom_mapping:
-            mapping.update(custom_mapping)
-
-        return cls(mapping, gas_names)
-
-    def validate(self) -> Dict[str, str]:
-        """Validate and return the final gas name mapping.
-
-        Returns:
-            Dictionary mapping standard gas names to dataset-specific names
-
-        Raises:
-            ValueError: If a required gas is not found in any mapping
-        """
-        validated_mapping = {}
-
-        for gas in self._required_gases:
-            if gas not in self._mapping:
-                if gas not in DEFAULT_GAS_MAPPING:
-                    raise ValueError(f"Gas {gas} not found in any mapping")
-                validated_mapping[gas] = DEFAULT_GAS_MAPPING[gas]
-            else:
-                validated_mapping[gas] = self._mapping[gas]
-
-        return validated_mapping
 
 
 @dataclass
