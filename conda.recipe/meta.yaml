@@ -21,6 +21,7 @@ requirements:
     - cmake==3.26.4
     - git
     - make
+    - liblief==0.14.1  # Ensure compatibility with conda-build
 
   host:
     - python >=3.11,<3.13
@@ -29,6 +30,7 @@ requirements:
     - pybind11 >=2.10.0
     - numpy >=1.21.0
     - pytest>=7.4
+    - liblief==0.14.1
 
   run:
     - python >=3.11,<3.13
@@ -37,6 +39,7 @@ requirements:
     - netcdf4 >=1.7.2
     - requests>=2.4.0
     - pytest>=7.4
+    - liblief==0.14.1
 
 test:
   imports:
