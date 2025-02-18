@@ -30,37 +30,42 @@ def compute_clouds(cloud_optics, ncol, nlay, p_lay, t_lay):
     rel_val = 0.5 * (cloud_optics["radliq_lwr"] + cloud_optics["radliq_upr"])
     rei_val = 0.5 * (cloud_optics["diamice_lwr"] + cloud_optics["diamice_upr"])
 
-    # Initialize arrays
-    cloud_mask = np.zeros((ncol, nlay), dtype=bool)
-    lwp = np.zeros((ncol, nlay))  # liquid water path
-    iwp = np.zeros((ncol, nlay))  # ice water path
-    rel = np.zeros((ncol, nlay))  # effective radius liquid
-    rei = np.zeros((ncol, nlay))  # effective radius ice
+    # Create coordinate arrays
+    site = np.arange(ncol)
+    layer = np.arange(nlay)
 
-    # Adjust the modulo operation to match Fortran's 1-based indexing
-    for ilay in range(nlay):
-        for icol in range(ncol):
-            cloud_mask[icol, ilay] = (
-                p_lay[icol, ilay] > 100 * 100
-                and p_lay[icol, ilay] < 900 * 100
-                and (icol + 1) % 3 != 0
-            )  # Add 1 to match Fortran indexing
+    # Convert inputs to xarray DataArrays if they aren't already
+    p_lay = xr.DataArray(
+        p_lay, dims=["site", "layer"], coords={"site": site, "layer": layer}
+    )
+    t_lay = xr.DataArray(
+        t_lay, dims=["site", "layer"], coords={"site": site, "layer": layer}
+    )
 
-            # Ice and liquid will overlap in a few layers
-            if cloud_mask[icol, ilay]:
-                if t_lay[icol, ilay] > 263:
-                    lwp[icol, ilay] = 10.0
-                    rel[icol, ilay] = rel_val
-                if t_lay[icol, ilay] < 273:
-                    iwp[icol, ilay] = 10.0
-                    rei[icol, ilay] = rei_val
+    # Create cloud mask using xarray operations
+    cloud_mask = (
+        (p_lay > 100 * 100) & (p_lay < 900 * 100) & ((site + 1) % 3 != 0).reshape(-1, 1)
+    )
+
+    # Initialize arrays as DataArrays with zeros
+    lwp = xr.zeros_like(p_lay)
+    iwp = xr.zeros_like(p_lay)
+    rel = xr.zeros_like(p_lay)
+    rei = xr.zeros_like(p_lay)
+
+    # Set values where clouds exist using xarray where operations
+    lwp = lwp.where(~(cloud_mask & (t_lay > 263)), 10.0)
+    rel = rel.where(~(cloud_mask & (t_lay > 263)), rel_val)
+
+    iwp = iwp.where(~(cloud_mask & (t_lay < 273)), 10.0)
+    rei = rei.where(~(cloud_mask & (t_lay < 273)), rei_val)
 
     return xr.Dataset(
         {
-            "lwp": (["site", "layer"], lwp),
-            "iwp": (["site", "layer"], iwp),
-            "rel": (["site", "layer"], rel),
-            "rei": (["site", "layer"], rei),
+            "lwp": lwp,
+            "iwp": iwp,
+            "rel": rel,
+            "rei": rei,
         }
     )
 
@@ -108,7 +113,10 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         raise ValueError(
             "Cloud optics: negative lwp or iwp where clouds are supposed to be"
         )
-    ngpt = cloud_optics.sizes.get("gpt", cloud_optics.sizes["nband"])
+
+    # Determine if we're using band-averaged or spectral properties
+    gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
+    ngpt = cloud_optics.sizes["nband" if gpt_dim == "nband" else "gpt"]
 
     # Compute optical properties using lookup tables
     # Liquid phase
@@ -116,7 +124,8 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         cloud_optics.sizes["nsize_liq"] - 1
     )
 
-    ltau, ltaussa, ltaussag = compute_cld_from_table(
+    ltau, ltaussa, ltaussag = xr.apply_ufunc(
+        compute_cld_from_table,
         ncol,
         nlay,
         ngpt,
@@ -126,9 +135,30 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         cloud_optics.sizes["nsize_liq"],
         step_size.values,
         cloud_optics.radliq_lwr.values,
-        cloud_optics.extliq.T,
-        cloud_optics.ssaliq.T,
-        cloud_optics.asyliq.T,
+        cloud_optics.extliq,
+        cloud_optics.ssaliq,
+        cloud_optics.asyliq,
+        input_core_dims=[
+            [],  # ncol
+            [],  # nlay
+            [],
+            ["site", "layer"],  # liq_mask
+            ["site", "layer"],  # lwp
+            ["site", "layer"],  # rel
+            [],  # nsize_liq
+            [],  # step_size
+            [],  # radliq_lwr
+            ["nsize_liq", gpt_dim],  # extliq
+            ["nsize_liq", gpt_dim],  # ssaliq
+            ["nsize_liq", gpt_dim],  # asyliq
+        ],
+        output_core_dims=[
+            ["site", "layer", "gpt"],  # ltau
+            ["site", "layer", "gpt"],  # ltaussa
+            ["site", "layer", "gpt"],  # ltaussag
+        ],
+        vectorize=True,
+        dask="allowed",
     )
 
     # Ice phase
@@ -137,7 +167,8 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
     )
     ice_roughness = 1
 
-    itau, itaussa, itaussag = compute_cld_from_table(
+    itau, itaussa, itaussag = xr.apply_ufunc(
+        compute_cld_from_table,
         ncol,
         nlay,
         ngpt,
@@ -147,29 +178,46 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         cloud_optics.sizes["nsize_ice"],
         step_size.values,
         cloud_optics.diamice_lwr.values,
-        cloud_optics.extice[ice_roughness, :, :].T,
-        cloud_optics.ssaice[ice_roughness, :, :].T,
-        cloud_optics.asyice[ice_roughness, :, :].T,
+        cloud_optics.extice[ice_roughness, :, :],
+        cloud_optics.ssaice[ice_roughness, :, :],
+        cloud_optics.asyice[ice_roughness, :, :],
+        input_core_dims=[
+            [],  # ncol
+            [],  # nlay
+            [],  # ngpt
+            ["site", "layer"],  # ice_mask
+            ["site", "layer"],  # iwp
+            ["site", "layer"],  # rei
+            [],  # nsize_ice
+            [],  # step_size
+            [],  # diamice_lwr
+            ["nsize_ice", gpt_dim],  # extice
+            ["nsize_ice", gpt_dim],  # ssaice
+            ["nsize_ice", gpt_dim],  # asyice
+        ],
+        output_core_dims=[
+            ["site", "layer", "gpt"],  # itau
+            ["site", "layer", "gpt"],  # itaussa
+            ["site", "layer", "gpt"],  # itaussag
+        ],
+        vectorize=True,
+        dask="allowed",
     )
 
     # Combine liquid and ice contributions
     if lw:
         tau = (ltau - ltaussa) + (itau - itaussa)
-        return tau
+        return tau.to_dataset(name="tau")
     else:
         tau = ltau + itau
         taussa = ltaussa + itaussa
         taussag = ltaussag + itaussag
 
         # Calculate derived quantities
-        ssa = np.divide(
-            taussa, tau, out=np.zeros_like(tau), where=tau > np.finfo(float).eps
-        )
-        g = np.divide(
-            taussag, taussa, out=np.zeros_like(tau), where=taussa > np.finfo(float).eps
-        )
+        ssa = xr.where(tau > np.finfo(float).eps, taussa / tau, 0.0)
+        g = xr.where(taussa > np.finfo(float).eps, taussag / taussa, 0.0)
 
-        return tau, ssa, g
+        return xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
 
 
 def combine_optical_props(op1, op2):
@@ -184,8 +232,9 @@ def combine_optical_props(op1, op2):
     ngpt = op2.sizes["gpt"]
 
     # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
-    is_1stream_1 = hasattr(op1, "tau") and not hasattr(op1, "ssa")
-    is_1stream_2 = hasattr(op2, "tau") and not hasattr(op2, "ssa")
+
+    is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
+    is_1stream_2 = "tau" in list(op2.data_vars) and "ssa" not in list(op2.data_vars)
 
     # Check if the g-points are equal between the two datasets
     gpoints_equal = op1.sizes["gpt"] == op2.sizes["gpt"]
@@ -195,39 +244,49 @@ def combine_optical_props(op1, op2):
             if is_1stream_2:
                 # 1-stream by 1-stream
                 increment_1scalar_by_1scalar(
-                    ncol, nlay, ngpt, op2.tau.values, op1.tau.values
+                    ncol, nlay, ngpt, op2["tau"].values, op1["tau"].values
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
             else:
                 # 1-stream by 2-stream
                 increment_1scalar_by_2stream(
-                    ncol, nlay, ngpt, op2.tau.values, op1.tau.values, op1.ssa.values
+                    ncol,
+                    nlay,
+                    ngpt,
+                    op2["tau"].values,
+                    op1["tau"].values,
+                    op1["ssa"].values,
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
         else:  # 2-stream output
             if is_1stream_2:
                 # 2-stream by 1-stream
                 increment_2stream_by_1scalar(
-                    ncol, nlay, ngpt, op2.tau.values, op2.ssa.values, op1.tau.values
+                    ncol,
+                    nlay,
+                    ngpt,
+                    op2["tau"].values,
+                    op2["ssa"].values,
+                    op1["tau"].values,
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2.ssa.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
+                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
             else:
                 # 2-stream by 2-stream
                 increment_2stream_by_2stream(
                     ncol,
                     nlay,
                     ngpt,
-                    op2.tau.values,
-                    op2.ssa.values,
-                    op2.g.values,
-                    op1.tau.values,
-                    op1.ssa.values,
-                    op1.g.values,
+                    op2["tau"].values,
+                    op2["ssa"].values,
+                    op2["g"].values,
+                    op1["tau"].values,
+                    op1["ssa"].values,
+                    op1["g"].values,
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2.ssa.values)
-                op2["g"] = (("site", "layer", "gpt"), op2.g.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
+                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
+                op2["g"] = (("site", "layer", "gpt"), op2["g"].values)
 
     else:
         # By-band increment (when op2's ngpt equals op1's nband)
@@ -241,25 +300,25 @@ def combine_optical_props(op1, op2):
                     ncol,
                     nlay,
                     ngpt,
-                    op2.tau.values,
-                    op1.tau.values,
+                    op2["tau"].values,
+                    op1["tau"].values,
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"].values.T,
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
             else:
                 # 1-stream by 2-stream by band
                 inc_1scalar_by_2stream_bybnd(
                     ncol,
                     nlay,
                     ngpt,
-                    op2.tau.values,
-                    op1.tau.values,
-                    op1.ssa.values,
+                    op2["tau"].values,
+                    op1["tau"].values,
+                    op1["ssa"].values,
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"].values.T,
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
         else:
             if is_1stream_2:
                 # 2-stream by 1-stream by band
@@ -267,32 +326,32 @@ def combine_optical_props(op1, op2):
                     ncol,
                     nlay,
                     ngpt,
-                    op2.tau.values,
-                    op2.ssa.values,
-                    op1.tau.values,
+                    op2["tau"].values,
+                    op2["ssa"].values,
+                    op1["tau"].values,
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"].values.T,
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2.ssa.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
+                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
             else:
                 # 2-stream by 2-stream by band
                 inc_2stream_by_2stream_bybnd(
                     ncol,
                     nlay,
                     ngpt,
-                    op2.tau.values,
-                    op2.ssa.values,
-                    op2.g.values,
-                    op1.tau.values,
-                    op1.ssa.values,
-                    op1.g.values,
+                    op2["tau"].values,
+                    op2["ssa"].values,
+                    op2["g"].values,
+                    op1["tau"].values,
+                    op1["ssa"].values,
+                    op1["g"].values,
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"].values.T,
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2.tau.values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2.ssa.values)
-                op2["g"] = (("site", "layer", "gpt"), op2.g.values)
+                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
+                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
+                op2["g"] = (("site", "layer", "gpt"), op2["g"].values)
 
 
 def delta_scale_optical_props(optical_props, forward_scattering=None):
