@@ -47,4 +47,4 @@ jobs:
         run: conda install conda-build conda-verify pytest
 
       - name: Build
-        run: conda build conda.recipe -v
+        run: conda build conda.recipe
