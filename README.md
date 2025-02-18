@@ -132,7 +132,7 @@ For platforms other than Linux for x64 processors, you can build the package fro
 
 If you are using a system other than Linux (x86_64) or want to build the package from source, you need to have a compatible Fortran compiler, a C++ compiler and CMake installed on your system.
 
-pyRTE-RRTMGP is compatible with POSIX systems and is tested on Linux and macOS using the GNU Fortran compiler (gfortran) and the GNU C++ compiler (g++). The package should also work with the Intel Fortran compiler (ifort) but was not tested with it. If you use ``conda``, the system packages are installed automatically. If you use ``pip``, you need to install those packages yourself (see below).
+pyRTE-RRTMGP is compatible with POSIX systems and is tested on Linux and macOS using Python 3.11/3.12, the GNU Fortran compiler (gfortran), and the GNU C++ compiler (g++). The package should also work with the Intel Fortran compiler (ifort) but was not tested with it. If you use ``conda``, the system packages are installed automatically. If you use ``pip``, you need to install those packages yourself (see below).
 
 The package source code is hosted [on GitHub](https://github.com/earth-system-radiation/pyRTE-RRTMGP). The easiest way to install pyRTE-RRTMGP is to use `git`. You can install git from [here](https://git-scm.com/downloads).
 
