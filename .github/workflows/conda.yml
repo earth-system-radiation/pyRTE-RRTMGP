@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Get conda
-        uses: conda-incubator/setup-miniconda@v3.0.0
+        uses: conda-incubator/setup-miniconda@v3.1.1
         with:
           miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
@@ -47,4 +47,4 @@ jobs:
         run: conda install conda-build conda-verify pytest
 
       - name: Build
-        run: conda build conda.recipe
+        run: conda build conda.recipe -v
