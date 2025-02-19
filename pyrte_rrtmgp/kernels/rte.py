@@ -4,6 +4,16 @@ import numpy as np
 import numpy.typing as npt
 
 from pyrte_rrtmgp.pyrte_rrtmgp import (
+    rte_delta_scale_2str_f_k,
+    rte_delta_scale_2str_k,
+    rte_inc_1scalar_by_1scalar_bybnd,
+    rte_inc_1scalar_by_2stream_bybnd,
+    rte_inc_2stream_by_1scalar_bybnd,
+    rte_inc_2stream_by_2stream_bybnd,
+    rte_increment_1scalar_by_1scalar,
+    rte_increment_1scalar_by_2stream,
+    rte_increment_2stream_by_1scalar,
+    rte_increment_2stream_by_2stream,
     rte_lw_solver_2stream,
     rte_lw_solver_noscat,
     rte_sw_solver_2stream,
@@ -304,3 +314,362 @@ def sw_solver_2stream(
     rte_sw_solver_2stream(*args)
 
     return flux_up, flux_dn, flux_dir, broadband_up, broadband_dn, broadband_dir
+
+
+def increment_1scalar_by_1scalar(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Increment one set of optical properties with another set (scalar by scalar).
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, ngpt)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(tau_in),
+    ]
+
+    rte_increment_1scalar_by_1scalar(*args)
+
+    return tau_inout
+
+
+def increment_1scalar_by_2stream(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+    ssa_in: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Increment scalar optical properties with 2-stream properties.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, ngpt)
+        ssa_in: Input single scattering albedo array (ncol, nlay, ngpt)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(tau_in),
+        np.asfortranarray(ssa_in),
+    ]
+
+    rte_increment_1scalar_by_2stream(*args)
+
+    return tau_inout
+
+
+def increment_2stream_by_1scalar(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    ssa_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Increment 2-stream optical properties with scalar properties.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        ssa_inout: Single scattering albedo array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, ngpt)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(ssa_inout),
+        np.asfortranarray(tau_in),
+    ]
+
+    rte_increment_2stream_by_1scalar(*args)
+
+    return tau_inout, ssa_inout
+
+
+def increment_2stream_by_2stream(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    ssa_inout: npt.NDArray[np.float64],
+    g_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+    ssa_in: npt.NDArray[np.float64],
+    g_in: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
+    """Increment one set of 2-stream optical properties with another.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        ssa_inout: Single scattering albedo array to be modified (ncol, nlay, ngpt)
+        g_inout: Asymmetry parameter array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, ngpt)
+        ssa_in: Input single scattering albedo array (ncol, nlay, ngpt)
+        g_in: Input asymmetry parameter array (ncol, nlay, ngpt)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(ssa_inout),
+        np.asfortranarray(g_inout),
+        np.asfortranarray(tau_in),
+        np.asfortranarray(ssa_in),
+        np.asfortranarray(g_in),
+    ]
+
+    rte_increment_2stream_by_2stream(*args)
+
+    return tau_inout, ssa_inout, g_inout
+
+
+def inc_1scalar_by_1scalar_bybnd(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+    nbnd: int,
+    band_lims_gpoint: npt.NDArray[np.int32],
+) -> npt.NDArray[np.float64]:
+    """Increment one set of scalar optical properties with another set by band.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, nbnd)
+        nbnd: Number of bands
+        band_lims_gpoint: Band limits for g-points (2, nbnd)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(tau_in),
+        nbnd,
+        np.asfortranarray(band_lims_gpoint),
+    ]
+
+    rte_inc_1scalar_by_1scalar_bybnd(*args)
+
+    return tau_inout
+
+
+def inc_1scalar_by_2stream_bybnd(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+    ssa_in: npt.NDArray[np.float64],
+    nbnd: int,
+    band_lims_gpoint: npt.NDArray[np.int32],
+) -> npt.NDArray[np.float64]:
+    """Increment scalar optical properties with 2-stream properties by band.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, nbnd)
+        ssa_in: Input single scattering albedo array (ncol, nlay, nbnd)
+        nbnd: Number of bands
+        band_lims_gpoint: Band limits for g-points (2, nbnd)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(tau_in),
+        np.asfortranarray(ssa_in),
+        nbnd,
+        np.asfortranarray(band_lims_gpoint),
+    ]
+
+    rte_inc_1scalar_by_2stream_bybnd(*args)
+
+    return tau_inout
+
+
+def inc_2stream_by_1scalar_bybnd(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    ssa_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+    nbnd: int,
+    band_lims_gpoint: npt.NDArray[np.int32],
+) -> npt.NDArray[np.float64]:
+    """Increment 2-stream optical properties with scalar properties by band.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        ssa_inout: Single scattering albedo array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, nbnd)
+        nbnd: Number of bands
+        band_lims_gpoint: Band limits for g-points (2, nbnd)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(ssa_inout),
+        np.asfortranarray(tau_in),
+        nbnd,
+        np.asfortranarray(band_lims_gpoint),
+    ]
+
+    rte_inc_2stream_by_1scalar_bybnd(*args)
+
+    return tau_inout
+
+
+def inc_2stream_by_2stream_bybnd(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau_inout: npt.NDArray[np.float64],
+    ssa_inout: npt.NDArray[np.float64],
+    g_inout: npt.NDArray[np.float64],
+    tau_in: npt.NDArray[np.float64],
+    ssa_in: npt.NDArray[np.float64],
+    g_in: npt.NDArray[np.float64],
+    nbnd: int,
+    band_lims_gpoint: npt.NDArray[np.int32],
+) -> npt.NDArray[np.float64]:
+    """Increment one set of 2-stream optical properties with another by band.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
+        ssa_inout: Single scattering albedo array to be modified (ncol, nlay, ngpt)
+        g_inout: Asymmetry parameter array to be modified (ncol, nlay, ngpt)
+        tau_in: Input optical depth array (ncol, nlay, nbnd)
+        ssa_in: Input single scattering albedo array (ncol, nlay, nbnd)
+        g_in: Input asymmetry parameter array (ncol, nlay, nbnd)
+        nbnd: Number of bands
+        band_lims_gpoint: Band limits for g-points (2, nbnd)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau_inout),
+        np.asfortranarray(ssa_inout),
+        np.asfortranarray(g_inout),
+        np.asfortranarray(tau_in),
+        np.asfortranarray(ssa_in),
+        np.asfortranarray(g_in),
+        nbnd,
+        np.asfortranarray(band_lims_gpoint),
+    ]
+
+    rte_inc_2stream_by_2stream_bybnd(*args)
+
+    return tau_inout
+
+
+def delta_scale_2str(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau: npt.NDArray[np.float64],
+    ssa: npt.NDArray[np.float64],
+    g: npt.NDArray[np.float64],
+) -> None:
+    """Apply the delta-scaling transformation to two-stream radiative properties.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau: Optical depth array to be modified (ncol, nlay, ngpt)
+        ssa: Single scattering albedo array to be modified (ncol, nlay, ngpt)
+        g: Asymmetry parameter array to be modified (ncol, nlay, ngpt)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau),
+        np.asfortranarray(ssa),
+        np.asfortranarray(g),
+    ]
+
+    rte_delta_scale_2str_k(*args)
+
+    return tau, ssa, g
+
+
+def delta_scale_2str_f(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    tau: npt.NDArray[np.float64],
+    ssa: npt.NDArray[np.float64],
+    g: npt.NDArray[np.float64],
+    f: npt.NDArray[np.float64],
+) -> None:
+    """Apply the delta-scaling transformation to two-stream radiative properties with forward scattering fraction.
+
+    Args:
+        ncol: Number of columns
+        nlay: Number of layers
+        ngpt: Number of g-points
+        tau: Optical depth array to be modified (ncol, nlay, ngpt)
+        ssa: Single scattering albedo array to be modified (ncol, nlay, ngpt)
+        g: Asymmetry parameter array to be modified (ncol, nlay, ngpt)
+        f: Forward scattering fraction array (ncol, nlay, ngpt)
+    """
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(tau),
+        np.asfortranarray(ssa),
+        np.asfortranarray(g),
+        np.asfortranarray(f),
+    ]
+
+    rte_delta_scale_2str_f_k(*args)
+
+    return tau, ssa, g

@@ -4,6 +4,7 @@ import numpy as np
 import numpy.typing as npt
 
 from pyrte_rrtmgp.pyrte_rrtmgp import (
+    rrtmgp_compute_cld_from_table,
     rrtmgp_compute_Planck_source,
     rrtmgp_compute_tau_absorption,
     rrtmgp_compute_tau_rayleigh,
@@ -118,7 +119,6 @@ def interpolation(
 
     rrtmgp_interpolation(*args)
 
-    tropo = tropo != 0  # Convert to boolean
     return jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress
 
 
@@ -466,3 +466,72 @@ def compute_tau_rayleigh(
     rrtmgp_compute_tau_rayleigh(*args)
 
     return tau_rayleigh
+
+
+def compute_cld_from_table(
+    ncol: int,
+    nlay: int,
+    ngpt: int,
+    mask: npt.NDArray[np.bool_],
+    lwp: npt.NDArray[np.float64],
+    re: npt.NDArray[np.float64],
+    nsteps: int,
+    step_size: float,
+    offset: float,
+    tau_table: npt.NDArray[np.float64],
+    ssa_table: npt.NDArray[np.float64],
+    asy_table: npt.NDArray[np.float64],
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    """Compute cloud optical properties using lookup tables.
+
+    For size dimension, select size bin appropriate for the requested aerosol size.
+    For rh dimension, linearly interpolate values from a lookup table with "nrh"
+    unevenly-spaced elements "aero_rh". The last dimension for all tables is band.
+    Returns zero where no aerosol is present.
+
+    Args:
+        ncol: Number of atmospheric columns
+        nlay: Number of atmospheric layers
+        nbnd: Number of spectral bands
+        mask: Cloud mask with shape (ncol, nlay)
+        lwp: Liquid water path with shape (ncol, nlay)
+        re: Effective radius with shape (ncol, nlay)
+        nsteps: Number of steps in the lookup tables
+        step_size: Step size for the lookup tables
+        offset: Offset for the lookup tables
+        tau_table: Optical depth lookup table with shape (nsteps, ngpt)
+        ssa_table: Single scattering albedo lookup table with shape (nsteps, ngpt)
+        asy_table: Asymmetry parameter lookup table with shape (nsteps, ngpt)
+
+    Returns:
+        Tuple containing:
+            - tau: Cloud optical depth with shape (ncol, nlay, ngpt)
+            - taussa: Product of tau and single scattering albedo with shape (ncol, nlay, ngpt)
+            - taussag: Product of taussa and asymmetry parameter with shape (ncol, nlay, ngpt)
+    """
+    # Initialize output arrays
+    tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
+    taussa = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
+    taussag = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
+
+    args = [
+        ncol,
+        nlay,
+        ngpt,
+        np.asfortranarray(mask),
+        np.asfortranarray(lwp),
+        np.asfortranarray(re),
+        nsteps,
+        step_size,
+        offset,
+        np.asfortranarray(tau_table),
+        np.asfortranarray(ssa_table),
+        np.asfortranarray(asy_table),
+        tau,
+        taussa,
+        taussag,
+    ]
+
+    rrtmgp_compute_cld_from_table(*args)
+
+    return tau, taussa, taussag

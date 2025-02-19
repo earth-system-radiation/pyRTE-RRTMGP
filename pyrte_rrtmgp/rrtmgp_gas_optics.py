@@ -8,6 +8,7 @@ import numpy.typing as npt
 import pandas as pd
 import xarray as xr
 
+from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
 from pyrte_rrtmgp.constants import (
     AVOGAD,
     HELMERT1,
@@ -19,7 +20,6 @@ from pyrte_rrtmgp.constants import (
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
 from pyrte_rrtmgp.data_validation import (
     AtmosphericMapping,
-    GasMapping,
     create_default_mapping,
 )
 from pyrte_rrtmgp.kernels.rrtmgp import (
@@ -134,17 +134,12 @@ class BaseGasOpticsAccessor:
             Modified atmosphere dataset if inplace=False, otherwise None
         """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
-
-        min_press = self._dataset["press_ref"].min().item()
-
-        min_index = np.argmin(atmosphere[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
-
         # Replace values smaller than min_press with min_press at min_index
-        atmosphere[pres_level_var][:, min_index] = xr.where(
-            atmosphere[pres_level_var][:, min_index] < min_press,
+        atmosphere[pres_level_var] = xr.where(
+            atmosphere[pres_level_var] < min_press,
             min_press,
-            atmosphere[pres_level_var][:, min_index],
+            atmosphere[pres_level_var],
         )
 
         if not inplace:
@@ -321,7 +316,7 @@ class BaseGasOpticsAccessor:
                 [site_dim, layer_dim],  # jpress
             ],
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         interpolation_results = xr.Dataset(
@@ -374,9 +369,19 @@ class BaseGasOpticsAccessor:
         lower_gases_mask = np.isin(minor_gases_lower, self._gas_names)
         upper_gases_mask = np.isin(minor_gases_upper, self._gas_names)
 
-        # TODO: Hardcoded 16, but shouldn't it be nbnd?
-        upper_gases_mask_expanded = np.repeat(upper_gases_mask, 16)
-        lower_gases_mask_expanded = np.repeat(lower_gases_mask, 16)
+        lower_gpt_sizes = (
+            (self._dataset["minor_limits_gpt_lower"].diff(dim="pair") + 1)
+            .transpose()
+            .values[0]
+        )
+        upper_gpt_sizes = (
+            (self._dataset["minor_limits_gpt_upper"].diff(dim="pair") + 1)
+            .transpose()
+            .values[0]
+        )
+
+        upper_gases_mask_expanded = np.repeat(upper_gases_mask, upper_gpt_sizes)
+        lower_gases_mask_expanded = np.repeat(lower_gases_mask, lower_gpt_sizes)
 
         reduced_dataset = self._dataset.isel(
             contributors_lower=lower_gases_mask_expanded
@@ -413,6 +418,13 @@ class BaseGasOpticsAccessor:
         idx_minor_scaling_lower = self.get_idx_minor(scaling_gas_lower)
         idx_minor_scaling_upper = self.get_idx_minor(scaling_gas_upper)
 
+        kminor_start_lower = self._dataset["kminor_start_lower"].isel(
+            minor_absorber_intervals_lower=slice(nminorlower)
+        )
+        kminor_start_upper = self._dataset["kminor_start_upper"].isel(
+            minor_absorber_intervals_upper=slice(nminorupper)
+        )
+
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         temp_layer_var = atmosphere.mapping.get_var("temp_layer")
 
@@ -447,8 +459,8 @@ class BaseGasOpticsAccessor:
             idx_minor_upper,
             idx_minor_scaling_lower,
             idx_minor_scaling_upper,
-            reduced_dataset["kminor_start_lower"],
-            reduced_dataset["kminor_start_upper"],
+            kminor_start_lower,
+            kminor_start_upper,
             gas_interpolation_data["tropopause_mask"],
             gas_interpolation_data["column_mix"],
             gas_interpolation_data["fmajor"],
@@ -698,11 +710,17 @@ class BaseGasOpticsAccessor:
         Raises:
             ValueError: If problem_type is invalid
         """
-        # Create and validate gas mapping
-        gas_mapping = GasMapping.create(self._gas_names, gas_name_map).validate()
-        gas_mapping = {
-            k: v for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)
-        }
+        gas_mapping = {}
+        if gas_name_map is None:
+            for gas, valid_names in DEFAULT_GAS_MAPPING.items():
+                for gas_data_name in list(atmosphere.data_vars):
+                    if gas_data_name in valid_names:
+                        gas_mapping[gas] = gas_data_name
+        else:
+            for gas in DEFAULT_GAS_MAPPING:
+                if gas in list(gas_name_map.keys()):
+                    gas_mapping[gas] = gas_name_map[gas]
+
         self._gas_names = [
             k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)
         ]
@@ -991,11 +1009,20 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             + (sb_index - b_offset) * solar_source_sunspot
         )
 
-        total_solar_irradiance = atmosphere["total_solar_irradiance"]
-
-        toa_flux = solar_source.broadcast_like(total_solar_irradiance)
-        def_tsi = toa_flux.sum(dim="gpt")
-        return (toa_flux * (total_solar_irradiance / def_tsi)).rename("toa_source")
+        # Check if total_solar_irradiance is available in atmosphere
+        if "total_solar_irradiance" in atmosphere:
+            total_solar_irradiance = atmosphere["total_solar_irradiance"]
+            toa_flux = solar_source.broadcast_like(total_solar_irradiance)
+            def_tsi = toa_flux.sum(dim="gpt")
+            return (toa_flux * (total_solar_irradiance / def_tsi)).rename("toa_source")
+        else:
+            # Compute normalization factor
+            norm = 1.0 / solar_source.sum(dim="gpt")
+            default_tsi = self._dataset["tsi_default"]
+            # Scale solar source to default TSI
+            site_dim = atmosphere.mapping.get_dim("site")
+            toa_source = (solar_source * default_tsi * norm).rename("toa_source")
+            return toa_source.expand_dims({site_dim: atmosphere[site_dim]})
 
     def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.Dataset:
         """Compute surface and solar boundary conditions.
@@ -1007,24 +1034,11 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             Dataset containing solar zenith angles, surface albedos and solar angle mask
         """
         layer_dim = atmosphere.mapping.get_dim("layer")
-
+        site_dim = atmosphere.mapping.get_dim("site")
         solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
         surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
         surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
         surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_dif")
-
-        usecol_values = atmosphere[solar_zenith_angle_var] < (
-            90.0 - 2.0 * np.spacing(90.0)
-        )
-        usecol_values = usecol_values.rename("solar_angle_mask")
-        mu0 = xr.where(
-            usecol_values,
-            np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
-            1.0,
-        )
-        solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename(
-            "solar_zenith_angle"
-        )
 
         if surface_albedo_dir_var not in atmosphere.data_vars:
             surface_albedo_direct = atmosphere[surface_albedo_var]
@@ -1045,14 +1059,38 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 "surface_albedo_diffuse"
             )
 
-        return xr.merge(
-            [
-                solar_zenith_angle,
-                surface_albedo_direct,
-                surface_albedo_diffuse,
+        data_vars = [
+            surface_albedo_direct,
+            surface_albedo_diffuse,
+        ]
+
+        if solar_zenith_angle_var in atmosphere.data_vars:
+            usecol_values = atmosphere[solar_zenith_angle_var] < (
+                90.0 - 2.0 * np.spacing(90.0)
+            )
+            if layer_dim in usecol_values.dims:
+                usecol_values = usecol_values.rename("solar_angle_mask").isel(
+                    {layer_dim: 0}
+                )
+            else:
+                usecol_values = usecol_values.rename("solar_angle_mask")
+            mu0 = xr.where(
                 usecol_values,
-            ]
-        )
+                np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
+                1.0,
+            )
+            solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename("mu0")
+            data_vars.append(solar_zenith_angle)
+            data_vars.append(usecol_values)
+        elif "mu0" in atmosphere.data_vars:
+            atmosphere["solar_angle_mask"] = xr.full_like(
+                atmosphere[site_dim], True
+            ).rename("solar_angle_mask")
+            atmosphere["mu0"] = atmosphere["mu0"].broadcast_like(atmosphere[layer_dim])
+            data_vars.append(atmosphere["mu0"])
+            data_vars.append(atmosphere["solar_angle_mask"])
+
+        return xr.merge(data_vars)
 
     def tau_rayleigh(self, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
         """Compute Rayleigh scattering optical depth.

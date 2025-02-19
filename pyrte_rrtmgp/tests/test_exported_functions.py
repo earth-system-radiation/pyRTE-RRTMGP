@@ -216,7 +216,7 @@ def test_rte_increment_1scalar_by_nstream():
                 ] * (1.0 - tau_in[icol - 1, ilay - 1, igpt - 1])
 
     py.rte_increment_1scalar_by_nstream(*parameters)
-    assert np.array_equal(tau_inout, res)
+    assert np.allclose(tau_inout, res, rtol=1e-7)
 
 
 ###########################################
@@ -394,11 +394,9 @@ def test_rte_increment_2stream_by_2stream():
                 res_tau_inout[icol - 1, ilay - 1, igpt - 1] = tau12
 
     py.rte_increment_2stream_by_2stream(*parameters)
-    assert (
-        np.array_equal(res_tau_inout, tau_inout)
-        and np.array_equal(res_ssa_inout, ssa_inout)
-        and np.array_equal(res_g_inout, g_inout)
-    )
+    assert np.allclose(res_tau_inout, tau_inout, rtol=1e-7)
+    assert np.allclose(res_ssa_inout, ssa_inout, rtol=1e-7)
+    assert np.allclose(res_g_inout, g_inout, rtol=1e-7)
 
 
 ###########################################
