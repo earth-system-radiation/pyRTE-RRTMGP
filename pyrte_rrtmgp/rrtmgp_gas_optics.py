@@ -134,16 +134,12 @@ class BaseGasOpticsAccessor:
             Modified atmosphere dataset if inplace=False, otherwise None
         """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
-
-        min_press = self._dataset["press_ref"].min().item()
-
-        min_index = np.argmin(atmosphere[pres_level_var].data)
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
         # Replace values smaller than min_press with min_press at min_index
-        atmosphere[pres_level_var][:, min_index] = xr.where(
-            atmosphere[pres_level_var][:, min_index] < min_press,
+        atmosphere[pres_level_var] = xr.where(
+            atmosphere[pres_level_var] < min_press,
             min_press,
-            atmosphere[pres_level_var][:, min_index],
+            atmosphere[pres_level_var],
         )
 
         if not inplace:
@@ -320,7 +316,7 @@ class BaseGasOpticsAccessor:
                 [site_dim, layer_dim],  # jpress
             ],
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         interpolation_results = xr.Dataset(
