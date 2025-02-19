@@ -116,6 +116,7 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
 
     # Determine if we're using band-averaged or spectral properties
     gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
+    gpt_out_dim = "bnd" if gpt_dim == "nband" else "gpt"
     ngpt = cloud_optics.sizes["nband" if gpt_dim == "nband" else "gpt"]
 
     # Compute optical properties using lookup tables
@@ -153,9 +154,9 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
             ["nsize_liq", gpt_dim],  # asyliq
         ],
         output_core_dims=[
-            ["site", "layer", "gpt"],  # ltau
-            ["site", "layer", "gpt"],  # ltaussa
-            ["site", "layer", "gpt"],  # ltaussag
+            ["site", "layer", gpt_out_dim],  # ltau
+            ["site", "layer", gpt_out_dim],  # ltaussa
+            ["site", "layer", gpt_out_dim],  # ltaussag
         ],
         vectorize=True,
         dask="allowed",
@@ -196,9 +197,9 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
             ["nsize_ice", gpt_dim],  # asyice
         ],
         output_core_dims=[
-            ["site", "layer", "gpt"],  # itau
-            ["site", "layer", "gpt"],  # itaussa
-            ["site", "layer", "gpt"],  # itaussag
+            ["site", "layer", gpt_out_dim],  # itau
+            ["site", "layer", gpt_out_dim],  # itaussa
+            ["site", "layer", gpt_out_dim],  # itaussag
         ],
         vectorize=True,
         dask="allowed",
@@ -236,122 +237,232 @@ def combine_optical_props(op1, op2):
     is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
     is_1stream_2 = "tau" in list(op2.data_vars) and "ssa" not in list(op2.data_vars)
 
-    # Check if the g-points are equal between the two datasets
-    gpoints_equal = op1.sizes["gpt"] == op2.sizes["gpt"]
-
-    if gpoints_equal:
+    if "gpt" in op1["tau"].sizes:
         if is_1stream_1:
             if is_1stream_2:
                 # 1-stream by 1-stream
-                increment_1scalar_by_1scalar(
-                    ncol, nlay, ngpt, op2["tau"].values, op1["tau"].values
-                )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
-            else:
-                # 1-stream by 2-stream
-                increment_1scalar_by_2stream(
+                combined_tau = xr.apply_ufunc(
+                    increment_1scalar_by_1scalar,
                     ncol,
                     nlay,
                     ngpt,
-                    op2["tau"].values,
-                    op1["tau"].values,
-                    op1["ssa"].values,
+                    op2["tau"],
+                    op1["tau"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                    ],
+                    output_core_dims=[["site", "layer", "gpt"]],
+                    dask="allowed",
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
+                op2["tau"] = combined_tau
+            else:
+                # 1-stream by 2-stream
+                combined_tau = xr.apply_ufunc(
+                    increment_1scalar_by_2stream,
+                    ncol,
+                    nlay,
+                    ngpt,
+                    op2["tau"],
+                    op1["tau"],
+                    op1["ssa"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                    ],
+                    output_core_dims=[["site", "layer", "gpt"]],
+                    dask="allowed",
+                )
+                op2["tau"] = combined_tau
         else:  # 2-stream output
             if is_1stream_2:
                 # 2-stream by 1-stream
-                increment_2stream_by_1scalar(
+                combined_tau, combined_ssa = xr.apply_ufunc(
+                    increment_2stream_by_1scalar,
                     ncol,
                     nlay,
                     ngpt,
-                    op2["tau"].values,
-                    op2["ssa"].values,
-                    op1["tau"].values,
+                    op2["tau"],
+                    op2["ssa"],
+                    op1["tau"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                    ],
+                    output_core_dims=[
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                    ],
+                    dask="allowed",
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
+                op2["tau"] = combined_tau
+                op2["ssa"] = combined_ssa
             else:
                 # 2-stream by 2-stream
-                increment_2stream_by_2stream(
+                combined_tau, combined_ssa, combined_g = xr.apply_ufunc(
+                    increment_2stream_by_2stream,
                     ncol,
                     nlay,
                     ngpt,
-                    op2["tau"].values,
-                    op2["ssa"].values,
-                    op2["g"].values,
-                    op1["tau"].values,
-                    op1["ssa"].values,
-                    op1["g"].values,
+                    op2["tau"],
+                    op2["ssa"],
+                    op2["g"],
+                    op1["tau"],
+                    op1["ssa"],
+                    op1["g"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                    ],
+                    output_core_dims=[
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                    ],
+                    dask="allowed",
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
-                op2["g"] = (("site", "layer", "gpt"), op2["g"].values)
+                op2["tau"] = combined_tau
+                op2["ssa"] = combined_ssa
+                op2["g"] = combined_g
+            return op2
 
     else:
         # By-band increment (when op2's ngpt equals op1's nband)
-        if op2.sizes["bnd"] != op1.sizes["gpt"]:
+        if op2.sizes["bnd"] != op1.sizes["bnd"]:
             raise ValueError("Incompatible g-point structures for by-band increment")
 
         if is_1stream_1:
             if is_1stream_2:
                 # 1-stream by 1-stream by band
-                inc_1scalar_by_1scalar_bybnd(
+                combined_tau = xr.apply_ufunc(
+                    inc_1scalar_by_1scalar_bybnd,
                     ncol,
                     nlay,
                     ngpt,
-                    op2["tau"].values,
-                    op1["tau"].values,
+                    op2["tau"],
+                    op1["tau"],
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values.T,
+                    op2["bnd_limits_gpt"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "bnd"],
+                        [],
+                        ["pair", "bnd"],
+                    ],
+                    output_core_dims=[["site", "layer", "gpt"]],
+                    dask="allowed",
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
+                op2["tau"] = combined_tau
+                return op2
             else:
                 # 1-stream by 2-stream by band
-                inc_1scalar_by_2stream_bybnd(
+                combined_tau = xr.apply_ufunc(
+                    inc_1scalar_by_2stream_bybnd,
                     ncol,
                     nlay,
                     ngpt,
-                    op2["tau"].values,
-                    op1["tau"].values,
-                    op1["ssa"].values,
+                    op2["tau"],
+                    op1["tau"],
+                    op1["ssa"],
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values.T,
+                    op2["bnd_limits_gpt"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "bnd"],
+                        ["site", "layer", "bnd"],
+                        [],
+                        ["pair", "bnd"],
+                    ],
+                    output_core_dims=[["site", "layer", "gpt"]],
+                    dask="allowed",
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
+                op2["tau"] = combined_tau
+                return op2
         else:
             if is_1stream_2:
                 # 2-stream by 1-stream by band
-                inc_2stream_by_1scalar_bybnd(
+                combined_tau = xr.apply_ufunc(
+                    inc_2stream_by_1scalar_bybnd,
                     ncol,
                     nlay,
                     ngpt,
-                    op2["tau"].values,
-                    op2["ssa"].values,
-                    op1["tau"].values,
+                    op2["tau"],
+                    op2["ssa"],
+                    op1["tau"],
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values.T,
+                    op2["bnd_limits_gpt"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "bnd"],
+                        [],
+                        ["pair", "bnd"],
+                    ],
+                    output_core_dims=[["site", "layer", "gpt"]],
+                    dask="allowed",
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
+                op2["tau"] = combined_tau
+                return op2
             else:
                 # 2-stream by 2-stream by band
-                inc_2stream_by_2stream_bybnd(
+                combined_tau = xr.apply_ufunc(
+                    inc_2stream_by_2stream_bybnd,
                     ncol,
                     nlay,
                     ngpt,
-                    op2["tau"].values,
-                    op2["ssa"].values,
-                    op2["g"].values,
-                    op1["tau"].values,
-                    op1["ssa"].values,
-                    op1["g"].values,
+                    op2["tau"],
+                    op2["ssa"],
+                    op2["g"],
+                    op1["tau"],
+                    op1["ssa"],
+                    op1["g"],
                     op2.sizes["bnd"],
-                    op2["bnd_limits_gpt"].values.T,
+                    op2["bnd_limits_gpt"],
+                    input_core_dims=[
+                        [],
+                        [],
+                        [],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "gpt"],
+                        ["site", "layer", "bnd"],
+                        ["site", "layer", "bnd"],
+                        ["site", "layer", "bnd"],
+                        [],
+                        ["pair", "bnd"],
+                    ],
+                    output_core_dims=[["site", "layer", "gpt"]],
+                    dask="allowed",
                 )
-                op2["tau"] = (("site", "layer", "gpt"), op2["tau"].values)
-                op2["ssa"] = (("site", "layer", "gpt"), op2["ssa"].values)
-                op2["g"] = (("site", "layer", "gpt"), op2["g"].values)
+                op2["tau"] = combined_tau
+                return op2
 
 
 def delta_scale_optical_props(optical_props, forward_scattering=None):
@@ -368,33 +479,64 @@ def delta_scale_optical_props(optical_props, forward_scattering=None):
     # Get dimensions
     ncol = optical_props.sizes["site"]
     nlay = optical_props.sizes["layer"]
-    ngpt = optical_props.sizes["gpt"]
+    gpt_dim = "gpt" if "gpt" in optical_props.sizes else "bnd"
+    ngpt = optical_props.sizes[gpt_dim]
 
-    # Get arrays and ensure they're mutable
-    tau = optical_props.tau.values
-    ssa = optical_props.ssa.values
-    g = optical_props.g.values
-
+    # Call kernel with forward scattering
     if forward_scattering is not None:
-        # Validate dimensions
-        if forward_scattering.shape != (ncol, nlay, ngpt):
-            raise ValueError(
-                "delta_scale: dimension of forward_scattering doesn't match optical properties arrays"
-            )
-
-        # Validate values are in [0,1]
-        if np.any((forward_scattering < 0) | (forward_scattering > 1)):
-            raise ValueError(
-                "delta_scale: values of forward_scattering out of bounds [0,1]"
-            )
-
-        # Call kernel with forward scattering
-        delta_scale_2str_f(ncol, nlay, ngpt, tau, ssa, g, forward_scattering)
+        tau, ssa, g = xr.apply_ufunc(
+            delta_scale_2str_f,
+            ncol,
+            nlay,
+            ngpt,
+            optical_props["tau"],
+            optical_props["ssa"],
+            optical_props["g"],
+            forward_scattering,
+            input_core_dims=[
+                [],
+                [],
+                [],
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+            ],
+            output_core_dims=[
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+            ],
+            dask="allowed",
+        )
     else:
-        # Call kernel without forward scattering
-        delta_scale_2str(ncol, nlay, ngpt, tau, ssa, g)
+        tau, ssa, g = xr.apply_ufunc(
+            delta_scale_2str,
+            ncol,
+            nlay,
+            ngpt,
+            optical_props["tau"],
+            optical_props["ssa"],
+            optical_props["g"],
+            input_core_dims=[
+                [],
+                [],
+                [],
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+            ],
+            output_core_dims=[
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+                ["site", "layer", gpt_dim],
+            ],
+            dask="allowed",
+        )
 
     # Update the dataset with modified values
-    optical_props["tau"] = (("site", "layer", "gpt"), tau)
-    optical_props["ssa"] = (("site", "layer", "gpt"), ssa)
-    optical_props["g"] = (("site", "layer", "gpt"), g)
+    optical_props["tau"] = tau
+    optical_props["ssa"] = ssa
+    optical_props["g"] = g
+
+    return optical_props

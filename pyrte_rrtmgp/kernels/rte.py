@@ -322,7 +322,7 @@ def increment_1scalar_by_1scalar(
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
     tau_in: npt.NDArray[np.float64],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment one set of optical properties with another set (scalar by scalar).
 
     Args:
@@ -342,6 +342,8 @@ def increment_1scalar_by_1scalar(
 
     rte_increment_1scalar_by_1scalar(*args)
 
+    return tau_inout
+
 
 def increment_1scalar_by_2stream(
     ncol: int,
@@ -350,7 +352,7 @@ def increment_1scalar_by_2stream(
     tau_inout: npt.NDArray[np.float64],
     tau_in: npt.NDArray[np.float64],
     ssa_in: npt.NDArray[np.float64],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment scalar optical properties with 2-stream properties.
 
     Args:
@@ -372,6 +374,8 @@ def increment_1scalar_by_2stream(
 
     rte_increment_1scalar_by_2stream(*args)
 
+    return tau_inout
+
 
 def increment_2stream_by_1scalar(
     ncol: int,
@@ -380,7 +384,7 @@ def increment_2stream_by_1scalar(
     tau_inout: npt.NDArray[np.float64],
     ssa_inout: npt.NDArray[np.float64],
     tau_in: npt.NDArray[np.float64],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment 2-stream optical properties with scalar properties.
 
     Args:
@@ -402,6 +406,8 @@ def increment_2stream_by_1scalar(
 
     rte_increment_2stream_by_1scalar(*args)
 
+    return tau_inout, ssa_inout
+
 
 def increment_2stream_by_2stream(
     ncol: int,
@@ -413,7 +419,7 @@ def increment_2stream_by_2stream(
     tau_in: npt.NDArray[np.float64],
     ssa_in: npt.NDArray[np.float64],
     g_in: npt.NDArray[np.float64],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment one set of 2-stream optical properties with another.
 
     Args:
@@ -441,6 +447,8 @@ def increment_2stream_by_2stream(
 
     rte_increment_2stream_by_2stream(*args)
 
+    return tau_inout, ssa_inout, g_inout
+
 
 def inc_1scalar_by_1scalar_bybnd(
     ncol: int,
@@ -450,7 +458,7 @@ def inc_1scalar_by_1scalar_bybnd(
     tau_in: npt.NDArray[np.float64],
     nbnd: int,
     band_lims_gpoint: npt.NDArray[np.int32],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment one set of scalar optical properties with another set by band.
 
     Args:
@@ -474,6 +482,8 @@ def inc_1scalar_by_1scalar_bybnd(
 
     rte_inc_1scalar_by_1scalar_bybnd(*args)
 
+    return tau_inout
+
 
 def inc_1scalar_by_2stream_bybnd(
     ncol: int,
@@ -484,7 +494,7 @@ def inc_1scalar_by_2stream_bybnd(
     ssa_in: npt.NDArray[np.float64],
     nbnd: int,
     band_lims_gpoint: npt.NDArray[np.int32],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment scalar optical properties with 2-stream properties by band.
 
     Args:
@@ -510,6 +520,8 @@ def inc_1scalar_by_2stream_bybnd(
 
     rte_inc_1scalar_by_2stream_bybnd(*args)
 
+    return tau_inout
+
 
 def inc_2stream_by_1scalar_bybnd(
     ncol: int,
@@ -520,7 +532,7 @@ def inc_2stream_by_1scalar_bybnd(
     tau_in: npt.NDArray[np.float64],
     nbnd: int,
     band_lims_gpoint: npt.NDArray[np.int32],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment 2-stream optical properties with scalar properties by band.
 
     Args:
@@ -546,6 +558,8 @@ def inc_2stream_by_1scalar_bybnd(
 
     rte_inc_2stream_by_1scalar_bybnd(*args)
 
+    return tau_inout
+
 
 def inc_2stream_by_2stream_bybnd(
     ncol: int,
@@ -559,7 +573,7 @@ def inc_2stream_by_2stream_bybnd(
     g_in: npt.NDArray[np.float64],
     nbnd: int,
     band_lims_gpoint: npt.NDArray[np.int32],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment one set of 2-stream optical properties with another by band.
 
     Args:
@@ -591,6 +605,8 @@ def inc_2stream_by_2stream_bybnd(
 
     rte_inc_2stream_by_2stream_bybnd(*args)
 
+    return tau_inout
+
 
 def delta_scale_2str(
     ncol: int,
@@ -620,6 +636,8 @@ def delta_scale_2str(
     ]
 
     rte_delta_scale_2str_k(*args)
+
+    return tau, ssa, g
 
 
 def delta_scale_2str_f(
@@ -653,3 +671,5 @@ def delta_scale_2str_f(
     ]
 
     rte_delta_scale_2str_f_k(*args)
+
+    return tau, ssa, g
