@@ -187,6 +187,7 @@ Using conda is the recommended method because conda will take care of the system
 
     Note: This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
 
+
 ### Building Locally with Pip
 
 You also have the option to build and install the package with pip. This should work with macOS and Linux systems but requires you to install the system dependencies manually.
