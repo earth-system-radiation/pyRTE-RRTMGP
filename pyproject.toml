@@ -97,6 +97,6 @@ per-file-ignores = "__init__.py:F401"
 
 [mypy]
 python_version = 3.11
-disallow_untyped_defs = True
-ignore_missing_imports = True
-strict_optional = True
+disallow_untyped_defs = true
+ignore_missing_imports = true
+strict_optional = true
