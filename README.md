@@ -211,6 +211,15 @@ Once built, the module will be located in a folder called `pyrte_rrtmgp`
 
 <!-- end-local-build-section -->
 
+## Static Type Checking
+This project employs [mypy](https://github.com/python/mypy) for static type checking to improve code reliability and maintainability. Mypy is integrated into our continuous integration workflow, and you can also run it locally using:
+
+```bash
+pip install mypy
+mypy .
+```
+Please ensure that new contributions pass the mypy checks before submitting pull requests.
+
 ## Running Tests
 
 After installing the package, you can run the tests by executing the following command:
