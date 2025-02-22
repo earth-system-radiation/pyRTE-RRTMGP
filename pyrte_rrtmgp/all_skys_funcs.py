@@ -16,7 +16,9 @@ from pyrte_rrtmgp.kernels.rte import (
 )
 
 
-def compute_clouds(cloud_optics, ncol, nlay, p_lay, t_lay):
+def compute_clouds(
+    cloud_optics: xr.Dataset, ncol: int, nlay: int, p_lay: np.ndarray, t_lay: np.ndarray
+) -> xr.Dataset:
     """Compute cloud properties for radiative transfer calculations.
 
     Args:
@@ -70,14 +72,16 @@ def compute_clouds(cloud_optics, ncol, nlay, p_lay, t_lay):
     )
 
 
-def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
+def compute_cloud_optics(
+    cloud_properties: xr.Dataset, cloud_optics: xr.Dataset, lw: bool = True
+) -> xr.Dataset:
     """
     Compute cloud optical properties for liquid and ice clouds.
 
     Args:
         cloud_properties: Dataset containing cloud properties
         cloud_optics: Dataset containing cloud optics data
-        lw (bool): Whether to compute liquid water phase (True) or ice water phase (False)
+        lw: Whether to compute liquid water phase (True) or ice water phase (False)
 
     Returns:
         tuple: Arrays of optical properties for both liquid and ice phases
@@ -208,7 +212,7 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
     # Combine liquid and ice contributions
     if lw:
         tau = (ltau - ltaussa) + (itau - itaussa)
-        return tau.to_dataset(name="tau")
+        return xr.Dataset({"tau": tau})
     else:
         tau = ltau + itau
         taussa = ltaussa + itaussa
@@ -221,7 +225,7 @@ def compute_cloud_optics(cloud_properties, cloud_optics, lw=True):
         return xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
 
 
-def combine_optical_props(op1, op2):
+def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
     """Combine two sets of optical properties, modifying op1 in place.
 
     Args:
@@ -465,7 +469,9 @@ def combine_optical_props(op1, op2):
                 return op2
 
 
-def delta_scale_optical_props(optical_props, forward_scattering=None):
+def delta_scale_optical_props(
+    optical_props: xr.Dataset, forward_scattering: np.ndarray | None = None
+) -> xr.Dataset:
     """Apply delta scaling to 2-stream optical properties.
 
     Args:

@@ -11,7 +11,7 @@ import tomllib
 sys.path.insert(0, os.path.abspath("../../"))
 
 
-def get_version_from_toml():
+def get_version_from_toml() -> str:
     if os.path.isfile("../../pyproject.toml"):
         # read pyproject.toml
         with open("../../pyproject.toml", "rb") as f:
@@ -43,7 +43,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns: list[str] = []
 
 autodoc_mock_imports = [
     "pyrte_rrtmgp.pyrte_rrtmgp",

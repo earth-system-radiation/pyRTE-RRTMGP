@@ -4,7 +4,7 @@ import subprocess
 import sys
 
 
-def run_tests():
+def run_tests() -> None:
     """Run tests using pytest."""
     package_root = os.path.dirname(os.path.abspath(__file__))
     tests_path = os.path.join(package_root, "tests")
@@ -31,7 +31,7 @@ def run_tests():
         sys.exit(e.returncode)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="pyRTE-RRTMGP command line interface")
     subparsers = parser.add_subparsers(
         dest="command",
