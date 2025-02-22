@@ -33,3 +33,7 @@ repos:
     rev: v1.15.0
     hooks:
     - id: mypy
+      exclude: ^pyrte_rrtmgp/tests/(?!test_python_frontend).*
+      additional_dependencies: [
+        'types-requests',
+      ]
