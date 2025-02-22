@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import Union
+from typing import Iterable, Union, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -145,6 +145,8 @@ class BaseGasOpticsAccessor:
         if not inplace:
             return atmosphere
 
+        return None
+
     @property
     def _selected_gas_names(self) -> list[str]:
         """List of selected gas names."""
@@ -183,19 +185,19 @@ class BaseGasOpticsAccessor:
                 values = xr.zeros_like(atmosphere[pres_level_var].isel(level=0))
             gas_values.append(values)
 
-        gas_values = xr.concat(
+        gas_da: xr.DataArray = xr.concat(
             gas_values, dim=pd.Index(gas_name_map.keys(), name="gas"), coords="minimal"
         )
 
-        col_dry = self.get_col_dry(gas_values.sel(gas="h2o"), atmosphere, latitude=None)
+        col_dry = self.get_col_dry(gas_da.sel(gas="h2o"), atmosphere, latitude=None)
 
-        gas_values = gas_values * col_dry
-        gas_values = xr.concat(
-            [col_dry.expand_dims(gas=["dry_air"]), gas_values],
+        gas_da = gas_da * col_dry
+        gas_da = xr.concat(
+            [col_dry.expand_dims(gas=["dry_air"]), gas_da],
             dim="gas",
         )
 
-        return gas_values
+        return gas_da
 
     def compute_problem(
         self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset
@@ -212,7 +214,7 @@ class BaseGasOpticsAccessor:
         raise NotImplementedError()
 
     def compute_sources(
-        self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset
+        self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset | None = None
     ) -> xr.Dataset:
         """Compute radiation sources.
 
@@ -608,7 +610,7 @@ class BaseGasOpticsAccessor:
             },
         )
 
-    def get_idx_minor(self, minor_gases: list[str]) -> npt.NDArray[np.int32]:
+    def get_idx_minor(self, minor_gases: Iterable[str]) -> npt.NDArray[np.int32]:
         """Get index of each minor gas in col_gas.
 
         Args:
@@ -721,9 +723,9 @@ class BaseGasOpticsAccessor:
                 if gas in list(gas_name_map.keys()):
                     gas_mapping[gas] = gas_name_map[gas]
 
-        self._gas_names = [
+        self._gas_names = tuple(
             k for k, v in gas_mapping.items() if v in list(atmosphere.data_vars)
-        ]
+        )
 
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
@@ -765,6 +767,7 @@ class BaseGasOpticsAccessor:
             atmosphere.update(gas_optics)
             atmosphere.attrs["problem_type"] = problem_type
             atmosphere.attrs["top_at_1"] = top_at_1
+            return None
         else:
             output_ds = gas_optics
             output_ds.attrs["problem_type"] = problem_type
@@ -795,7 +798,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         return self.tau_absorption(atmosphere, gas_interpolation_data)
 
     def compute_sources(
-        self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset
+        self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset | None = None
     ) -> xr.Dataset:
         """Compute Planck source terms for longwave radiation.
 
@@ -982,7 +985,11 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         g = xr.zeros_like(tau["tau"]).rename("g")
         return xr.merge([tau, ssa, g])
 
-    def compute_sources(self, atmosphere: xr.Dataset, *args, **kwargs) -> xr.DataArray:
+    def compute_sources(
+        self,
+        atmosphere: xr.Dataset,
+        gas_interpolation_data: xr.Dataset | None = None,
+    ) -> xr.DataArray:
         """Compute solar source terms.
 
         Args:
@@ -1171,15 +1178,11 @@ class GasOpticsAccessor:
         xarray_obj (xr.Dataset): The xarray Dataset containing gas optics data
         selected_gases (list[str] | None): Optional list of gas names to include.
             If None, all gases in the dataset will be used.
-
-    Returns:
-        Union[LWGasOpticsAccessor, SWGasOpticsAccessor]: The appropriate gas optics accessor
-            based on whether internal source terms are present.
     """
 
     def __new__(
         cls, xarray_obj: xr.Dataset, selected_gases: list[str] | None = None
-    ) -> Union[LWGasOpticsAccessor, SWGasOpticsAccessor]:
+    ) -> "GasOpticsAccessor":
         # Check if source is internal by looking for required LW variables
         is_internal: bool = (
             "totplnk" in xarray_obj.data_vars
@@ -1187,6 +1190,12 @@ class GasOpticsAccessor:
         )
 
         if is_internal:
-            return LWGasOpticsAccessor(xarray_obj, is_internal, selected_gases)
+            return cast(
+                GasOpticsAccessor,
+                LWGasOpticsAccessor(xarray_obj, is_internal, selected_gases),
+            )
         else:
-            return SWGasOpticsAccessor(xarray_obj, is_internal, selected_gases)
+            return cast(
+                GasOpticsAccessor,
+                SWGasOpticsAccessor(xarray_obj, is_internal, selected_gases),
+            )
