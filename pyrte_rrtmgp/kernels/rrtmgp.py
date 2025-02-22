@@ -1,3 +1,5 @@
+"""Kernel functions for RRTMGP."""
+
 from typing import Tuple
 
 import numpy as np
@@ -61,12 +63,16 @@ def interpolation(
 
     Returns:
         Tuple containing:
-            - jtemp: Temperature interpolation indices with shape (ncol, nlay)
-            - fmajor: Major gas interpolation fractions with shape (2, 2, 2, ncol, nlay, nflav)
-            - fminor: Minor gas interpolation fractions with shape (2, 2, ncol, nlay, nflav)
+            - jtemp: Temperature interpolation indices with shape
+              (ncol, nlay)
+            - fmajor: Major gas interpolation fractions with shape
+              (2, 2, 2, ncol, nlay, nflav)
+            - fminor: Minor gas interpolation fractions with shape
+              (2, 2, ncol, nlay, nflav)
             - col_mix: Mixing fractions with shape (2, ncol, nlay, nflav)
             - tropo: Boolean mask for troposphere with shape (ncol, nlay)
-            - jeta: Binary species interpolation indices with shape (2, ncol, nlay, nflav)
+            - jeta: Binary species interpolation indices with shape
+              (2, ncol, nlay, nflav)
             - jpress: Pressure interpolation indices with shape (ncol, nlay)
     """
     press_ref_log = np.log(press_ref)
@@ -284,8 +290,9 @@ def compute_tau_absorption(
 ) -> npt.NDArray[np.float64]:
     """Compute the absorption optical depth for atmospheric profiles.
 
-    This function calculates the total absorption optical depth by combining contributions
-    from major and minor gas species in both the upper and lower atmosphere.
+    This function calculates the total absorption optical depth by combining
+    contributions from major and minor gas species in both the upper and lower
+    atmosphere.
 
     Args:
         ncol: Number of atmospheric columns
@@ -410,7 +417,8 @@ def compute_tau_rayleigh(
 ) -> npt.NDArray[np.float64]:
     """Compute Rayleigh scattering optical depth.
 
-    This function calculates the optical depth due to Rayleigh scattering by air molecules.
+    This function calculates the optical depth due to Rayleigh scattering by air
+    molecules.
 
     Args:
         ncol: Number of atmospheric columns
@@ -423,7 +431,8 @@ def compute_tau_rayleigh(
         ntemp: Number of temperature points
         gpoint_flavor: G-point flavors with shape (2, ngpt)
         band_lims_gpt: Band limits in g-point space with shape (2, nbnd)
-        krayl: Rayleigh scattering coefficients with shape (ntemp, neta, ngpt, 2)
+        krayl: Rayleigh scattering coefficients with shape
+          (ntemp, neta, ngpt, 2)
         idx_h2o: Index of water vapor
         col_dry: Dry air column amounts with shape (ncol, nlay)
         col_gas: Gas concentrations with shape (ncol, nlay, ngas + 1)
@@ -484,15 +493,14 @@ def compute_cld_from_table(
 ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Compute cloud optical properties using lookup tables.
 
-    For size dimension, select size bin appropriate for the requested aerosol size.
-    For rh dimension, linearly interpolate values from a lookup table with "nrh"
-    unevenly-spaced elements "aero_rh". The last dimension for all tables is band.
-    Returns zero where no aerosol is present.
+    This function computes cloud optical properties (optical depth, single scattering
+    albedo, and asymmetry parameter) using pre-computed lookup tables. The tables
+    are indexed by liquid water path (lwp) and effective radius (re).
 
     Args:
         ncol: Number of atmospheric columns
         nlay: Number of atmospheric layers
-        nbnd: Number of spectral bands
+        ngpt: Number of g-points
         mask: Cloud mask with shape (ncol, nlay)
         lwp: Liquid water path with shape (ncol, nlay)
         re: Effective radius with shape (ncol, nlay)
@@ -506,8 +514,10 @@ def compute_cld_from_table(
     Returns:
         Tuple containing:
             - tau: Cloud optical depth with shape (ncol, nlay, ngpt)
-            - taussa: Product of tau and single scattering albedo with shape (ncol, nlay, ngpt)
-            - taussag: Product of taussa and asymmetry parameter with shape (ncol, nlay, ngpt)
+            - taussa: Product of tau and single scattering albedo with shape
+              (ncol, nlay, ngpt)
+            - taussag: Product of taussa and asymmetry parameter with shape
+              (ncol, nlay, ngpt)
     """
     # Initialize output arrays
     tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")

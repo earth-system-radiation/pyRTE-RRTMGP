@@ -1,3 +1,5 @@
+"""Cloud optics utilities for pyRTE-RRTMGP."""
+
 import numpy as np
 import xarray as xr
 
@@ -146,7 +148,7 @@ def compute_cloud_optics(
         input_core_dims=[
             [],  # ncol
             [],  # nlay
-            [],
+            [],  # ngpt
             ["site", "layer"],  # liq_mask
             ["site", "layer"],  # lwp
             ["site", "layer"],  # rel
@@ -253,11 +255,11 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op2["tau"],
                     op1["tau"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "gpt"],  # tau_in
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
                     dask="allowed",
@@ -274,12 +276,12 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op1["tau"],
                     op1["ssa"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "gpt"],  # tau_in
+                        ["site", "layer", "gpt"],  # ssa_in
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
                     dask="allowed",
@@ -297,12 +299,12 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op2["ssa"],
                     op1["tau"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "gpt"],  # ssa_inout
+                        ["site", "layer", "gpt"],  # tau_in
                     ],
                     output_core_dims=[
                         ["site", "layer", "gpt"],
@@ -326,15 +328,15 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op1["ssa"],
                     op1["g"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "gpt"],  # ssa_inout
+                        ["site", "layer", "gpt"],  # g_inout
+                        ["site", "layer", "gpt"],  # tau_in
+                        ["site", "layer", "gpt"],  # ssa_in
+                        ["site", "layer", "gpt"],  # g_in
                     ],
                     output_core_dims=[
                         ["site", "layer", "gpt"],
@@ -366,13 +368,13 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "bnd"],
-                        [],
-                        ["pair", "bnd"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "bnd"],  # tau_in
+                        [],  # nbnd
+                        ["pair", "bnd"],  # band_lims_gpoint
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
                     dask="allowed",
@@ -392,14 +394,14 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "bnd"],
-                        ["site", "layer", "bnd"],
-                        [],
-                        ["pair", "bnd"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "bnd"],  # tau_in
+                        ["site", "layer", "bnd"],  # ssa_in
+                        [],  # nbnd
+                        ["pair", "bnd"],  # bnd_limits_gpt
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
                     dask="allowed",
@@ -420,14 +422,14 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "bnd"],
-                        [],
-                        ["pair", "bnd"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "gpt"],  # ssa_inout
+                        ["site", "layer", "bnd"],  # tau_in
+                        [],  # nbnd
+                        ["pair", "bnd"],  # band_lims_gpoint
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
                     dask="allowed",
@@ -450,17 +452,17 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                     op2.sizes["bnd"],
                     op2["bnd_limits_gpt"],
                     input_core_dims=[
-                        [],
-                        [],
-                        [],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "gpt"],
-                        ["site", "layer", "bnd"],
-                        ["site", "layer", "bnd"],
-                        ["site", "layer", "bnd"],
-                        [],
-                        ["pair", "bnd"],
+                        [],  # ncol
+                        [],  # nlay
+                        [],  # ngpt
+                        ["site", "layer", "gpt"],  # tau_inout
+                        ["site", "layer", "gpt"],  # ssa_inout
+                        ["site", "layer", "gpt"],  # g_inout
+                        ["site", "layer", "bnd"],  # tau_in
+                        ["site", "layer", "bnd"],  # ssa_in
+                        ["site", "layer", "bnd"],  # g_in
+                        [],  # nbnd
+                        ["pair", "bnd"],  # band_lims_gpoint
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
                     dask="allowed",
@@ -476,11 +478,12 @@ def delta_scale_optical_props(
 
     Args:
         optical_props: xarray Dataset containing tau, ssa, and g variables
-        forward_scattering: Optional array of forward scattering fraction (g**2 if not provided)
-            Must have shape (ncol, nlay, ngpt) if provided
+        forward_scattering: Optional array of forward scattering fraction
+          (g**2 if not provided) Must have shape (ncol, nlay, ngpt) if provided
 
     Raises:
-        ValueError: If forward_scattering array has incorrect dimensions or values outside [0,1]
+        ValueError: If forward_scattering array has incorrect dimensions or values
+          outside [0,1]
     """
     # Get dimensions
     ncol = optical_props.sizes["site"]
@@ -500,13 +503,13 @@ def delta_scale_optical_props(
             optical_props["g"],
             forward_scattering,
             input_core_dims=[
-                [],
-                [],
-                [],
-                ["site", "layer", gpt_dim],
-                ["site", "layer", gpt_dim],
-                ["site", "layer", gpt_dim],
-                ["site", "layer", gpt_dim],
+                [],  # ncol
+                [],  # nlay
+                [],  # ngpt
+                ["site", "layer", gpt_dim],  # tau
+                ["site", "layer", gpt_dim],  # ssa
+                ["site", "layer", gpt_dim],  # g
+                ["site", "layer", gpt_dim],  # f
             ],
             output_core_dims=[
                 ["site", "layer", gpt_dim],
@@ -525,12 +528,12 @@ def delta_scale_optical_props(
             optical_props["ssa"],
             optical_props["g"],
             input_core_dims=[
-                [],
-                [],
-                [],
-                ["site", "layer", gpt_dim],
-                ["site", "layer", gpt_dim],
-                ["site", "layer", gpt_dim],
+                [],  # ncol
+                [],  # nlay
+                [],  # ngpt
+                ["site", "layer", gpt_dim],  # tau
+                ["site", "layer", gpt_dim],  # ssa
+                ["site", "layer", gpt_dim],  # g
             ],
             output_core_dims=[
                 ["site", "layer", gpt_dim],

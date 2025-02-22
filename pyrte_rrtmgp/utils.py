@@ -1,3 +1,5 @@
+"""Utility functions for pyRTE-RRTMGP."""
+
 import numpy as np
 import xarray as xr
 

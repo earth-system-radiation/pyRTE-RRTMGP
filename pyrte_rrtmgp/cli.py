@@ -1,3 +1,5 @@
+"""Command line interface for pyRTE-RRTMGP."""
+
 import argparse
 import os
 import subprocess
@@ -32,6 +34,7 @@ def run_tests() -> None:
 
 
 def main() -> None:
+    """Run the pyRTE-RRTMGP command line interface."""
     parser = argparse.ArgumentParser(description="pyRTE-RRTMGP command line interface")
     subparsers = parser.add_subparsers(
         dest="command",
