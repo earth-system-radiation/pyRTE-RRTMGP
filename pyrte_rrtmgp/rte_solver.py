@@ -2,6 +2,7 @@
 
 from typing import Optional
 
+import numpy as np
 import xarray as xr
 
 from pyrte_rrtmgp.constants import GAUSS_DS, GAUSS_WTS
@@ -163,8 +164,9 @@ class RTESolver:
                 [site_dim, level_dim, "gpt"],  # solver_flux_up
                 [site_dim, level_dim, "gpt"],  # solver_flux_down
             ],
+            output_dtypes=[np.float64, np.float64, np.float64, np.float64, np.float64],
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         return xr.Dataset(
@@ -261,8 +263,19 @@ class RTESolver:
                 [site_dim, level_dim],  # solver_flux_down_broadband
                 [site_dim, level_dim],  # solver_flux_dir_broadband
             ],
+            output_dtypes=[
+                np.float64,
+                np.float64,
+                np.float64,
+                np.float64,
+                np.float64,
+                np.float64,
+            ],
+            dask_gufunc_kwargs={
+                "output_sizes": {level_dim: problem_ds.sizes[layer_dim] + 1}
+            },
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         # Construct output dataset
@@ -302,6 +315,8 @@ class RTESolver:
             raise ValueError(
                 f"Unknown problem type: {problem_ds.attrs['problem_type']}"
             )
+
+        fluxes = fluxes.compute()
 
         if add_to_input:
             problem_ds.update(fluxes)

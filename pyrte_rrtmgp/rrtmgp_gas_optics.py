@@ -297,7 +297,7 @@ class BaseGasOpticsAccessor:
             self._dataset["vmr_ref"].sel(absorber_ext=gas_order),
             atmosphere[atmosphere.mapping.get_var("pres_layer")],
             atmosphere[atmosphere.mapping.get_var("temp_layer")],
-            gases_columns.sel(gas=gas_order),
+            gases_columns.sel(gas=gas_order).chunk({"gas": -1}),
             input_core_dims=[
                 [],  # ncol
                 [],  # nlay
@@ -332,6 +332,23 @@ class BaseGasOpticsAccessor:
                 [site_dim, layer_dim],  # jpress
             ],
             vectorize=True,
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    "eta_interp": neta,
+                    "temp_interp": ntemp,
+                    "press_interp": npres,
+                    "pair": 2,
+                }
+            },
+            output_dtypes=[
+                np.int32,
+                np.float64,
+                np.float64,
+                np.float64,
+                np.bool_,
+                np.int32,
+                np.int32,
+            ],
             dask="parallelized",
         )
 
@@ -483,7 +500,7 @@ class BaseGasOpticsAccessor:
             gas_interpolation_data["fminor"],
             atmosphere[pres_layer_var],
             atmosphere[temp_layer_var],
-            gas_interpolation_data["gases_columns"],
+            gas_interpolation_data["gases_columns"].chunk(dict(gas=-1)),
             gas_interpolation_data["eta_index"],
             gas_interpolation_data["temperature_index"],
             gas_interpolation_data["pressure_index"],
@@ -547,7 +564,8 @@ class BaseGasOpticsAccessor:
             ],
             output_core_dims=[[site_dim, layer_dim, "gpt"]],
             vectorize=True,
-            dask="allowed",
+            output_dtypes=[np.float64],
+            dask="parallelized",
         )
 
         return tau_absorption.rename("tau").to_dataset()
@@ -954,8 +972,9 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                 ["site", "level", "gpt"],  # lev_source
                 ["site", "gpt"],  # sfc_src_jac
             ],
+            output_dtypes=[np.float64, np.float64, np.float64, np.float64],
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         return xr.Dataset(
@@ -1177,8 +1196,9 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 [site_dim, layer_dim],  # jtemp
             ],
             output_core_dims=[[site_dim, layer_dim, "gpt"]],
+            output_dtypes=[np.float64],
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         return tau_rayleigh.rename("tau").to_dataset()
