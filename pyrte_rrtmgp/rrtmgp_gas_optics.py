@@ -211,7 +211,7 @@ class BaseGasOpticsAccessor:
             dim="gas",
         )
 
-        return gas_da
+        return gas_da.compute()  # some chunks are not computed
 
     def compute_problem(
         self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset
@@ -297,7 +297,7 @@ class BaseGasOpticsAccessor:
             self._dataset["vmr_ref"].sel(absorber_ext=gas_order),
             atmosphere[atmosphere.mapping.get_var("pres_layer")],
             atmosphere[atmosphere.mapping.get_var("temp_layer")],
-            gases_columns.sel(gas=gas_order).chunk({"gas": -1}),
+            gases_columns.sel(gas=gas_order),
             input_core_dims=[
                 [],  # ncol
                 [],  # nlay
@@ -500,7 +500,7 @@ class BaseGasOpticsAccessor:
             gas_interpolation_data["fminor"],
             atmosphere[pres_layer_var],
             atmosphere[temp_layer_var],
-            gas_interpolation_data["gases_columns"].chunk(dict(gas=-1)),
+            gas_interpolation_data["gases_columns"],
             gas_interpolation_data["eta_index"],
             gas_interpolation_data["temperature_index"],
             gas_interpolation_data["pressure_index"],
