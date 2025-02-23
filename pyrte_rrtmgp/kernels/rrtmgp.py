@@ -183,7 +183,7 @@ def compute_planck_source(
         tropo: Troposphere mask with shape (ncol, nlay)
         jtemp: Temperature interpolation indices with shape (ncol, nlay)
         jpress: Pressure interpolation indices with shape (ncol, nlay)
-        gpoint_bands: TODO: Add information (ngpt)
+        gpoint_bands: g-point for each band (ngpt)
         band_lims_gpt: Band limits in g-point space with shape (2, nbnd)
         pfracin: Planck fractions with shape (ntemp, neta, npres+1, ngpt)
         temp_ref_min: Minimum reference temperature
