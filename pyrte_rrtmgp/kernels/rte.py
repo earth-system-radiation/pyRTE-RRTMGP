@@ -388,7 +388,7 @@ def increment_2stream_by_1scalar(
     tau_inout: npt.NDArray[np.float64],
     ssa_inout: npt.NDArray[np.float64],
     tau_in: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Increment 2-stream optical properties with scalar properties.
 
     Args:
@@ -423,7 +423,7 @@ def increment_2stream_by_2stream(
     tau_in: npt.NDArray[np.float64],
     ssa_in: npt.NDArray[np.float64],
     g_in: npt.NDArray[np.float64],
-) -> npt.NDArray[np.float64]:
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Increment one set of 2-stream optical properties with another.
 
     Args:
