@@ -8,7 +8,7 @@ from typing import Any
 import json
 
 
-def parse_value(value: str) -> Any:
+def parse_value(value: Any) -> Any:
     # Handle NaN
     if "NaN" in value:
         res = float("nan")
