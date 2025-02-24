@@ -211,7 +211,7 @@ class BaseGasOpticsAccessor:
             dim="gas",
         )
 
-        return gas_da
+        return gas_da.compute()  # some chunks are not computed
 
     def compute_problem(
         self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset
@@ -332,6 +332,23 @@ class BaseGasOpticsAccessor:
                 [site_dim, layer_dim],  # jpress
             ],
             vectorize=True,
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    "eta_interp": neta,
+                    "temp_interp": ntemp,
+                    "press_interp": npres,
+                    "pair": 2,
+                }
+            },
+            output_dtypes=[
+                np.int32,
+                np.float64,
+                np.float64,
+                np.float64,
+                np.bool_,
+                np.int32,
+                np.int32,
+            ],
             dask="parallelized",
         )
 
@@ -547,7 +564,8 @@ class BaseGasOpticsAccessor:
             ],
             output_core_dims=[[site_dim, layer_dim, "gpt"]],
             vectorize=True,
-            dask="allowed",
+            output_dtypes=[np.float64],
+            dask="parallelized",
         )
 
         return tau_absorption.rename("tau").to_dataset()
@@ -954,8 +972,9 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                 ["site", "level", "gpt"],  # lev_source
                 ["site", "gpt"],  # sfc_src_jac
             ],
+            output_dtypes=[np.float64, np.float64, np.float64, np.float64],
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         return xr.Dataset(
@@ -1177,8 +1196,9 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 [site_dim, layer_dim],  # jtemp
             ],
             output_core_dims=[[site_dim, layer_dim, "gpt"]],
+            output_dtypes=[np.float64],
             vectorize=True,
-            dask="allowed",
+            dask="parallelized",
         )
 
         return tau_rayleigh.rename("tau").to_dataset()

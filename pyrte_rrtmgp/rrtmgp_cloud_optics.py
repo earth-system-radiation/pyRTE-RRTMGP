@@ -164,8 +164,9 @@ def compute_cloud_optics(
             ["site", "layer", gpt_out_dim],  # ltaussa
             ["site", "layer", gpt_out_dim],  # ltaussag
         ],
+        output_dtypes=[np.float64, np.float64, np.float64],
         vectorize=True,
-        dask="allowed",
+        dask="parallelized",
     )
 
     # Ice phase
@@ -207,8 +208,9 @@ def compute_cloud_optics(
             ["site", "layer", gpt_out_dim],  # itaussa
             ["site", "layer", gpt_out_dim],  # itaussag
         ],
+        output_dtypes=[np.float64, np.float64, np.float64],
         vectorize=True,
-        dask="allowed",
+        dask="parallelized",
     )
 
     # Combine liquid and ice contributions
@@ -262,7 +264,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["site", "layer", "gpt"],  # tau_in
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
-                    dask="allowed",
+                    output_dtypes=[np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
             else:
@@ -284,7 +288,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["site", "layer", "gpt"],  # ssa_in
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
-                    dask="allowed",
+                    output_dtypes=[np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
         else:  # 2-stream output
@@ -310,7 +316,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["site", "layer", "gpt"],
                         ["site", "layer", "gpt"],
                     ],
-                    dask="allowed",
+                    output_dtypes=[np.float64, np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
                 op2["ssa"] = combined_ssa
@@ -343,7 +351,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["site", "layer", "gpt"],
                         ["site", "layer", "gpt"],
                     ],
-                    dask="allowed",
+                    output_dtypes=[np.float64, np.float64, np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
                 op2["ssa"] = combined_ssa
@@ -377,7 +387,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["pair", "bnd"],  # band_lims_gpoint
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
-                    dask="allowed",
+                    output_dtypes=[np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
                 return op2
@@ -404,7 +416,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["pair", "bnd"],  # bnd_limits_gpt
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
-                    dask="allowed",
+                    output_dtypes=[np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
                 return op2
@@ -432,7 +446,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["pair", "bnd"],  # band_lims_gpoint
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
-                    dask="allowed",
+                    output_dtypes=[np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
                 return op2
@@ -465,7 +481,9 @@ def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
                         ["pair", "bnd"],  # band_lims_gpoint
                     ],
                     output_core_dims=[["site", "layer", "gpt"]],
-                    dask="allowed",
+                    output_dtypes=[np.float64],
+                    vectorize=True,
+                    dask="parallelized",
                 )
                 op2["tau"] = combined_tau
                 return op2
@@ -516,7 +534,9 @@ def delta_scale_optical_props(
                 ["site", "layer", gpt_dim],
                 ["site", "layer", gpt_dim],
             ],
-            dask="allowed",
+            output_dtypes=[np.float64, np.float64, np.float64],
+            vectorize=True,
+            dask="parallelized",
         )
     else:
         tau, ssa, g = xr.apply_ufunc(
@@ -540,7 +560,9 @@ def delta_scale_optical_props(
                 ["site", "layer", gpt_dim],
                 ["site", "layer", gpt_dim],
             ],
-            dask="allowed",
+            output_dtypes=[np.float64, np.float64, np.float64],
+            vectorize=True,
+            dask="parallelized",
         )
 
     # Update the dataset with modified values
