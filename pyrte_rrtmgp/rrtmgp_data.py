@@ -3,13 +3,15 @@ import os
 import platform
 import tarfile
 from pathlib import Path
-from typing import Union
+from typing import Literal, Union
 
 import requests
 
 # URL of the file to download
-REF = "v1.9"  # Can be a tag (e.g. "v1.8.2") or branch name (e.g. "main")
-DATA_URL = f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/{'tags' if REF.startswith('v') else 'heads'}/{REF}.tar.gz"
+REF: str = "v1.9"  # Can be a tag (e.g. "v1.8.2") or branch name (e.g. "main")
+DATA_URL: str = (
+    f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/{'tags' if REF.startswith('v') else 'heads'}/{REF}.tar.gz"
+)
 
 
 def get_cache_dir() -> str:
@@ -20,7 +22,7 @@ def get_cache_dir() -> str:
     """
     # Determine the system cache folder
     if platform.system() == "Windows":
-        cache_path = os.getenv("LOCALAPPDATA")
+        cache_path = os.getenv("LOCALAPPDATA", "")
     elif platform.system() == "Darwin":
         cache_path = os.path.expanduser("~/Library/Caches")
     else:
@@ -84,7 +86,9 @@ def download_rrtmgp_data() -> str:
     return os.path.join(cache_dir, f"rrtmgp-data-{ref_dirname}")
 
 
-def _get_file_checksum(filepath: Union[str, Path], mode: str = "r") -> str:
+def _get_file_checksum(
+    filepath: Union[str, Path], mode: Literal["r", "rb"] = "r"
+) -> str:
     """Calculate SHA256 checksum of a file or read existing checksum.
 
     Args:

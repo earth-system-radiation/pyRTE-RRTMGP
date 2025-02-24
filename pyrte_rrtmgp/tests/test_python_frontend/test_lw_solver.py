@@ -35,7 +35,7 @@ rld = xr.load_dataset(
 ref_flux_down = rld.isel(expt=0)["rld"]
 
 
-def test_lw_solver_noscat():
+def test_lw_solver_noscat() -> None:
     # Load gas optics with the new API
     gas_optics_lw = load_gas_optics(gas_optics_file=GasOpticsFiles.LW_G256)
 
@@ -45,6 +45,7 @@ def test_lw_solver_noscat():
     # Solve RTE with the new API
     solver = RTESolver()
     fluxes = solver.solve(atmosphere, add_to_input=False)
+    assert fluxes is not None
 
     # Compare results with reference data
     assert np.isclose(fluxes["lw_flux_up"], ref_flux_up, atol=ERROR_TOLERANCE).all()

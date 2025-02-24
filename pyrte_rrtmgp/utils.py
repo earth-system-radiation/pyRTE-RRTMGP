@@ -2,7 +2,9 @@ import numpy as np
 import xarray as xr
 
 
-def create_gas_dataset(gas_values, dims):
+def create_gas_dataset(
+    gas_values: dict[str, float], dims: dict[str, int]
+) -> xr.Dataset:
     """Create a dataset with gas values and dimensions.
 
     Args:

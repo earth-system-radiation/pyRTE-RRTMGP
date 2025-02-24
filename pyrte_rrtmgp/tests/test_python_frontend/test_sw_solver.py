@@ -35,7 +35,7 @@ rsd = xr.load_dataset(
 ref_flux_down = rsd.isel(expt=0)["rsd"]
 
 
-def test_sw_solver_noscat():
+def test_sw_solver_noscat() -> None:
     # Load gas optics with new API
     gas_optics_sw = load_gas_optics(gas_optics_file=GasOpticsFiles.SW_G224)
 
@@ -45,6 +45,7 @@ def test_sw_solver_noscat():
     # Solve using new rte_solve function
     solver = RTESolver()
     fluxes = solver.solve(atmosphere, add_to_input=False)
+    assert fluxes is not None
 
     # Compare results
     assert np.isclose(fluxes["sw_flux_up"], ref_flux_up, atol=ERROR_TOLERANCE).all()

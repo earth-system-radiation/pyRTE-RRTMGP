@@ -22,7 +22,7 @@ ref_dir = os.path.join(rfmip_dir, "reference")
 lw_clouds = os.path.join(rte_rrtmgp_dir, "rrtmgp-clouds-lw-bnd.nc")
 
 
-def test_lw_solver_with_clouds():
+def test_lw_solver_with_clouds() -> None:
     # Set up dimensions
     ncol = 24
     nlay = 72
@@ -67,6 +67,7 @@ def test_lw_solver_with_clouds():
     )
     solver = RTESolver()
     fluxes = solver.solve(combined_optical_props, add_to_input=False)
+    assert fluxes is not None
 
     # Load reference data and verify results
     ref_data = xr.load_dataset(
@@ -76,12 +77,8 @@ def test_lw_solver_with_clouds():
 
     # Compare results with reference data
     assert np.isclose(
-        fluxes["lw_flux_up"].values,
-        ref_data["lw_flux_up"].values.T,
-        atol=ERROR_TOLERANCE,
+        fluxes["lw_flux_up"], ref_data["lw_flux_up"].T, atol=ERROR_TOLERANCE
     ).all()
     assert np.isclose(
-        fluxes["lw_flux_down"].values,
-        ref_data["lw_flux_dn"].values.T,
-        atol=ERROR_TOLERANCE,
+        fluxes["lw_flux_down"], ref_data["lw_flux_dn"].T, atol=ERROR_TOLERANCE
     ).all()

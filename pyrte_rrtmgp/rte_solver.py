@@ -297,6 +297,6 @@ class RTESolver:
             )
 
         if add_to_input:
-            problem_ds.assign_coords(fluxes.coords)
+            problem_ds.update(fluxes)
             return None
         return fluxes

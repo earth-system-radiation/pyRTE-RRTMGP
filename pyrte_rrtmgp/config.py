@@ -7,7 +7,7 @@ for gases, dimensions and variables used in radiative transfer calculations.
 from typing import Dict, Final
 
 # Mapping of standard gas names to RRTMGP-specific names
-DEFAULT_GAS_MAPPING: Final[Dict[str, str]] = {
+DEFAULT_GAS_MAPPING: Final[Dict[str, list[str]]] = {
     "h2o": ["h2o", "water_vapor"],
     "co2": ["co2", "carbon_dioxide_GM"],
     "o3": ["o3", "ozone"],

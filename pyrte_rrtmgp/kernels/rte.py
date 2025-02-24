@@ -615,7 +615,7 @@ def delta_scale_2str(
     tau: npt.NDArray[np.float64],
     ssa: npt.NDArray[np.float64],
     g: npt.NDArray[np.float64],
-) -> None:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Apply the delta-scaling transformation to two-stream radiative properties.
 
     Args:
@@ -625,6 +625,9 @@ def delta_scale_2str(
         tau: Optical depth array to be modified (ncol, nlay, ngpt)
         ssa: Single scattering albedo array to be modified (ncol, nlay, ngpt)
         g: Asymmetry parameter array to be modified (ncol, nlay, ngpt)
+
+    Returns:
+        tuple: Modified tau, ssa, and g arrays
     """
     args = [
         ncol,
@@ -648,7 +651,7 @@ def delta_scale_2str_f(
     ssa: npt.NDArray[np.float64],
     g: npt.NDArray[np.float64],
     f: npt.NDArray[np.float64],
-) -> None:
+) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Apply the delta-scaling transformation to two-stream radiative properties with forward scattering fraction.
 
     Args:
@@ -659,6 +662,9 @@ def delta_scale_2str_f(
         ssa: Single scattering albedo array to be modified (ncol, nlay, ngpt)
         g: Asymmetry parameter array to be modified (ncol, nlay, ngpt)
         f: Forward scattering fraction array (ncol, nlay, ngpt)
+
+    Returns:
+        tuple: Modified tau, ssa, and g arrays
     """
     args = [
         ncol,
