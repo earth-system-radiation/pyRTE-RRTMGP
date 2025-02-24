@@ -19,7 +19,7 @@ import pyrte_rrtmgp.pyrte_rrtmgp as py
         (np.ones((3, 3)), py.zero_array_4D, "Number of dimensions must be 4"),
     ],
 )
-def test_invalid_array_dimension(array, method, error):
+def test_invalid_array_dimension(array, method, error) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(array)
     assert str(excinfo.value) == error
@@ -34,7 +34,7 @@ def test_invalid_array_dimension(array, method, error):
         (np.ones((0, 0, 0, 0)), py.zero_array_4D),
     ],
 )
-def test_empty_array_exception(array, method):
+def test_empty_array_exception(array, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(array)
     assert str(excinfo.value) == "Array size cannot be 0 or negative"
@@ -49,7 +49,7 @@ def test_empty_array_exception(array, method):
         ((4, 4, 4, 4), py.zero_array_4D),
     ],
 )
-def test_zero_array(shape, fortran_zero_array):
+def test_zero_array(shape, fortran_zero_array) -> None:
     arr = np.random.rand(*shape)
     fortran_zero_array(arr)
     assert np.all(arr == 0)
@@ -60,7 +60,7 @@ def test_zero_array(shape, fortran_zero_array):
 ###########################################
 
 
-def test_rte_increment_1scalar_by_1scalar_dimension_check():
+def test_rte_increment_1scalar_by_1scalar_dimension_check() -> None:
 
     ncol = 0
     nlay = 0
@@ -82,13 +82,13 @@ def test_rte_increment_1scalar_by_1scalar_dimension_check():
         )
     ],
 )
-def test_rte_increment_1scalar_by_1scalar_array_size_check(parameters, method):
+def test_rte_increment_1scalar_by_1scalar_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_1scalar_by_1scalar():
+def test_rte_increment_1scalar_by_1scalar() -> None:
     ncol, nlay, ngpt = (3, 4, 5)
     tau_inout = np.random.rand(ncol, nlay, ngpt)
     tau_in = np.random.rand(ncol, nlay, ngpt)
@@ -111,7 +111,7 @@ def test_rte_increment_1scalar_by_1scalar():
 ###########################################
 
 
-def test_rte_increment_1scalar_by_2stream_dimension_check():
+def test_rte_increment_1scalar_by_2stream_dimension_check() -> None:
     ncol = 0
     nlay = 0
     ngpt = 0
@@ -132,7 +132,7 @@ def test_rte_increment_1scalar_by_2stream_dimension_check():
         )
     ],
 )
-def test_rte_increment_1scalar_by_2stream_array_size_check(parameters, method):
+def test_rte_increment_1scalar_by_2stream_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
@@ -147,7 +147,7 @@ def test_rte_increment_1scalar_by_2stream_array_size_check(parameters, method):
         )
     ],
 )
-def test_rte_increment_1scalar_by_2stream(parameters, method):
+def test_rte_increment_1scalar_by_2stream(parameters, method) -> None:
     ncol, nlay, ngpt, tau_inout, tau_in, ssa_in = parameters
     res = np.array(tau_inout)
 
@@ -167,7 +167,7 @@ def test_rte_increment_1scalar_by_2stream(parameters, method):
 ###########################################
 
 
-def test_rte_increment_1scalar_by_nstream_dimension_check():
+def test_rte_increment_1scalar_by_nstream_dimension_check() -> None:
     ncol = 0
     nlay = 0
     ngpt = 0
@@ -191,13 +191,13 @@ def test_rte_increment_1scalar_by_nstream_dimension_check():
         )
     ],
 )
-def test_rte_increment_1scalar_by_nstream_array_size_check(parameters, method):
+def test_rte_increment_1scalar_by_nstream_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_1scalar_by_nstream():
+def test_rte_increment_1scalar_by_nstream() -> None:
     ncol = 3
     nlay = 4
     ngpt = 5
@@ -233,7 +233,7 @@ def test_rte_increment_1scalar_by_nstream():
         )
     ],
 )
-def test_rte_increment_2stream_by_1scalar_dimension_check(parameters, method):
+def test_rte_increment_2stream_by_1scalar_dimension_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "ncol, nlay, and ngpt must be positive integers"
@@ -248,13 +248,13 @@ def test_rte_increment_2stream_by_1scalar_dimension_check(parameters, method):
         )
     ],
 )
-def test_rte_increment_2stream_by_1scalar_array_size_check(parameters, method):
+def test_rte_increment_2stream_by_1scalar_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_2stream_by_1scalar():
+def test_rte_increment_2stream_by_1scalar() -> None:
 
     eps = 3.0 * np.finfo(float).tiny
 
@@ -316,7 +316,7 @@ def test_rte_increment_2stream_by_1scalar():
         )
     ],
 )
-def test_rte_increment_2stream_by_2stream_dimension_check(parameters, method):
+def test_rte_increment_2stream_by_2stream_dimension_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "ncol, nlay, and ngpt must be positive integers"
@@ -341,13 +341,13 @@ def test_rte_increment_2stream_by_2stream_dimension_check(parameters, method):
         )
     ],
 )
-def test_rte_increment_2stream_by_2stream_array_size_check(parameters, method):
+def test_rte_increment_2stream_by_2stream_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_2stream_by_2stream():
+def test_rte_increment_2stream_by_2stream() -> None:
     ncol = 3
     nlay = 4
     ngpt = 5
@@ -424,7 +424,7 @@ def test_rte_increment_2stream_by_2stream():
         )
     ],
 )
-def test_rte_increment_2stream_by_nstream_dimension_check(parameters, method):
+def test_rte_increment_2stream_by_nstream_dimension_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "ncol, nlay, ngpt and nmom must be positive integers"
@@ -450,13 +450,13 @@ def test_rte_increment_2stream_by_nstream_dimension_check(parameters, method):
         )
     ],
 )
-def test_rte_increment_2stream_by_nstream_array_size_check(parameters, method):
+def test_rte_increment_2stream_by_nstream_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_2stream_by_nstream():
+def test_rte_increment_2stream_by_nstream() -> None:
 
     ncol = 3
     nlay = 4
@@ -517,7 +517,7 @@ def test_rte_increment_2stream_by_nstream():
         )
     ],
 )
-def test_rte_increment_nstream_by_1scalar_dimension_check(parameters, method):
+def test_rte_increment_nstream_by_1scalar_dimension_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "ncol, nlay and ngpt must be positive integers"
@@ -532,13 +532,13 @@ def test_rte_increment_nstream_by_1scalar_dimension_check(parameters, method):
         )
     ],
 )
-def test_rte_increment_nstream_by_1scalar_array_size_check(parameters, method):
+def test_rte_increment_nstream_by_1scalar_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_nstream_by_1scalar():
+def test_rte_increment_nstream_by_1scalar() -> None:
     ncol, nlay, ngpt = 3, 3, 3
     tau_inout = np.random.rand(ncol, nlay, ngpt)
     g_inout = np.random.rand(ncol, nlay, ngpt)
@@ -588,7 +588,7 @@ def test_rte_increment_nstream_by_1scalar():
         )
     ],
 )
-def test_rte_increment_nstream_by_2stream_dimension_check(parameters, method):
+def test_rte_increment_nstream_by_2stream_dimension_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "ncol, nlay, ngpt and nmom1 must be positive integers"
@@ -614,13 +614,13 @@ def test_rte_increment_nstream_by_2stream_dimension_check(parameters, method):
         )
     ],
 )
-def test_rte_increment_nstream_by_2stream_array_size_check(parameters, method):
+def test_rte_increment_nstream_by_2stream_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_nstream_by_2stream():
+def test_rte_increment_nstream_by_2stream() -> None:
 
     ncol = 3
     nlay = 4
@@ -705,7 +705,7 @@ def test_rte_increment_nstream_by_2stream():
         )
     ],
 )
-def test_rte_increment_nstream_by_nstream_dimension_check(parameters, method):
+def test_rte_increment_nstream_by_nstream_dimension_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert (
@@ -735,13 +735,13 @@ def test_rte_increment_nstream_by_nstream_dimension_check(parameters, method):
         )
     ],
 )
-def test_rte_increment_nstream_by_nstream_array_size_check(parameters, method):
+def test_rte_increment_nstream_by_nstream_array_size_check(parameters, method) -> None:
     with pytest.raises(RuntimeError) as excinfo:
         method(*parameters)
     assert str(excinfo.value) == "Invalid size for input arrays"
 
 
-def test_rte_increment_nstream_by_nstream():
+def test_rte_increment_nstream_by_nstream() -> None:
     ncol = 3
     nlay = 4
     ngpt = 5
