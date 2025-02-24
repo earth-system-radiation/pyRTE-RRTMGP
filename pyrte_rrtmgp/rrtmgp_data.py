@@ -1,3 +1,5 @@
+"""Data download utilities for pyRTE-RRTMGP."""
+
 import hashlib
 import os
 import platform
@@ -10,7 +12,8 @@ import requests
 # URL of the file to download
 REF: str = "v1.9"  # Can be a tag (e.g. "v1.8.2") or branch name (e.g. "main")
 DATA_URL: str = (
-    f"https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/{'tags' if REF.startswith('v') else 'heads'}/{REF}.tar.gz"
+    "https://github.com/earth-system-radiation/rrtmgp-data/archive/refs/"
+    f"{'tags' if REF.startswith('v') else 'heads'}/{REF}.tar.gz"
 )
 
 

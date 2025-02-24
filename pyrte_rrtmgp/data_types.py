@@ -1,12 +1,14 @@
+"""Data types for pyRTE-RRTMGP."""
+
 from enum import StrEnum
 
 
 class GasOpticsFiles(StrEnum):
     """Enumeration of default RRTMGP gas optics data files.
 
-    This enum defines the available pre-configured gas optics data files that can be used
-    with RRTMGP. The files contain absorption coefficients and other optical properties
-    needed for radiative transfer calculations.
+    This enum defines the available pre-configured gas optics data files that can be
+    used with RRTMGP. The files contain absorption coefficients and other optical
+    properties needed for radiative transfer calculations.
 
     Attributes:
         LW_G128: Longwave gas optics file with 128 g-points
@@ -24,8 +26,9 @@ class GasOpticsFiles(StrEnum):
 class ProblemTypes(StrEnum):
     """Enumeration of available radiation calculation types.
 
-    This enum defines the different types of radiation calculations that can be performed,
-    including both longwave and shortwave calculations with different solution methods.
+    This enum defines the different types of radiation calculations that can be
+    performed, including both longwave and shortwave calculations with different
+    solution methods.
 
     Attributes:
         LW_ABSORPTION: Longwave absorption-only calculation

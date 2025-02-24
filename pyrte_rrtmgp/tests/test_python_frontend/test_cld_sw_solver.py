@@ -7,7 +7,7 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 from pyrte_rrtmgp.rte_solver import RTESolver
-from pyrte_rrtmgp.all_skys_funcs import (
+from pyrte_rrtmgp.rrtmgp_cloud_optics import (
     compute_clouds,
     compute_cloud_optics,
     combine_optical_props,

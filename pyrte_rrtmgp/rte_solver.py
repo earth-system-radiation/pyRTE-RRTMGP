@@ -1,3 +1,5 @@
+"""RTE solver for pyRTE-RRTMGP."""
+
 from typing import Optional
 
 import xarray as xr
@@ -8,6 +10,8 @@ from pyrte_rrtmgp.kernels.rte import lw_solver_noscat, sw_solver_2stream
 
 
 class RTESolver:
+    """Class for solving radiative transfer problems using the RTE."""
+
     GAUSS_DS = GAUSS_DS
     GAUSS_WTS = GAUSS_WTS
 
@@ -23,8 +27,8 @@ class RTESolver:
 
         Returns:
             tuple containing:
-                ds (xr.DataArray): Quadrature secants (directional cosines) with dimensions
-                    [site, gpt, n_quad_angs].
+                ds (xr.DataArray): Quadrature secants (directional cosines) with
+                  dimensions [site, gpt, n_quad_angs].
                 weights (xr.DataArray): Quadrature weights with dimension [n_quad_angs].
         """
         n_quad_angs: int = nmus
@@ -55,7 +59,8 @@ class RTESolver:
         """Compute longwave fluxes for absorption-only radiative transfer.
 
         Args:
-            problem_ds: Dataset containing the problem specification with required variables:
+            problem_ds: Dataset containing the problem specification with required
+            variables:
                 - tau: Optical depth
                 - layer_source: Layer source function
                 - level_source: Level source function
@@ -136,9 +141,9 @@ class RTESolver:
             incident_flux,
             kwargs={"do_broadband": not spectrally_resolved, "top_at_1": top_at_1},
             input_core_dims=[
-                [],
-                [],
-                [],
+                [],  # ncol
+                [],  # nlay
+                [],  # ngpt
                 [site_dim, "gpt", "n_quad_angs"],  # ds
                 ["n_quad_angs"],  # weights
                 [site_dim, layer_dim, "gpt"],  # tau
@@ -176,8 +181,8 @@ class RTESolver:
         """Compute shortwave fluxes using two-stream solver.
 
         Args:
-            problem_ds: Dataset containing problem definition including optical properties,
-                surface properties and boundary conditions.
+            problem_ds: Dataset containing problem definition including optical
+                properties, surface properties and boundary conditions.
             spectrally_resolved: If True, return spectrally resolved fluxes.
                 If False, return broadband fluxes.
 
@@ -236,9 +241,9 @@ class RTESolver:
             incident_flux_dif,
             kwargs={"top_at_1": top_at_1, "do_broadband": not spectrally_resolved},
             input_core_dims=[
-                [],
-                [],
-                [],
+                [],  # ncol
+                [],  # nlay
+                [],  # ngpt
                 [site_dim, layer_dim, "gpt"],  # tau
                 [site_dim, layer_dim, "gpt"],  # ssa
                 [site_dim, layer_dim, "gpt"],  # g
@@ -281,8 +286,10 @@ class RTESolver:
 
         Args:
             problem_ds: Dataset containing problem definition and inputs
-            add_to_input: If True, add computed fluxes to input dataset. If False, return fluxes separately
-            spectrally_resolved: If True, return spectrally resolved fluxes. If False, return broadband fluxes
+            add_to_input: If True, add computed fluxes to input dataset. If False,
+                return fluxes separately
+            spectrally_resolved: If True, return spectrally resolved fluxes. If False,
+                return broadband fluxes
 
         Returns:
             Dataset containing computed fluxes if add_to_input is False, None otherwise

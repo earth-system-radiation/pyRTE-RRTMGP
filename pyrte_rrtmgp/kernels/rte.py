@@ -1,3 +1,5 @@
+"""Kernel functions for RTE."""
+
 from typing import Tuple
 
 import numpy as np
@@ -50,8 +52,8 @@ def lw_solver_noscat(
 ]:
     """Perform longwave radiation transfer calculations without scattering.
 
-    This function solves the longwave radiative transfer equation in the absence of scattering,
-    computing fluxes and optionally their Jacobians.
+    This function solves the longwave radiative transfer equation in the absence of
+    scattering, computing fluxes and optionally their Jacobians.
 
     Args:
         ncol: Number of columns
@@ -137,8 +139,8 @@ def lw_solver_2stream(
 ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """Solve the longwave radiative transfer equation using the 2-stream approximation.
 
-    This function implements the two-stream approximation for longwave radiative transfer,
-    accounting for both absorption and scattering processes.
+    This function implements the two-stream approximation for longwave radiative
+    transfer, accounting for both absorption and scattering processes.
 
     Args:
         ncol: Number of columns
@@ -250,10 +252,12 @@ def sw_solver_2stream(
     npt.NDArray[np.float64],
     npt.NDArray[np.float64],
 ]:
-    """Perform shortwave radiation transfer calculations using the 2-stream approximation.
+    """
+    Perform shortwave radiation transfer calculations using the 2-stream approximation.
 
-    This function implements the two-stream approximation for shortwave radiative transfer,
-    computing direct, diffuse upward and downward fluxes, as well as optional broadband fluxes.
+    This function implements the two-stream approximation for shortwave radiative
+    transfer, computing direct, diffuse upward and downward fluxes, as well as optional
+    broadband fluxes.
 
     Args:
         ncol: Number of columns
@@ -652,7 +656,7 @@ def delta_scale_2str_f(
     g: npt.NDArray[np.float64],
     f: npt.NDArray[np.float64],
 ) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
-    """Apply the delta-scaling transformation to two-stream radiative properties with forward scattering fraction.
+    """Apply the delta-scaling to two-stream with forward scattering fraction.
 
     Args:
         ncol: Number of columns

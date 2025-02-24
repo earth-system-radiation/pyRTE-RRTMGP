@@ -1,7 +1,4 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""Configuration file for the Sphinx documentation builder."""
 
 import datetime as dt
 import os
@@ -12,6 +9,7 @@ sys.path.insert(0, os.path.abspath("../../"))
 
 
 def get_version_from_toml() -> str:
+    """Get the version from the pyproject.toml file."""
     if os.path.isfile("../../pyproject.toml"):
         # read pyproject.toml
         with open("../../pyproject.toml", "rb") as f:

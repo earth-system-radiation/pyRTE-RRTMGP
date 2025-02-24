@@ -1,7 +1,9 @@
+"""Gas optics utilities for pyRTE-RRTMGP."""
+
 import logging
 import os
 import sys
-from typing import Iterable, Union, cast
+from typing import Iterable, cast
 
 import numpy as np
 import numpy.typing as npt
@@ -76,8 +78,8 @@ class BaseGasOpticsAccessor:
     """Base class for gas optics calculations.
 
     This class provides common functionality for both longwave and shortwave gas optics
-    calculations, including gas interpolation, optical depth computation, and handling of
-    atmospheric conditions.
+    calculations, including gas interpolation, optical depth computation, and handling
+    of atmospheric conditions.
 
     Args:
         xarray_obj (xr.Dataset): Dataset containing gas optics data
@@ -94,6 +96,17 @@ class BaseGasOpticsAccessor:
         is_internal: bool,
         selected_gases: list[str] | None = None,
     ) -> None:
+        """Initialize the BaseGasOpticsAccessor.
+
+        Args:
+            xarray_obj: Dataset containing gas optics data.
+            is_internal: Whether this is for internal (longwave) radiation.
+            selected_gases: List of gases to include in calculations.
+                If None, all gases in the file will be used.
+
+        Raises:
+            ValueError: If 'h2o' is not included in the gas mapping.
+        """
         self._dataset = xarray_obj
         self.is_internal = is_internal
 
@@ -115,7 +128,8 @@ class BaseGasOpticsAccessor:
 
         if "h2o" not in self._gas_names:
             raise ValueError(
-                "'h2o' must be included in gas mapping as it is required to compute Dry air"
+                "'h2o' must be included in gas mapping as it is required to compute "
+                "Dry air"
             )
 
         # Set the gas names as coordinate in the dataset
@@ -269,21 +283,21 @@ class BaseGasOpticsAccessor:
 
         jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress = xr.apply_ufunc(
             interpolation,
-            ncol,  # ncol
-            nlay,  # nlay
-            ngas,  # ngas
-            nflav,  # nflav
-            neta,  # neta
-            npres,  # npres
-            ntemp,  # ntemp
-            self.flavors_sets,  # flavor
-            self._dataset["press_ref"],  # press_ref
-            self._dataset["temp_ref"],  # temp_ref
-            self._dataset["press_ref_trop"],  # press_ref_trop (scalar)
+            ncol,
+            nlay,
+            ngas,
+            nflav,
+            neta,
+            npres,
+            ntemp,
+            self.flavors_sets,
+            self._dataset["press_ref"],
+            self._dataset["temp_ref"],
+            self._dataset["press_ref_trop"],
             self._dataset["vmr_ref"].sel(absorber_ext=gas_order),
-            atmosphere[atmosphere.mapping.get_var("pres_layer")],  # play
-            atmosphere[atmosphere.mapping.get_var("temp_layer")],  # tlay
-            gases_columns.sel(gas=gas_order),  # col_gas
+            atmosphere[atmosphere.mapping.get_var("pres_layer")],
+            atmosphere[atmosphere.mapping.get_var("temp_layer")],
+            gases_columns.sel(gas=gas_order),
             input_core_dims=[
                 [],  # ncol
                 [],  # nlay
@@ -474,19 +488,19 @@ class BaseGasOpticsAccessor:
             gas_interpolation_data["temperature_index"],
             gas_interpolation_data["pressure_index"],
             input_core_dims=[
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
+                [],  # ncol
+                [],  # nlay
+                [],  # nbnd
+                [],  # ngpt
+                [],  # ngas
+                [],  # nflav
+                [],  # neta
+                [],  # npres
+                [],  # ntemp
+                [],  # nminorlower
+                [],  # nminorklower
+                [],  # nminorupper
+                [],  # nminorkupper
                 [],  # idx_h2o
                 ["atmos_layer", "gpt"],  # gpoint_flavor
                 ["pair", "bnd"],  # bnd_limits_gpt
@@ -760,7 +774,8 @@ class BaseGasOpticsAccessor:
             problem_type = ProblemTypes.SW_2STREAM.value
         else:
             raise ValueError(
-                f"Invalid problem type: {problem_type} for {'LW' if self.is_internal else 'SW'} radiation"
+                f"Invalid problem type: {problem_type} for "
+                f"{'LW' if self.is_internal else 'SW'} radiation"
             )
 
         if add_to_input:
@@ -846,7 +861,8 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             gas_interpolation_data: Dataset containing interpolated gas properties
 
         Returns:
-            Dataset containing Planck source terms including surface, layer and level sources
+            Dataset containing Planck source terms including surface, layer and level
+              sources
         """
         site_dim = atmosphere.mapping.get_dim("site")
         layer_dim = atmosphere.mapping.get_dim("layer")
@@ -900,15 +916,15 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             self._dataset["totplnk"],
             self.gpoint_flavor,
             input_core_dims=[
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],  # scalar dimensions
+                [],  # ncol
+                [],  # nlay
+                [],  # nbnd
+                [],  # ngpt
+                [],  # nflav
+                [],  # neta
+                [],  # npres
+                [],  # ntemp
+                [],  # nPlanckTemp
                 [site_dim, layer_dim],  # tlay
                 [site_dim, level_dim],  # tlev
                 [site_dim],  # tsfc
@@ -955,8 +971,9 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
 class SWGasOpticsAccessor(BaseGasOpticsAccessor):
     """Accessor for external (shortwave) radiation sources.
 
-    This class handles gas optics calculations specific to shortwave radiation, including
-    computing absorption and Rayleigh scattering optical depths, solar sources, and boundary conditions.
+    This class handles gas optics calculations specific to shortwave radiation,
+    including computing absorption and Rayleigh scattering optical depths, solar
+    sources, and boundary conditions.
     """
 
     def compute_problem(
@@ -1127,27 +1144,27 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             self.flavors_sets.sizes["flavor"],
             self._dataset.sizes["mixing_fraction"],
             self._dataset.sizes["temperature"],
-            self.gpoint_flavor,  # gpoint_flavor
-            self._dataset["bnd_limits_gpt"],  # band_lims_gpt
-            krayl,  # krayl
-            self._selected_gas_names_ext.index("h2o"),  # idx_h2o
-            gas_interpolation_data["gases_columns"].sel(gas="dry_air"),  # col_dry
+            self.gpoint_flavor,
+            self._dataset["bnd_limits_gpt"],
+            krayl,
+            self._selected_gas_names_ext.index("h2o"),
+            gas_interpolation_data["gases_columns"].sel(gas="dry_air"),
             gas_interpolation_data["gases_columns"].sel(
                 gas=self._selected_gas_names_ext
-            ),  # col_gas
-            gas_interpolation_data["fminor"],  # fminor
-            gas_interpolation_data["eta_index"],  # jeta
-            gas_interpolation_data["tropopause_mask"],  # tropo
-            gas_interpolation_data["temperature_index"],  # jtemp
+            ),
+            gas_interpolation_data["fminor"],
+            gas_interpolation_data["eta_index"],
+            gas_interpolation_data["tropopause_mask"],
+            gas_interpolation_data["temperature_index"],
             input_core_dims=[
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],
-                [],  # scalar dimensions
+                [],  # ncol
+                [],  # nlay
+                [],  # nbnd
+                [],  # ngpt
+                [],  # ngas
+                [],  # nflav
+                [],  # neta
+                [],  # ntemp
                 ["atmos_layer", "gpt"],  # gpoint_flavor
                 ["pair", "bnd"],  # band_lims_gpt
                 ["temperature", "mixing_fraction", "gpt", "rayl_bound"],  # krayl
@@ -1169,7 +1186,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
 
 @xr.register_dataset_accessor("gas_optics")
 class GasOpticsAccessor:
-    """Factory class that returns appropriate GasOptics implementation based on dataset contents.
+    """Factory class that returns appropriate GasOptics based on dataset contents.
 
     This class determines whether to return a longwave (LW) or shortwave (SW) gas optics
     accessor by checking for the presence of internal source variables in the dataset.
@@ -1183,6 +1200,7 @@ class GasOpticsAccessor:
     def __new__(
         cls, xarray_obj: xr.Dataset, selected_gases: list[str] | None = None
     ) -> "GasOpticsAccessor":
+        """Return either the LW or SW accessor depending on dataset contents."""
         # Check if source is internal by looking for required LW variables
         is_internal: bool = (
             "totplnk" in xarray_obj.data_vars

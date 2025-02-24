@@ -1,5 +1,7 @@
+"""Data validation utilities for pyRTE-RRTMGP."""
+
 from dataclasses import asdict, dataclass
-from typing import Dict, Optional, Set
+from typing import Dict, Optional
 
 import xarray as xr
 
@@ -14,8 +16,10 @@ class DatasetMapping:
     """Container for dimension and variable name mappings.
 
     Attributes:
-        dim_mapping: Dictionary mapping standard dimension names to dataset-specific names
-        var_mapping: Dictionary mapping standard variable names to dataset-specific names
+        dim_mapping: Dictionary mapping standard dimension names to dataset-specific
+          names
+        var_mapping: Dictionary mapping standard variable names to dataset-specific
+          names
     """
 
     dim_mapping: Dict[str, str]
@@ -46,6 +50,11 @@ class DatasetMappingAccessor:
     """
 
     def __init__(self, xarray_obj: xr.Dataset) -> None:
+        """Initialize the DatasetMappingAccessor.
+
+        Args:
+            xarray_obj: Dataset containing the mapping.
+        """
         self._obj = xarray_obj
 
     def set_mapping(self, mapping: DatasetMapping) -> None:
@@ -57,10 +66,6 @@ class DatasetMappingAccessor:
         Raises:
             ValueError: If mapped dimensions don't exist in dataset
         """
-        # missing_dims = set(mapping.dim_mapping.values()) - set(self._obj.dims)
-        # if missing_dims:
-        #     raise ValueError(f"Dataset missing required dimensions: {missing_dims}")
-
         self._obj.attrs["dataset_mapping"] = asdict(mapping)
 
     @property
