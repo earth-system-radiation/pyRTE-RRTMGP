@@ -7,8 +7,10 @@ import numpy as np
 
 import pyrte_rrtmgp.pyrte_rrtmgp as py
 
+from typing import Any
 
-def test_rrtmgp_compute_tau_absorption(request):
+
+def test_rrtmgp_compute_tau_absorption(request: Any) -> None:
     path = os.path.dirname(request.path)
 
     input_data = None

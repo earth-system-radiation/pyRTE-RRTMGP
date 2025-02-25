@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 import json
 import os
+from typing import Any
 
 import numpy as np
 
 import pyrte_rrtmgp.pyrte_rrtmgp as py
 
 
-def test_lw_solver(request):
+def test_lw_solver(request: Any) -> None:
     path = os.path.dirname(request.path)
     with open(f"{path}/lw_solver_input.json", "r") as f:
         data = json.load(f)

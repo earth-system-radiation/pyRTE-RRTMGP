@@ -7,13 +7,15 @@ import numpy as np
 
 import pyrte_rrtmgp.pyrte_rrtmgp as py
 
+from typing import Any
 
-def load_json_file(file_path):
+
+def load_json_file(file_path: str) -> dict:
     with open(file_path, "r") as f:
         return json.load(f)
 
 
-def test_rrtmgp_interpolation(request):
+def test_rrtmgp_interpolation(request: Any) -> None:
     path = os.path.dirname(request.path)
 
     input_data = None

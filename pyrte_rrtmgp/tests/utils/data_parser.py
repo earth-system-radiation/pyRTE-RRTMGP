@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
+
+
+from typing import Any
+
+
+
 import json
 
 
-def parse_value(value):
+def parse_value(value: Any) -> Any:
     # Handle NaN
     if "NaN" in value:
         res = float("nan")
@@ -22,7 +28,7 @@ def parse_value(value):
     return res
 
 
-def load_data_from_file(file_path):
+def load_data_from_file(file_path: str) -> dict:
     data = {}
     with open(file_path, "r") as file:
         for line in file:

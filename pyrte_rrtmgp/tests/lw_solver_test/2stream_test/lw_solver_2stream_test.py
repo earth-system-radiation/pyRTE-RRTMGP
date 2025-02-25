@@ -8,7 +8,10 @@ import numpy as np
 import pyrte_rrtmgp.pyrte_rrtmgp as py
 
 
-def test_lw_solver(request):
+from typing import Any
+
+
+def test_lw_solver(request: Any) -> None:
     path = os.path.dirname(request.path)
 
     # Unzip data
