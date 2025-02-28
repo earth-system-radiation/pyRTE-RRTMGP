@@ -1,4 +1,4 @@
-name: Mypy Static Type Analysis
+name: Mypy
 
 on:
   push:
