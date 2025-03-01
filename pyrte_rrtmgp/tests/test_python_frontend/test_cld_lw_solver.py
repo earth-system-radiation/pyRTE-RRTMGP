@@ -3,9 +3,9 @@ import xarray as xr
 
 from pyrte_rrtmgp.data_types import CloudOpticsFiles, GasOpticsFiles, AllSkyExampleFiles
 from pyrte_rrtmgp.rrtmgp_gas_optics import load_gas_optics
+import pyrte_rrtmgp.rrtmgp_cloud_optics
 from pyrte_rrtmgp.rrtmgp_cloud_optics import (
     load_cloud_optics,
-    compute_cloud_optics,
     combine_optical_props,
 )
 from pyrte_rrtmgp.utils import compute_profiles, compute_clouds, load_rrtmgp_file
@@ -47,11 +47,11 @@ def test_lw_solver_with_clouds() -> None:
     atmosphere = atmosphere.merge(cloud_properties)
 
     # Calculate cloud optical properties
-    clouds_optical_props = compute_cloud_optics(atmosphere, cloud_optics_lw)
+    clouds_optical_props = cloud_optics_lw.compute_cloud_optics(atmosphere)
 
     # Calculate gas optical properties
     gas_optics_lw = load_gas_optics(gas_optics_file=GasOpticsFiles.LW_G256)
-    clear_sky_optical_props = gas_optics_lw.gas_optics.compute(
+    clear_sky_optical_props = gas_optics_lw.compute_gas_optics(
         atmosphere, problem_type="absorption", add_to_input=False
     )
     clear_sky_optical_props["surface_emissivity"] = 0.98

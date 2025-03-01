@@ -3,9 +3,9 @@ import xarray as xr
 
 from pyrte_rrtmgp.data_types import CloudOpticsFiles, GasOpticsFiles, AllSkyExampleFiles
 from pyrte_rrtmgp.rrtmgp_gas_optics import load_gas_optics
+import pyrte_rrtmgp.rrtmgp_cloud_optics
 from pyrte_rrtmgp.rrtmgp_cloud_optics import (
     load_cloud_optics,
-    compute_cloud_optics,
     combine_optical_props,
     delta_scale_optical_props,
 )
@@ -48,7 +48,7 @@ def test_sw_solver_with_clouds() -> None:
     atmosphere = atmosphere.merge(cloud_properties)
 
     # Calculate cloud optical properties
-    clouds_optical_props = compute_cloud_optics(atmosphere, cloud_optics_sw, lw=False)
+    clouds_optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere, lw=False)
     clouds_optical_props = delta_scale_optical_props(clouds_optical_props)
 
     # Load gas optics and add SW-specific properties
@@ -67,7 +67,7 @@ def test_sw_solver_with_clouds() -> None:
     )
 
     # Calculate gas optical properties
-    clear_sky_optical_props = gas_optics_sw.gas_optics.compute(
+    clear_sky_optical_props = gas_optics_sw.compute_gas_optics(
         atmosphere, problem_type="two-stream", add_to_input=False
     )
 

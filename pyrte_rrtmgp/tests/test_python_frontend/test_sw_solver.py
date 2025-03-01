@@ -18,7 +18,7 @@ def test_sw_solver_noscat() -> None:
     atmosphere = atmosphere.sel(expt=0)  # only one experiment
 
     # Compute gas optics for the atmosphere
-    gas_optics_sw.gas_optics.compute(atmosphere, problem_type="two-stream")
+    gas_optics_sw.compute_gas_optics(atmosphere, problem_type="two-stream")
 
     # Solve RTE
     fluxes = rte_solve(atmosphere, add_to_input=False)

@@ -720,7 +720,7 @@ class BaseGasOpticsAccessor:
 
         return col_dry.rename("dry_air")
 
-    def compute(
+    def __call__(
         self,
         atmosphere: xr.Dataset,
         problem_type: str,
@@ -1204,7 +1204,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         return tau_rayleigh.rename("tau").to_dataset()
 
 
-@xr.register_dataset_accessor("gas_optics")
+@xr.register_dataset_accessor("compute_gas_optics")
 class GasOpticsAccessor:
     """Factory class that returns appropriate GasOptics based on dataset contents.
 

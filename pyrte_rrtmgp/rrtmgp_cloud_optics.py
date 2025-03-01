@@ -49,159 +49,174 @@ def load_cloud_optics(
     return dataset
 
 
-def compute_cloud_optics(
-    cloud_properties: xr.Dataset, cloud_optics: xr.Dataset, lw: bool = True
-) -> xr.Dataset:
-    """
-    Compute cloud optical properties for liquid and ice clouds.
+@xr.register_dataset_accessor("compute_cloud_optics")
+class CloudOpticsAccessor:
+    """Accessor for computing cloud optical properties."""
 
-    Args:
-        cloud_properties: Dataset containing cloud properties
-        cloud_optics: Dataset containing cloud optics data
-        lw: Whether to compute liquid water phase (True) or ice water phase (False)
+    def __init__(self, xarray_obj: xr.Dataset):
+        """Initialize the accessor."""
+        self._obj = xarray_obj
 
-    Returns:
-        tuple: Arrays of optical properties for both liquid and ice phases
-    """
-    # Get dimensions
-    ncol, nlay = cloud_properties.sizes["site"], cloud_properties.sizes["layer"]
+    def __call__(
+        self, cloud_properties: xr.Dataset, lw: bool = True, add_to_input: bool = False
+    ) -> xr.Dataset:
+        """
+        Compute cloud optical properties for liquid and ice clouds.
 
-    # Create cloud masks
-    liq_mask = cloud_properties.lwp > 0
-    ice_mask = cloud_properties.iwp > 0
+        Args:
+            cloud_properties: Dataset containing cloud properties
+            lw: Whether to compute liquid water phase (True) or ice water phase (False)
 
-    # Check if cloud optics data is initialized
-    if not hasattr(cloud_optics, "extliq"):
-        raise ValueError("Cloud optics: no data has been initialized")
+        Returns:
+            xr.Dataset: Dataset containing optical properties for both liquid and ice
+              phases
+        """
+        cloud_optics = self._obj
 
-    # Validate particle sizes are within bounds
-    if np.any(
-        (cloud_properties.rel.where(liq_mask) < cloud_optics.radliq_lwr.values)
-        | (cloud_properties.rel.where(liq_mask) > cloud_optics.radliq_upr.values)
-    ):
-        raise ValueError("Cloud optics: liquid effective radius is out of bounds")
+        # Get dimensions
+        ncol, nlay = cloud_properties.sizes["site"], cloud_properties.sizes["layer"]
 
-    if np.any(
-        (cloud_properties.rei.where(ice_mask) < cloud_optics.diamice_lwr.values)
-        | (cloud_properties.rei.where(ice_mask) > cloud_optics.diamice_upr.values)
-    ):
-        raise ValueError("Cloud optics: ice effective radius is out of bounds")
+        # Create cloud masks
+        liq_mask = cloud_properties.lwp > 0
+        ice_mask = cloud_properties.iwp > 0
 
-    # Check for negative water paths
-    if np.any(cloud_properties.lwp.where(liq_mask) < 0) or np.any(
-        cloud_properties.iwp.where(ice_mask) < 0
-    ):
-        raise ValueError(
-            "Cloud optics: negative lwp or iwp where clouds are supposed to be"
+        # Check if cloud optics data is initialized
+        if not hasattr(cloud_optics, "extliq"):
+            raise ValueError("Cloud optics: no data has been initialized")
+
+        # Validate particle sizes are within bounds
+        if np.any(
+            (cloud_properties.rel.where(liq_mask) < cloud_optics.radliq_lwr.values)
+            | (cloud_properties.rel.where(liq_mask) > cloud_optics.radliq_upr.values)
+        ):
+            raise ValueError("Cloud optics: liquid effective radius is out of bounds")
+
+        if np.any(
+            (cloud_properties.rei.where(ice_mask) < cloud_optics.diamice_lwr.values)
+            | (cloud_properties.rei.where(ice_mask) > cloud_optics.diamice_upr.values)
+        ):
+            raise ValueError("Cloud optics: ice effective radius is out of bounds")
+
+        # Check for negative water paths
+        if np.any(cloud_properties.lwp.where(liq_mask) < 0) or np.any(
+            cloud_properties.iwp.where(ice_mask) < 0
+        ):
+            raise ValueError(
+                "Cloud optics: negative lwp or iwp where clouds are supposed to be"
+            )
+
+        # Determine if we're using band-averaged or spectral properties
+        gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
+        gpt_out_dim = "bnd" if gpt_dim == "nband" else "gpt"
+        ngpt = cloud_optics.sizes["nband" if gpt_dim == "nband" else "gpt"]
+
+        # Compute optical properties using lookup tables
+        # Liquid phase
+        step_size = (cloud_optics.radliq_upr - cloud_optics.radliq_lwr) / (
+            cloud_optics.sizes["nsize_liq"] - 1
         )
 
-    # Determine if we're using band-averaged or spectral properties
-    gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
-    gpt_out_dim = "bnd" if gpt_dim == "nband" else "gpt"
-    ngpt = cloud_optics.sizes["nband" if gpt_dim == "nband" else "gpt"]
+        ltau, ltaussa, ltaussag = xr.apply_ufunc(
+            compute_cld_from_table,
+            ncol,
+            nlay,
+            ngpt,
+            liq_mask,
+            cloud_properties.lwp,
+            cloud_properties.rel,
+            cloud_optics.sizes["nsize_liq"],
+            step_size.values,
+            cloud_optics.radliq_lwr.values,
+            cloud_optics.extliq,
+            cloud_optics.ssaliq,
+            cloud_optics.asyliq,
+            input_core_dims=[
+                [],  # ncol
+                [],  # nlay
+                [],  # ngpt
+                ["site", "layer"],  # liq_mask
+                ["site", "layer"],  # lwp
+                ["site", "layer"],  # rel
+                [],  # nsize_liq
+                [],  # step_size
+                [],  # radliq_lwr
+                ["nsize_liq", gpt_dim],  # extliq
+                ["nsize_liq", gpt_dim],  # ssaliq
+                ["nsize_liq", gpt_dim],  # asyliq
+            ],
+            output_core_dims=[
+                ["site", "layer", gpt_out_dim],  # ltau
+                ["site", "layer", gpt_out_dim],  # ltaussa
+                ["site", "layer", gpt_out_dim],  # ltaussag
+            ],
+            output_dtypes=[np.float64, np.float64, np.float64],
+            vectorize=True,
+            dask="parallelized",
+        )
 
-    # Compute optical properties using lookup tables
-    # Liquid phase
-    step_size = (cloud_optics.radliq_upr - cloud_optics.radliq_lwr) / (
-        cloud_optics.sizes["nsize_liq"] - 1
-    )
+        # Ice phase
+        step_size = (cloud_optics.diamice_upr - cloud_optics.diamice_lwr) / (
+            cloud_optics.sizes["nsize_ice"] - 1
+        )
+        ice_roughness = 1
 
-    ltau, ltaussa, ltaussag = xr.apply_ufunc(
-        compute_cld_from_table,
-        ncol,
-        nlay,
-        ngpt,
-        liq_mask,
-        cloud_properties.lwp,
-        cloud_properties.rel,
-        cloud_optics.sizes["nsize_liq"],
-        step_size.values,
-        cloud_optics.radliq_lwr.values,
-        cloud_optics.extliq,
-        cloud_optics.ssaliq,
-        cloud_optics.asyliq,
-        input_core_dims=[
-            [],  # ncol
-            [],  # nlay
-            [],  # ngpt
-            ["site", "layer"],  # liq_mask
-            ["site", "layer"],  # lwp
-            ["site", "layer"],  # rel
-            [],  # nsize_liq
-            [],  # step_size
-            [],  # radliq_lwr
-            ["nsize_liq", gpt_dim],  # extliq
-            ["nsize_liq", gpt_dim],  # ssaliq
-            ["nsize_liq", gpt_dim],  # asyliq
-        ],
-        output_core_dims=[
-            ["site", "layer", gpt_out_dim],  # ltau
-            ["site", "layer", gpt_out_dim],  # ltaussa
-            ["site", "layer", gpt_out_dim],  # ltaussag
-        ],
-        output_dtypes=[np.float64, np.float64, np.float64],
-        vectorize=True,
-        dask="parallelized",
-    )
+        itau, itaussa, itaussag = xr.apply_ufunc(
+            compute_cld_from_table,
+            ncol,
+            nlay,
+            ngpt,
+            ice_mask,
+            cloud_properties.iwp,
+            cloud_properties.rei,
+            cloud_optics.sizes["nsize_ice"],
+            step_size.values,
+            cloud_optics.diamice_lwr.values,
+            cloud_optics.extice[ice_roughness, :, :],
+            cloud_optics.ssaice[ice_roughness, :, :],
+            cloud_optics.asyice[ice_roughness, :, :],
+            input_core_dims=[
+                [],  # ncol
+                [],  # nlay
+                [],  # ngpt
+                ["site", "layer"],  # ice_mask
+                ["site", "layer"],  # iwp
+                ["site", "layer"],  # rei
+                [],  # nsize_ice
+                [],  # step_size
+                [],  # diamice_lwr
+                ["nsize_ice", gpt_dim],  # extice
+                ["nsize_ice", gpt_dim],  # ssaice
+                ["nsize_ice", gpt_dim],  # asyice
+            ],
+            output_core_dims=[
+                ["site", "layer", gpt_out_dim],  # itau
+                ["site", "layer", gpt_out_dim],  # itaussa
+                ["site", "layer", gpt_out_dim],  # itaussag
+            ],
+            output_dtypes=[np.float64, np.float64, np.float64],
+            vectorize=True,
+            dask="parallelized",
+        )
 
-    # Ice phase
-    step_size = (cloud_optics.diamice_upr - cloud_optics.diamice_lwr) / (
-        cloud_optics.sizes["nsize_ice"] - 1
-    )
-    ice_roughness = 1
+        # Combine liquid and ice contributions
+        if lw:
+            tau = (ltau - ltaussa) + (itau - itaussa)
+            props = xr.Dataset({"tau": tau})
+        else:
+            tau = ltau + itau
+            taussa = ltaussa + itaussa
+            taussag = ltaussag + itaussag
 
-    itau, itaussa, itaussag = xr.apply_ufunc(
-        compute_cld_from_table,
-        ncol,
-        nlay,
-        ngpt,
-        ice_mask,
-        cloud_properties.iwp,
-        cloud_properties.rei,
-        cloud_optics.sizes["nsize_ice"],
-        step_size.values,
-        cloud_optics.diamice_lwr.values,
-        cloud_optics.extice[ice_roughness, :, :],
-        cloud_optics.ssaice[ice_roughness, :, :],
-        cloud_optics.asyice[ice_roughness, :, :],
-        input_core_dims=[
-            [],  # ncol
-            [],  # nlay
-            [],  # ngpt
-            ["site", "layer"],  # ice_mask
-            ["site", "layer"],  # iwp
-            ["site", "layer"],  # rei
-            [],  # nsize_ice
-            [],  # step_size
-            [],  # diamice_lwr
-            ["nsize_ice", gpt_dim],  # extice
-            ["nsize_ice", gpt_dim],  # ssaice
-            ["nsize_ice", gpt_dim],  # asyice
-        ],
-        output_core_dims=[
-            ["site", "layer", gpt_out_dim],  # itau
-            ["site", "layer", gpt_out_dim],  # itaussa
-            ["site", "layer", gpt_out_dim],  # itaussag
-        ],
-        output_dtypes=[np.float64, np.float64, np.float64],
-        vectorize=True,
-        dask="parallelized",
-    )
+            # Calculate derived quantities
+            ssa = xr.where(tau > np.finfo(float).eps, taussa / tau, 0.0)
+            g = xr.where(taussa > np.finfo(float).eps, taussag / taussa, 0.0)
 
-    # Combine liquid and ice contributions
-    if lw:
-        tau = (ltau - ltaussa) + (itau - itaussa)
-        return xr.Dataset({"tau": tau})
-    else:
-        tau = ltau + itau
-        taussa = ltaussa + itaussa
-        taussag = ltaussag + itaussag
+            props = xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
 
-        # Calculate derived quantities
-        ssa = xr.where(tau > np.finfo(float).eps, taussa / tau, 0.0)
-        g = xr.where(taussa > np.finfo(float).eps, taussag / taussa, 0.0)
+        if add_to_input:
+            cloud_properties.update(props)
 
-        return xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
+        return props
 
 
 def combine_optical_props(op1: xr.Dataset, op2: xr.Dataset) -> xr.Dataset:
