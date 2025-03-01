@@ -10,7 +10,7 @@ from pyrte_rrtmgp.rrtmgp_cloud_optics import (
     delta_scale_optical_props,
 )
 from pyrte_rrtmgp.utils import compute_profiles, compute_clouds, load_rrtmgp_file
-from pyrte_rrtmgp.rte_solver import RTESolver
+from pyrte_rrtmgp.rte_solver import rte_solve
 
 
 def test_sw_solver_with_clouds() -> None:
@@ -76,8 +76,7 @@ def test_sw_solver_with_clouds() -> None:
         clouds_optical_props, clear_sky_optical_props
     )
 
-    solver = RTESolver()
-    fluxes = solver.solve(combined_optical_props, add_to_input=False)
+    fluxes = rte_solve(combined_optical_props, add_to_input=False)
     assert fluxes is not None
 
     # Load reference data and verify results

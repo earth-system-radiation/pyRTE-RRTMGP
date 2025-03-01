@@ -6,7 +6,7 @@ import xarray as xr
 from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
-from pyrte_rrtmgp.rte_solver import RTESolver
+from pyrte_rrtmgp.rte_solver import rte_solve
 
 ERROR_TOLERANCE = 1e-7
 
@@ -43,8 +43,7 @@ def test_lw_solver_noscat() -> None:
     gas_optics_lw.gas_optics.compute(atmosphere, problem_type="absorption")
 
     # Solve RTE with the new API
-    solver = RTESolver()
-    fluxes = solver.solve(atmosphere, add_to_input=False)
+    fluxes = rte_solve(atmosphere, add_to_input=False)
     assert fluxes is not None
 
     # Compare results with reference data
