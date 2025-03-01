@@ -66,7 +66,7 @@ class RFMIPExampleFiles(StrEnum):
     RRTMGP. The files contain example data for radiative transfer calculations.
     """
 
-    INPUT = (
+    RFMIP = (
         "examples/rfmip-clear-sky/inputs/"
         "multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc"
     )
