@@ -49,62 +49,6 @@ def load_cloud_optics(
     return dataset
 
 
-def compute_clouds(
-    cloud_optics: xr.Dataset, ncol: int, nlay: int, p_lay: np.ndarray, t_lay: np.ndarray
-) -> xr.Dataset:
-    """Compute cloud properties for radiative transfer calculations.
-
-    Args:
-        cloud_optics: Dataset containing cloud optics data
-        ncol: Number of columns
-        nlay: Number of layers
-        p_lay: Pressure profile
-        t_lay: Temperature profile
-    """
-    # Get min/max radii values for liquid and ice
-    rel_val = 0.5 * (cloud_optics["radliq_lwr"] + cloud_optics["radliq_upr"])
-    rei_val = 0.5 * (cloud_optics["diamice_lwr"] + cloud_optics["diamice_upr"])
-
-    # Create coordinate arrays
-    site = np.arange(ncol)
-    layer = np.arange(nlay)
-
-    # Convert inputs to xarray DataArrays if they aren't already
-    p_lay = xr.DataArray(
-        p_lay, dims=["site", "layer"], coords={"site": site, "layer": layer}
-    )
-    t_lay = xr.DataArray(
-        t_lay, dims=["site", "layer"], coords={"site": site, "layer": layer}
-    )
-
-    # Create cloud mask using xarray operations
-    cloud_mask = (
-        (p_lay > 100 * 100) & (p_lay < 900 * 100) & ((site + 1) % 3 != 0).reshape(-1, 1)
-    )
-
-    # Initialize arrays as DataArrays with zeros
-    lwp = xr.zeros_like(p_lay)
-    iwp = xr.zeros_like(p_lay)
-    rel = xr.zeros_like(p_lay)
-    rei = xr.zeros_like(p_lay)
-
-    # Set values where clouds exist using xarray where operations
-    lwp = lwp.where(~(cloud_mask & (t_lay > 263)), 10.0)
-    rel = rel.where(~(cloud_mask & (t_lay > 263)), rel_val)
-
-    iwp = iwp.where(~(cloud_mask & (t_lay < 273)), 10.0)
-    rei = rei.where(~(cloud_mask & (t_lay < 273)), rei_val)
-
-    return xr.Dataset(
-        {
-            "lwp": lwp,
-            "iwp": iwp,
-            "rel": rel,
-            "rei": rei,
-        }
-    )
-
-
 def compute_cloud_optics(
     cloud_properties: xr.Dataset, cloud_optics: xr.Dataset, lw: bool = True
 ) -> xr.Dataset:

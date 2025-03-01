@@ -1,7 +1,12 @@
 """Utility functions for pyRTE-RRTMGP."""
 
+import os
+
 import numpy as np
 import xarray as xr
+
+from pyrte_rrtmgp.data_types import AllSkyExampleFiles, RFMIPExampleFiles
+from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 
 
 def create_gas_dataset(
@@ -48,6 +53,7 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
             - temp_level: Temperature at layer interfaces [K]
             - water_vapor: Water vapor mass mixing ratio [kg/kg]
             - ozone: Ozone mass mixing ratio [kg/kg]
+            - surface_temperature: Temperature at surface [K]
 
     Raises:
         ValueError: If input parameters are invalid
@@ -160,6 +166,8 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
         p0 * (Tv_lev / Tv0) ** (g / (Rd * gamma)),
     )
 
+    t_sfc = np.repeat(sst, ncol)
+
     # Repeat profiles for each column
     p_lay = np.repeat(p_lay, ncol, axis=0)
     t_lay = np.repeat(t_lay, ncol, axis=0)
@@ -174,6 +182,7 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
             "temp_layer": (["site", "layer"], t_lay),
             "pres_level": (["site", "level"], p_lev),
             "temp_level": (["site", "level"], t_lev),
+            "surface_temperature": (["site"], t_sfc),
             "h2o": (["site", "layer"], q_lay),
             "o3": (["site", "layer"], o3),
         },
@@ -184,3 +193,66 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
             "nlay": nlay,
         },
     )
+
+
+def compute_clouds(
+    cloud_optics: xr.Dataset, p_lay: xr.DataArray, t_lay: xr.DataArray
+) -> xr.Dataset:
+    """Compute cloud properties for radiative transfer calculations.
+
+    Args:
+        cloud_optics: Dataset containing cloud optics data
+        atmosphere: Dataset with atmospheric data
+
+    Returns:
+        xr.Dataset: Dataset containing cloud properties (lwp, iwp, rel, rei)
+    """
+    # Get dimensions from atmosphere
+    ncol = p_lay.sizes["site"]
+
+    # Get reference radii values
+    rel_val = 0.5 * (cloud_optics["radliq_lwr"] + cloud_optics["radliq_upr"])
+    rei_val = 0.5 * (cloud_optics["diamice_lwr"] + cloud_optics["diamice_upr"])
+
+    # Create cloud mask - clouds between 100-900 hPa and in 2/3 of columns
+    cloud_mask = (
+        (p_lay > 100 * 100)
+        & (p_lay < 900 * 100)
+        & ((np.arange(ncol) + 1) % 3 != 0).reshape(-1, 1)
+    )
+
+    # Initialize arrays with zeros
+    lwp = xr.zeros_like(p_lay)
+    iwp = xr.zeros_like(p_lay)
+    rel = xr.zeros_like(p_lay)
+    rei = xr.zeros_like(p_lay)
+
+    # Set values where clouds exist
+    lwp = lwp.where(~(cloud_mask & (t_lay > 263)), 10.0)
+    rel = rel.where(~(cloud_mask & (t_lay > 263)), rel_val)
+
+    iwp = iwp.where(~(cloud_mask & (t_lay < 273)), 10.0)
+    rei = rei.where(~(cloud_mask & (t_lay < 273)), rei_val)
+
+    return xr.Dataset(
+        {
+            "lwp": lwp,
+            "iwp": iwp,
+            "rel": rel,
+            "rei": rei,
+        }
+    )
+
+
+def load_rrtmgp_file(file: AllSkyExampleFiles | RFMIPExampleFiles) -> xr.Dataset:
+    """Load an RRTMGP file.
+
+    Args:
+        file: The file to load
+
+    Returns:
+        xr.Dataset: The loaded dataset
+    """
+    rte_rrtmgp_dir = download_rrtmgp_data()
+    ref_path = os.path.join(rte_rrtmgp_dir, file.value)
+    return xr.load_dataset(ref_path, decode_cf=False)
