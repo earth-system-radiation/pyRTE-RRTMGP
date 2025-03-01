@@ -1,8 +1,11 @@
 """Cloud optics utilities for pyRTE-RRTMGP."""
 
+import os
+
 import numpy as np
 import xarray as xr
 
+from pyrte_rrtmgp.data_types import CloudOpticsFiles
 from pyrte_rrtmgp.kernels.rrtmgp import compute_cld_from_table
 from pyrte_rrtmgp.kernels.rte import (
     delta_scale_2str,
@@ -16,6 +19,34 @@ from pyrte_rrtmgp.kernels.rte import (
     increment_2stream_by_1scalar,
     increment_2stream_by_2stream,
 )
+from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+
+
+def load_cloud_optics(
+    file_path: str | None = None,
+    cloud_optics_file: CloudOpticsFiles | None = None,
+) -> xr.Dataset:
+    """Load cloud optics data from a netCDF file.
+
+    Args:
+        cloud_optics_file: Enum specifying a predefined cloud optics file from the
+            RRTMGP data package. Only used if file_path is None.
+
+    Returns:
+        xr.Dataset: Dataset containing the cloud optics data.
+
+    Raises:
+        ValueError: If neither file_path nor cloud_optics_file is provided.
+    """
+    if file_path is not None:
+        dataset = xr.load_dataset(file_path)
+    elif cloud_optics_file is not None:
+        rte_rrtmgp_dir = download_rrtmgp_data()
+        dataset = xr.load_dataset(os.path.join(rte_rrtmgp_dir, cloud_optics_file.value))
+    else:
+        raise ValueError("Either file_path or cloud_optics_file must be provided")
+
+    return dataset
 
 
 def compute_clouds(
