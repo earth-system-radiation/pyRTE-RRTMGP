@@ -9,7 +9,7 @@ This is the repository for the pyRTE-RRTMGP project.
 
 This project provides a **Python interface to the [RTE+RRTMGP](https://earth-system-radiation.github.io/rte-rrtmgp/)
 Fortran software package**. RTE+RRTMGP package is a set of libraries for for computing radiative fluxes in
-planetary atmospheres. 
+planetary atmospheres.
 
 ## Documentation
 
@@ -17,7 +17,7 @@ Documentation for pyRTE-RRTMGP is available on [Read the Docs](https://pyrte-rrt
 
 ## Project Status
 
-The project is currently under active development. We hope to have a stable first usable release by Apr 2025. 
+The project is currently under active development. We hope to have a stable first usable release by Apr 2025.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to this effort
 

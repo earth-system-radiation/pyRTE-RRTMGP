@@ -24,7 +24,7 @@ mypy .
 ```
 Please ensure that new contributions pass the mypy checks before submitting pull requests.
 
-Static type checking is run as part of `pre-commit`, the use of which we encourage. 
+Static type checking is run as part of `pre-commit`, the use of which we encourage.
 
 
 ## How to Contribute to the Documentation?
