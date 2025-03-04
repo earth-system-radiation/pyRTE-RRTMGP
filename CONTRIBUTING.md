@@ -13,7 +13,19 @@ Please file a feature request on the [GitHub page](https://github.com/earth-syst
 
 ## How to Set up a Local Development Environment?
 
-Please follow the instructions for [installing pyRTE-RRTMTP with pip in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html).
+Please follow the instructions for [installing pyRTE-RRTMTP with pip or conda in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html).
+
+### Static Type Checking
+This project employs [mypy](https://github.com/python/mypy) for static type checking to improve code reliability and maintainability. Mypy is integrated into our continuous integration workflow, and you can also run it locally using:
+
+```bash
+pip install mypy
+mypy .
+```
+Please ensure that new contributions pass the mypy checks before submitting pull requests.
+
+Static type checking is run as part of `pre-commit`, the use of which we encourage. 
+
 
 ## How to Contribute to the Documentation?
 
