@@ -3,24 +3,29 @@
 #
 #   Data comes from the NASA/GMAO contribution to DYAMOND2 described at
 #   https://gmao.gsfc.nasa.gov/global_mesoscale/dyamond_phaseII/data_access/
-#   Data is on a cubed sphere at resolution c2880 (~3.5 km globally, or about 50 million columns)
-#   Files are about 6Gb per snapshot (we choose Feb 1 at 9 Z); files for cloud variables are smaller
+#   Data is on a cubed sphere at resolution c2880
+#   (~3.5 km globally, or about 50 million columns). Files are about
+#   6Gb per snapshot (we choose Feb 1 at 9 Z); files for cloud variables are smaller
 #
 from pathlib import Path
 
 import pooch
 
+ymd = "20200201"
+ym = ymd[:-2]
+sim = "DYAMONDv2_c2880_L181"
+
 urls = [
-    "https://portal.nccs.nasa.gov/datashare/G5NR/DYAMONDv2/03KM/DYAMONDv2_c2880_L181/"
-    + f"inst_01hr_3d_{v}_Mv/202002/DYAMONDv2_c2880_L181.inst_01hr_3d_{v}_Mv.20200201_0900z.nc4"
+    f"https://portal.nccs.nasa.gov/datashare/G5NR/DYAMONDv2/03KM/{sim}/"
+    + f"inst_01hr_3d_{v}_Mv/{ym}/{sim}.inst_01hr_3d_{v}_Mv.{ymd}_0900z.nc4"
     for v in ["QL", "QI", "RL", "RI", "DELP", "CO2", "QV", "T", "P"]
 ]
 #
 # Ozone is 6-hourly
 #
 urls.append(
-    "https://portal.nccs.nasa.gov/datashare/G5NR/DYAMONDv2/03KM/DYAMONDv2_c2880_L181/"
-    + "geosgcm_prog/202002/DYAMONDv2_c2880_L181.geosgcm_prog.20200201_0600z.nc4"
+    f"https://portal.nccs.nasa.gov/datashare/G5NR/DYAMONDv2/03KM/{sim}/"
+    + f"geosgcm_prog/{ym}/{sim}.geosgcm_prog.{ymd}_0600z.nc4"
 )
 
 data_dir = "GEOS-DYAMOND2-data"
