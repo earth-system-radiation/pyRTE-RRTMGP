@@ -1,17 +1,19 @@
 #! /usr/env/python
+"""Compute cloud optics for a large sample of clouds."""
+#
+#   fetch-DYAMOND-data.py must be run first.
+#
 import scipy as sc
 import xarray as xr
 
 #
-# Compute cloud optics for a large sample of clouds
-#   fetch-DYAMOND-data.py must be run first.
+# Only about half the levels contain clouds so
+#   for cloud optics only we can limit the data we import
 #
-
-#
-# Only about half the levels contain clouds so for cloud optics only we can limit the data we import
-#
-min_lev_liquid = 107  # There are almost no liquid clouds in levels higher (smaller index is higher) than 107
-min_lev_ice = 78  # There are almost no ice clouds in levels higher (smaller index is higher) than 78
+min_lev_liquid = 107
+# There are almost no liquid clouds in levels higher (smaller index is higher) than 107
+min_lev_ice = 78
+# There are almost no ice clouds in levels higher (smaller index is higher) than 78
 
 atmosphere = xr.open_mfdataset(
     "GEOS-DYAMOND2-data/*.nc4",
