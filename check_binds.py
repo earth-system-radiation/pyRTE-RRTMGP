@@ -1,8 +1,31 @@
+"""
+This module provides functionality to compare C function declarations with
+Pybind11 bindings.
+
+Example usage:
+
+```
+python check_binds.py \
+    --c_headers /path/to/rrtmgp_kernels.h /path/to/rte_kernels.h \
+    --pybind /path/to/pybind_interface.cpp
+```
+
+"""
+
 import argparse
 import re
 
 
 def extract_c_functions(file_paths):
+    """
+    Extract C function names from the given header files.
+
+    Args:
+        file_paths (list of str): List of paths to C header files.
+
+    Returns:
+        set: A set of C function names.
+    """
     functionNames = set()
 
     for filePath in file_paths:
@@ -26,6 +49,15 @@ def extract_c_functions(file_paths):
 
 
 def extract_pybind_functions(pybind_file):
+    """
+    Extract function names bound using Pybind11 from the given file.
+
+    Args:
+        pybind_file (str): Path to the Pybind11 binding file.
+
+    Returns:
+        set: A set of function names bound using Pybind11.
+    """
     try:
         with open(pybind_file, "r", encoding="utf-8") as file:
             content = file.read()
@@ -38,14 +70,22 @@ def extract_pybind_functions(pybind_file):
 
 
 def main():
+    """
+    Main function to compare C function declarations with Pybind11 bindings.
+    """
     parser = argparse.ArgumentParser(
         description="Compare C function declarations with Pybind11 bindings."
     )
     parser.add_argument(
-        "--c_headers", nargs="+", required=True, help="List of C header files to check."
+        "--c_headers",
+        nargs="+",
+        required=True,
+        help="List of C header files to check.",
     )
     parser.add_argument(
-        "--pybind", required=True, help="Path to the Pybind11 binding file."
+        "--pybind",
+        required=True,
+        help="Path to the Pybind11 binding file.",
     )
 
     args = parser.parse_args()
