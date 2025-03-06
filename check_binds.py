@@ -1,6 +1,4 @@
-"""
-This module provides functionality to compare C function declarations with
-Pybind11 bindings.
+"""Compare C function declarations with Pybind11 bindings.
 
 Example usage:
 
@@ -16,9 +14,8 @@ import argparse
 import re
 
 
-def extract_c_functions(file_paths):
-    """
-    Extract C function names from the given header files.
+def extract_c_functions(file_paths):  # type: ignore
+    """Extract C function names from the given header files.
 
     Args:
         file_paths (list of str): List of paths to C header files.
@@ -48,9 +45,8 @@ def extract_c_functions(file_paths):
     return functionNames
 
 
-def extract_pybind_functions(pybind_file):
-    """
-    Extract function names bound using Pybind11 from the given file.
+def extract_pybind_functions(pybind_file):  # type: ignore
+    """Extract function names bound using Pybind11 from the given file.
 
     Args:
         pybind_file (str): Path to the Pybind11 binding file.
@@ -69,10 +65,8 @@ def extract_pybind_functions(pybind_file):
         return set()
 
 
-def main():
-    """
-    Main function to compare C function declarations with Pybind11 bindings.
-    """
+def main():  # type: ignore
+    """Compare C function declarations with Pybind11 bindings."""
     parser = argparse.ArgumentParser(
         description="Compare C function declarations with Pybind11 bindings."
     )
