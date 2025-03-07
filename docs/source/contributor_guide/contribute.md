@@ -100,4 +100,4 @@ After checking the compatibility, follow these steps to make a new release:
 
 A PR to update the conda forge recipe should be created automatically by [regro-cf-autotick-bot](https://conda-forge.org/docs/maintainer/updating_pkgs/#pushing-to-regro-cf-autotick-bot-branch).
 
-The documentation on [https://pyrte-rrtmgp.readthedocs.io/](https://pyrte-rrtmgp.readthedocs.io/) will update automatically.
+The documentation on [https://pyrte-rrtmgp.readthedocs.io/](https://pyrte-rrtmgp.readthedocs.io/) will update automatically. To make changes to the build process and other aspects of the readthedocs configuration, see the `.readthedocs.yml` file.

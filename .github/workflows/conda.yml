@@ -20,7 +20,9 @@ jobs:
       matrix:
         platform: [ubuntu-latest, macos-latest]
         python-version: ["3.11", "3.12"]
-        # when updating the tested Python versions, please also update README.md
+        # when updating the tested Python versions, please also update README.md,
+        # the conda.recipe/meta.yaml file, pyproject.toml, and (if necessary) the
+        # .readthedocs.yaml file
 
     runs-on: ${{ matrix.platform }}
 

@@ -11,10 +11,9 @@ build:
   os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
   tools:
     python: "3.11"
-    # You can also specify other tool versions:
-    # nodejs: "19"
-    # rust: "1.64"
-    # golang: "1.19"
+    # when updating the tested Python versions, please also update README.md,
+    # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
+    # for the GitHub Actions workflow
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
