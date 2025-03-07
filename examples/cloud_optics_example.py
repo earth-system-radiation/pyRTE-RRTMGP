@@ -31,9 +31,9 @@ atmosphere = xr.open_mfdataset(
     )
 )
 #
-# By default the dask arrays are contiguous in Xdim and Ydim
+# By default the dask arrays are contiguous in Xdim and Ydim (first two dimensions)
 #   This will work for computing optics but not for computing fluxes,
-#   where chunks need to include all layers
+#   where chunks need to include all layers/levels
 #
 
 atmosphere["LWP"] = (atmosphere.DELP * atmosphere.QL) / sc.constants.g
@@ -42,4 +42,4 @@ atmosphere["IWP"] = (atmosphere.DELP * atmosphere.QI) / sc.constants.g
 #
 # What we'd eventutally like to do...
 #
-clouds_optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere)
+# clouds_optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere)
