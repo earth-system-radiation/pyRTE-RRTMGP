@@ -32,18 +32,56 @@ make html
 
 The built documentation will be located in `docs/build/html`.
 
+(local-install)=
 ## How to Set up a Local Development Environment
 
-<!-- TBD: DEV install instead of user install -->
+To build and test the package locally, you need to install two sets of dependencies: the system dependencies and the package itself (using [pip in "editable" mode](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs)).
 
-Please follow the instructions for [installing pyRTE-RRTMTP with pip or conda in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html).
+Before installing the package, you should **create a virtual environment** to avoid conflicts with other packages. You can create a virtual environment in a folder of your choice using the following commands:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
+
+Then, follow the instructions below for your respective platform to **install the system dependencies**:
+
+* Debian/Ubuntu: On Debian/Ubuntu systems, you can use a tool like `apt` to install the dependencies: ``sudo apt install build-essential gfortran cmake git``
+* Other Linux distributions: Install the dependencies using the package manager of your distribution.
+* Mac OS: On MacOS systems you can use a tool like `brew` to install the dependencies: ``brew install git gcc cmake``
+
+Next, **download the source code**. Clone the repository to your local machine using
+
+```bash
+git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
+```
+
+After cloning the repository, **enter the repository directory**:
+
+```bash
+cd pyRTE-RRTMGP
+```
+
+Then, **install the package** in "editable" mode:
+
+```bash
+pip install -e .
+```
 
 ### How to Set up Pre-Commit Hooks
 
-This project uses [pre-commit](https://pre-commit.com/) to maintain consistent code formatting (using [flake8](https://flake8.pycqa.org/en/latest/), [isort](https://pycqa.github.io/isort/), and [black](https://black.readthedocs.io/en/stable/)) and run static type checking with [mypy](https://github.com/python/mypy) before each commit. To set up pre-commit hooks, first install the required dependencies:
+This project uses [pre-commit](https://pre-commit.com/) to maintain consistent code formatting (using [flake8](https://flake8.pycqa.org/en/latest/), [isort](https://pycqa.github.io/isort/), and [black](https://black.readthedocs.io/en/stable/)) and run static type checking with [mypy](https://github.com/python/mypy) before each commit. 
+
+To set up pre-commit hooks, first install the required dependencies:
 
 ```bash
 pip install pre-commit
+```
+
+Then, make sure you are in the root directory of your local clone of the repository and
+install the pre-commit hooks:
+
+```bash
 pre-commit install
 ```
 
@@ -64,6 +102,53 @@ Then, run the tests:
 ```bash
 pytest tests
 ```
+
+## How to Locally Build and Test the Conda Package
+
+Before creating a new release and updating the conda package, you should test the package locally to ensure that it builds correctly. To build the conda package locally, follow these steps:
+
+1. **Clone the repository** (if you haven't already):
+
+    ```bash
+    git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
+    ```
+
+    After cloning the repository, enter the repository directory:
+
+    ```bash
+    cd pyRTE-RRTMGP
+    ```
+
+2. **Make sure you have conda installed**. If not, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
+    To make sure your conda setup is working, run the command below:
+
+    ```bash
+    conda --version
+    ```
+
+    If this runs without errors, you are good to go.
+
+3. **Install the conda build requirements** (if you haven't already):
+
+    ```bash
+    conda install conda-build conda-verify
+    ```
+
+4. **Build the conda package locally**:
+    ```bash
+    conda build conda.recipe
+    ```
+
+5. **Install the package** in your current conda environment:
+    ```bash
+    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
+    ```
+
+    ```{note}
+    This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
+    ```
+
+The recipe for the conda package is located in the `conda.recipe` directory. The recipe contains the metadata for the package, including the dependencies and the build instructions.
 
 ## How to Contribute a Patch That Fixes a Bug
 

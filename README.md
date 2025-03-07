@@ -26,7 +26,6 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 
 ## Installing pyRTE-RRTMGP
 
-
 ### Installing with Conda (recommended)
 
 <!-- start-installation-section -->
@@ -45,20 +44,12 @@ After installing the package, you can import it in your Python code:
 import pyrte_rrtmgp
 ```
 
-For platforms other than Linux for x64 processors, you can build the package from source using the instructions in the [documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html).
-
-<!-- end-installation-section -->
-
-
-### Building Locally
-
-See the documentation for [instructions](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html).
-
-
-## Running Tests
-
-After installing the package, you can run the tests by executing the following command:
+To verify your installation, you can run a set of tests with the following command:
 
 ```bash
 pyrte_rrtmgp run_tests
 ```
+
+<!-- end-installation-section -->
+
+For **platforms other than Linux for x64 processors** and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/contributor_guide/contribute.html#how-to-set-up-a-local-development-environment).
