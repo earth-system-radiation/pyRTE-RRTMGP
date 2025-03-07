@@ -16,7 +16,7 @@ min_lev_ice = 78
 # There are almost no ice clouds in levels higher (smaller index is higher) than 78
 
 atmosphere = xr.open_mfdataset(
-    "GEOS-DYAMOND2-data/*.nc4",
+    "GEOS-DYAMOND2-data/*inst_01hr_3d_*.nc4",
     drop_variables=[
         "anchor",
         "cubed_sphere",
