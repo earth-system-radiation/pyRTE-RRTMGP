@@ -24,8 +24,7 @@ mypy .
 ```
 Please ensure that new contributions pass the mypy checks before submitting pull requests.
 
-Static type checking is run as part of `pre-commit`, the use of which we encourage.
-
+Static type checking is run as part of the `pre-commit` setup included in this repository. See the [pre-commit documentation](https://pre-commit.com/) for more information. We recommend running `pre-commit install` in your local repository to enable the pre-commit hooks, or run `pre-commit run --all-files` to run the checks manually.
 
 ## How to Contribute to the Documentation?
 
@@ -78,9 +77,19 @@ Pull Requests for new features should include tests and documentation.
 
 For maintainers:
 
+To check for common issues that might arise between RTE-RRTMGP (Fortran) and pyRTE-RRTMGP (Python), use the `check_binds.py` script. This script will compare the functions in the Fortran code with the functions in the Python bindings. The script will output any missing functions or functions that have been removed.
+
+```bash
+python check_binds.py --c_headers /path/to/rrtmgp_kernels.h /path/to/rte_kernels.h --pybind /path/to/pybind_interface.cpp
+```
+
+<!-- [TBD] For more details, see  -->
+
 1. To make a new release, update the version number in `pyproject.toml` and `conda.recipe/meta.yaml`. Also update `CITATION.cff` as necessary.
 2. Then, create a new release off the `main` branch on GitHub, using the "Draft a new release" button in [https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases](https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases).
 3. Create a new tag with the version number, and use the "Generate release notes" button to create the release notes.
-4. Review and update the the release notes as necessary, and publish the release and set it as the latest release.
+4. Review and update the the release notes as necessary, publish the release, and set it as the latest release.
+
+A PR to update the conda forge recipe should be created automatically by [regro-cf-autotick-bot](https://conda-forge.org/docs/maintainer/updating_pkgs/#pushing-to-regro-cf-autotick-bot-branch).
 
 The documentation on [https://pyrte-rrtmgp.readthedocs.io/](https://pyrte-rrtmgp.readthedocs.io/) will update automatically.
