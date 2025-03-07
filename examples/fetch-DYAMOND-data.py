@@ -24,10 +24,11 @@ urls = [
 ]
 
 if compute_gas_optics:
-    for v in  ["P", "CO2", "QV", "T"]:
-      urls.append(
-        f"https://portal.nccs.nasa.gov/datashare/G5NR/DYAMONDv2/03KM/{sim}/"
-        + f"inst_01hr_3d_{v}_Mv/{ym}/{sim}.inst_01hr_3d_{v}_Mv.{ymd}_0900z.nc4")
+    for v in ["P", "CO2", "QV", "T"]:
+        urls.append(
+            f"https://portal.nccs.nasa.gov/datashare/G5NR/DYAMONDv2/03KM/{sim}/"
+            + f"inst_01hr_3d_{v}_Mv/{ym}/{sim}.inst_01hr_3d_{v}_Mv.{ymd}_0900z.nc4"
+        )
     #
     # Ozone is 6-hourly
     #
