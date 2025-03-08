@@ -1,5 +1,5 @@
 #! /usr/env/python
-"""Write a virtual Zaar with icechunk"""
+"""Write a virtual Zaar with icechunk."""
 
 import glob
 
