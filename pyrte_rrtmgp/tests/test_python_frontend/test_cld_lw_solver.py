@@ -1,10 +1,9 @@
-import numpy as np
 import xarray as xr
+import numpy as np
 
+from pyrte_rrtmgp import rrtmgp_cloud_optics
+from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import CloudOpticsFiles, GasOpticsFiles, AllSkyExampleFiles
-from pyrte_rrtmgp.rrtmgp_gas_optics import load_gas_optics
-import pyrte_rrtmgp.rrtmgp_cloud_optics
-from pyrte_rrtmgp.rrtmgp_cloud_optics import load_cloud_optics
 from pyrte_rrtmgp.utils import compute_profiles, compute_clouds, load_rrtmgp_file
 from pyrte_rrtmgp.rte_solver import rte_solve
 
@@ -35,7 +34,9 @@ def test_lw_solver_with_clouds() -> None:
         )
 
     # Load cloud optics data
-    cloud_optics_lw = load_cloud_optics(cloud_optics_file=CloudOpticsFiles.LW_BND)
+    cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
+        cloud_optics_file=CloudOpticsFiles.LW_BND
+    )
 
     # Calculate cloud properties and merge into the atmosphere dataset
     cloud_properties = compute_clouds(
@@ -49,7 +50,9 @@ def test_lw_solver_with_clouds() -> None:
     )
 
     # Calculate gas optical properties
-    gas_optics_lw = load_gas_optics(gas_optics_file=GasOpticsFiles.LW_G256)
+    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
     clear_sky_optical_props = gas_optics_lw.compute_gas_optics(
         atmosphere, problem_type="absorption", add_to_input=False
     )
