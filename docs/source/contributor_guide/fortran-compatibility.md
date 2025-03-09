@@ -1,14 +1,14 @@
-# Steps When a New Release of RTE-RRTMGP is Active
+# Maintaining compatibility between pyRTE-RRTMGP and RTE-RRTMGP
 
-When a new release of [RTE-RRTMGP](https://github.com/earth-system-radiation/rte-rrtmgp/) is published and changes are made to the functions we bind and support, a manual update is required in [pybind_interface.cpp](../../pybind_interface.cpp).
+When a new release of [RTE-RRTMGP](https://github.com/earth-system-radiation/rte-rrtmgp/) is published and changes are made to the functions that pyRTE-RRTMGP binds and supports, a manual update is required in ``pybind_interface.cpp``.
 
 ## Steps to Use the New Version of RTE-RRTMGP (New Source)
 
-In [CMakeLists.txt](../../CMakeLists.txt), to use a different version of RTE-RRTMGP, we need to change the `GIT_TAG` to the desired version.
+In ``CMakeLists.txt``, to use a different version of RTE-RRTMGP, we need to change the `GIT_TAG` to the desired version.
 
 Clone or download the source code for the version of [RTE-RRTMGP](https://github.com/earth-system-radiation/rte-rrtmgp/) you want to use. To build it, you can use the setup script provided in the source code.
 
-There is a script designed to provide general information about the state of the Pybinds and Cbinds from Fortran:
+The top-level folder of this repo contains a script called ``check_binds.py`` which provides general information about the state of the Pybinds and Cbinds from Fortran:
 ```
 python check_binds.py --c_headers /path/to/rrtmgp_kernels.h /path/to/rte_kernels.h --pybind /path/to/pybind_interface.cpp
 ```
@@ -102,8 +102,8 @@ If there is a difference in the outputs and everything appears to be correct, th
 
 If a new function is introduced to the bindings, follow this procedure to add it to the Python repository:
 
-- Add the new function to [pybind_interface.cpp](../../pybind_interface.cpp), ensuring proper error checking for valid dimensions and inputs.
-- Add the new function to either [rte.py](../../pyrte_rrtmgp/kernels/rte.py) or [rrtmgp.py](../../pyrte_rrtmgp/kernels/rrtmgp.py).
+- Add the new function to ``pybind_interface.cpp``, ensuring proper error checking for valid dimensions and inputs.
+- Add the new function to either ``pyrte_rrtmgp/kernels/rte.py`` or ``pyrte_rrtmgp/kernels/rrtmgp.py``.
 - Implement appropriate tests for the new functionality. If a test for this functionality exists in [RTE-RRTMGP](https://github.com/earth-system-radiation/rte-rrtmgp/), the new test should mimic it.
 - Changes to functions may also require updates to input and reference data for the tests in [RRTMGP-DATA](https://github.com/earth-system-radiation/rrtmgp-data/), necessitating corresponding updates in PYRTE-RRTMGP’s tests.
 
