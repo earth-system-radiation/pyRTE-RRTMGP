@@ -19,7 +19,7 @@ requirements:
     - git >=2.44.0
     - ninja
     - python
-  
+
   host:
     - python
     - pip
