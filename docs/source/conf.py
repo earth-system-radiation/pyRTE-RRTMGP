@@ -43,12 +43,6 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns: list[str] = []
 
-# autodoc_mock_imports = [
-#     # "pyrte_rrtmgp.pyrte_rrtmgp",
-#     # "numpy",
-#     # "xarray",
-# ]
-
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
