@@ -38,7 +38,7 @@ Then, follow the instructions below for your respective platform to **install th
 After installing the system dependencies, you can install the package directly from the git repository:
 
 ```bash
-pip install git+https://github.com/earth-system-radiation/pyRTE-RRTMGP`
+pip install git+https://github.com/earth-system-radiation/pyRTE-RRTMGP
 ```
 
 ## Local installation for development
