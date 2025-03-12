@@ -37,3 +37,19 @@ repos:
       additional_dependencies: [
         'types-requests',
       ]
+
+-   repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.2.2
+    hooks:
+    -   id: nbqa-black
+        files: \.ipynb$
+    -   id: nbqa-flake8
+        files: \.ipynb$
+    -   id: nbqa-isort
+        files: \.ipynb$
+
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.5.0
+    hooks:
+    -   id: nbstripout
+        files: \.ipynb$
