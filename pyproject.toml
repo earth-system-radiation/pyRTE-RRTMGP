@@ -40,6 +40,10 @@ build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
+cmake.args = [
+    "-G", "Ninja"
+]
+
 
 [tool.pytest.ini_options]
 minversion = "6.0"
