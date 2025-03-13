@@ -45,6 +45,7 @@ repos:
         files: \.ipynb$
     -   id: nbqa-black
         files: \.ipynb$
+        args: [--line-length=79]
     -   id: nbqa-flake8
         files: \.ipynb$
         args: [--ignore=E402]
