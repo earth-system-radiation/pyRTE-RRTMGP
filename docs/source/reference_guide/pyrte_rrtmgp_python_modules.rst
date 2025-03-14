@@ -7,6 +7,8 @@ The documentation below provides details for several of the high-level functions
 
 For more information about the low-level functions available in the ``pyrte_rrtmgp.pyrte_rrtmgp`` submodule, please go to :ref:`low_level_interface`.
 
+.. _pyrte_rrtmgp_solver:
+
 pyrte\_rrtmgp.rte_solver module
 -------------------------------
 
@@ -15,6 +17,8 @@ pyrte\_rrtmgp.rte_solver module
    :undoc-members:
    :show-inheritance:
 
+.. _pyrte_rrtmgp_cloud_optics:
+
 pyrte\_rrtmgp.rrtmgp_cloud_optics module
 ----------------------------------------
 
@@ -22,6 +26,8 @@ pyrte\_rrtmgp.rrtmgp_cloud_optics module
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. _pyrte_rrtmgp_gas_optics:
 
 pyrte\_rrtmgp.rrtmgp_gas_optics module
 --------------------------------------

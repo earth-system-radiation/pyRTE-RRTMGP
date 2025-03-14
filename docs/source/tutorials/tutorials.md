@@ -1,3 +1,4 @@
+(tutorials)=
 # pyRTE-RRTMGP Tutorials
 
 The pyRTE-RRTMGP repository contains a number of tutorials in the form of  [Jupyter notebooks](https://docs.jupyter.org). These notebooks are located in the `examples` folder of the repository.
@@ -57,3 +58,9 @@ Some of the notebooks might require you to install additional dependencies into 
 Once you have opened a tutorial notebook in Jupyter, you can run the cells in the notebook by pressing `Shift + Enter`. You can also use the "Run" button in the toolbar at the top of the notebook.
 
 See the [Jupyter documentation](https://docs.jupyter.org) for more information on how to use Jupyter notebooks.
+
+<!--
+Note about including interactive notebooks in the documentation:
+- We can't include interactive notebooks in the documentation directly because they require a running Jupyter server to work. readthedocs doesn't support running Jupyter notebooks interactively.
+- We could include links to run the notebooks on Google Colab (``[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/your-repo/your-notebook.ipynb)``). However, this requires setting up the environments with the required packages (potentially with something like https://pypi.org/project/condacolab/).
+ -->

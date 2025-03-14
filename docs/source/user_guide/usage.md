@@ -4,28 +4,21 @@ This section provides a brief overview of how to use `pyrte_rrtmgp` with Python.
 
 ## Python Package Structure
 
-The `pyrte_rrtmgp` package contains the following submodules:
+The `pyrte_rrtmgp` package contains multiple submodules. The most important ones are:
 
-- `pyrte_rrtmgp.pyrte_rrtmgp`: The main module that provides access to a subset of RTE-RRTMGP's Fortran functions in Python. The functions available in this module mirror the Fortran functions (see below). You can think of this as the low-level implementation that allows you to access the respective Fortran functions directly in Python. See [](low_level_interface) for more information.
-- `pyrte_rrtmgp.kernels.rte`: A high-level module that provides a more user-friendly Python interface for select RTE functions. This module is still under development and will be expanded in future releases. See [](module_ref) for details.
-- `pyrte_rrtmgp.kernels.rrtmgp`: A high-level module that provides a more user-friendly Python interface for select RRTMGP functions. This module is still under development and will be expanded in future releases. See [](module_ref) for details.
-- `pyrte_rrtmgp.utils`: A module that provides utility functions for working with RTE-RRTMGP data. This module is still under development and will be expanded in future releases. See [](module_ref) for details.
+- `pyrte_rrtmgp.rte_solver`: The main module that provides functions to solve radiative transfer equations (RTE) using RRTMGP. See {ref}`pyrte_rrtmgp_solver` for details.
+- `pyrte_rrtmgp.rrtmgp_gas_optics`: A module that provides functions to calculate gas optics for RRTMGP. See {ref}`pyrte_rrtmgp_gas_optics` for details.
+- `pyrte_rrtmgp.rrtmgp_cloud_optics`: A module that provides functions to calculate cloud optics for RRTMGP. See {ref}`pyrte_rrtmgp_cloud_optics` for details.
 
 ```{seealso}
-The folder `/examples` in the repository contains Jupyter notebook examples that demonstrate how to use the package.
+See {ref}`module_ref` for a reference of all available submodules.
+See {ref}`tutorials` for examples of how to use the package.
 ```
 
-## Importing the Package
+<!--
+## Using pyRTE-RRTMGP
 
-To use any of the RTE-RRTMGP functions in Python, you first need to import `pyrte_rrtmgp` and the respective submodule you want to use.
-For example: ``import pyrte_rrtmgp.pyrte_rrtmgp`` or ``import pyrte_rrtmgp.rrtmgp as rrtmgp``.
+TBD
 
-The example below uses the `pyrte_rrtmgp.pyrte_rrtmgp` submodule, which gives you low-level access to [RTE-RRTMGP](https://github.com/earth-system-radiation/pyRTE-RRTMGP)'s Fortran functions in Python:
-
-```python
-import pyrte_rrtmgp.pyrte_rrtmgp as py
-
-args = list_of_arguments
-
-py.rte_lw_solver_noscat(*args)
-```
+Write a short, high-level overview of how to use the package and its components. In a general sense, what are the main steps to use the package? e.g. first compute underlying data (e.g. with compute_gas_optics), then call the solver?
+-->
