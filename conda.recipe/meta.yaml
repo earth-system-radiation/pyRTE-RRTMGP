@@ -1,59 +1,59 @@
 package:
   name: pyrte_rrtmgp
-  version: 0.0.6
+  version: 0.0.7
 
 source:
   path: ..
 
 build:
-  number: 0
   script: {{ PYTHON }} -m pip install . -vv
+  number: 0
 
 requirements:
   build:
-    - python
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
-    - gfortran_linux-64   # [linux]
-    - gfortran_osx-64     # [osx and not arm64]
-    - gfortran_osx-arm64  # [osx and arm64]
-    - m2w64-gcc-fortran   # [win]
-    - libuv==1.44.2
-    - cmake==3.26.4
-    - git
-    - make
-    - liblief==0.14.1  # Ensure compatibility with conda-build
+    - {{ compiler('fortran') }}
+    - cmake >=3.18
+    - git >=2.44.0
+    - libuv >=1.44.2
+    - ninja
+    - python
 
   host:
-    - python
-    - pip
-    - scikit-build-core
-    - pybind11 >=2.10.0
     - numpy >=1.21.0
-    - pytest>=7.4
-    - liblief==0.14.1
+    - pip
+    - pybind11 >=2.10.0
+    - python
+    - rte_rrtmgp ==v1.9.1
+    - scikit-build-core
 
   run:
-    - python
-    - numpy >=1.21.0
-    - xarray >=2023.5.0
     - netcdf4 >=1.7.2
-    - requests>=2.4.0
-    - pytest>=7.4
-    - liblief==0.14.1
+    - numpy >=1.21.0
+    - pytest >=7.4
+    - python
+    - requests >=2.4.0
+    - rte_rrtmgp ==v1.9.1
+    - xarray >=2023.5.0
 
 test:
   imports:
     - pyrte_rrtmgp
   requires:
-    - numpy>=1.21
-    - pytest>=7.4
-    - xarray >=2023.5.0
     - netcdf4 >=1.7.2
-    - requests>=2.4.0
+    - numpy >=1.21
+    - pytest >=7.4
+    - requests >=2.4.0
+    - rte_rrtmgp ==v1.9.1
+    - xarray >=2023.5.0
   commands:
     - pyrte_rrtmgp run_tests
 
 about:
+  home: https://github.com/earth-system-radiation/pyRTE-RRTMGP
   summary: A Python interface to the RTE+RRTMGP Fortran software package.
+  license: BSD-3-Clause
+  license_family: BSD
   license_file: LICENSE
+  doc_url: https://pyrte-rrtmgp.readthedocs.io/
