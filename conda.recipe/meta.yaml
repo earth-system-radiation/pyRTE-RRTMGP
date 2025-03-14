@@ -14,7 +14,6 @@ requirements:
     - {{ compiler('c') }}
     - {{ compiler('cxx') }}
     - {{ compiler('fortran') }}
-    - {{ stdlib('c') }}
     - cmake >=3.18
     - git >=2.44.0
     - libuv >=1.44.2
