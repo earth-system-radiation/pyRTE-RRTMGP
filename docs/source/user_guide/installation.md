@@ -1,3 +1,4 @@
+(installation)=
 # Installing pyRTE-RRTMGP
 
 This section contains instructions for installing pyRTE-RRTMGP. On Linux (x86_64) platforms, you can install the package with `conda`. For other platforms, you need to build the package from source.
