@@ -55,5 +55,5 @@ about:
   summary: A Python interface to the RTE+RRTMGP Fortran software package.
   license: BSD-3-Clause
   license_family: BSD
-  license_file: LICENSE.txt
+  license_file: LICENSE
   doc_url: https://pyrte-rrtmgp.readthedocs.io/
