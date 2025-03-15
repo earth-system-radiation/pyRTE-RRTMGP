@@ -24,8 +24,8 @@ in planetary atmospheres. RTE+RRTMGP is described in a
    :maxdepth: 2
    :caption: Using pyRTE-RRTMGP:
 
-   user_guide/installation
-   user_guide/usage
+   how_to/installation
+   how_to/usage
    tutorials/tutorials
 
 .. toctree::

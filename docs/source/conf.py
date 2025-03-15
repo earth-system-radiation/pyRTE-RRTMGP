@@ -21,6 +21,19 @@ def get_version_from_toml() -> str:
     return version if version else "dev"
 
 
+def get_python_requires_from_toml() -> str:
+    """Get the version from the pyproject.toml file."""
+    if os.path.isfile("../../pyproject.toml"):
+        # read pyproject.toml
+        with open("../../pyproject.toml", "rb") as f:
+            pyproject = tomllib.load(f)
+        # get version from pyproject.toml
+        python_requires = pyproject.get("project", {}).get("requires-python", "")
+    else:
+        python_requires = None
+    return python_requires
+
+
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -29,6 +42,7 @@ copyright = f"{dt.datetime.now().year}, Atmospheric and Environmental Research"
 author = "Atmospheric and Environmental Research"
 version = get_version_from_toml()
 release = version
+python_requires = get_python_requires_from_toml()
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -39,6 +53,15 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
 ]
+
+myst_enable_extensions = [
+    "substitution",
+]
+
+myst_substitutions = {
+    "python_requires": python_requires,
+    "version": version,
+}
 
 templates_path = ["_templates"]
 exclude_patterns: list[str] = []

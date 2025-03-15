@@ -35,38 +35,49 @@ The built documentation will be located in `docs/build/html`.
 (local-install)=
 ## How to Set up a Local Development Environment
 
-To build and test the package locally, you need to install two sets of dependencies: the system dependencies and the package itself (using [pip in "editable" mode](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs)).
+Building and testing the package locally requires (conda)[https://docs.conda.io] to be installed on your system. You can install conda by following the instructions [here](https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html).
 
-Before installing the package, you should **create a virtual environment** to avoid conflicts with other packages. You can create a virtual environment in a folder of your choice using the following commands:
+Building pyRTE-RRTMGP locally **only works with Linux (Ubuntu) and macOS (Intel/ARM)**.
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
+Follow the instructions below to set up a local development environment:
 
-Then, follow the instructions below for your respective platform to **install the system dependencies**:
+1. Once `conda` is available on your system, you should **create a new conda environment** to avoid conflicts with other packages. You should specify a Python version that works with the version of pyRTE-RRTMGP you want to work on (currently Python *{{ python_requires }}*). For example:
 
-* Debian/Ubuntu: On Debian/Ubuntu systems, you can use a tool like `apt` to install the dependencies: ``sudo apt install build-essential gfortran cmake git``
-* Other Linux distributions: Install the dependencies using the package manager of your distribution.
-* Mac OS: On MacOS systems you can use a tool like `brew` to install the dependencies: ``brew install git gcc cmake``
+    ```bash
+    conda create -n pyrte_rrtmgp_dev python=3.12
+    ```
 
-Next, **download the source code**. Clone the repository to your local machine using
+2. **Clone the GitHub repository**:
 
-```bash
-git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
-```
+    ```bash
+    git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
+    ```
 
-After cloning the repository, **enter the repository directory**:
+3. After cloning the repository, **enter the repository directory**:
 
-```bash
-cd pyRTE-RRTMGP
-```
+    ```bash
+    cd pyRTE-RRTMGP
+    ```
 
-Then, **install the package** in "editable" mode:
+4. **Install the main RTE-RRTMGP (Fortran) package** into the conda environment:
 
-```bash
-pip install -e .
-```
+    ```bash
+    conda install -c conda-forge rte_rrtmgp
+    ```
+
+    See the [RTE-RRTMGP GitHub repository](https://github.com/earth-system-radiation/rte-rrtmgp) for more information about the Fortran package.
+
+5. **Install the Ninja build system** into the conda environment:
+
+    ```bash
+    conda install -c conda-forge ninja
+    ```
+
+5. Finally, **install the package** in ["editable" mode](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs):
+
+    ```bash
+    pip install -e .
+    ```
 
 ### How to Set up Pre-Commit Hooks
 
@@ -105,50 +116,33 @@ pytest tests
 
 ## How to Locally Build and Test the Conda Package
 
-Before creating a new release and updating the conda package, you should test the package locally to ensure that it builds correctly. To build the conda package locally, follow these steps:
+Before creating a new release and updating the conda package, you should test the package locally to ensure that it builds correctly.
 
-1. **Clone the repository** (if you haven't already):
+To build the conda package locally, first set up a local development environment as described in the {ref}`local-install` section above.
 
-    ```bash
-    git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
-    ```
-
-    After cloning the repository, enter the repository directory:
-
-    ```bash
-    cd pyRTE-RRTMGP
-    ```
-
-2. **Make sure you have conda installed**. If not, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
-    To make sure your conda setup is working, run the command below:
-
-    ```bash
-    conda --version
-    ```
-
-    If this runs without errors, you are good to go.
-
-3. **Install the conda build requirements** (if you haven't already):
+1. Make sure your local development environment is active (e.g. `conda activate pyrte_rrtmgp_dev`). Before you can build the conda package locally, you need to **install the conda build requirements** (if they aren't already on your system):
 
     ```bash
     conda install conda-build conda-verify
     ```
 
 4. **Build the conda package locally**:
+
     ```bash
     conda build conda.recipe
     ```
 
-5. **Install the package** in your current conda environment:
+5. **Install the locally built package** in your current conda environment:
+
     ```bash
     conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
     ```
 
     ```{note}
-    This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
+    Make sure to remove any other versions of the package that might be installed in your environment (e.g. if you used `pip install -e .` before)!
     ```
 
-The recipe for the conda package is located in the `conda.recipe` directory. The recipe contains the metadata for the package, including the dependencies and the build instructions.
+The recipe for the conda package is located in the `conda.recipe` directory in the GitHub repository. This recipe contains the metadata for the package, including the dependencies and the build instructions.
 
 ## How to Contribute a Patch That Fixes a Bug
 
