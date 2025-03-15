@@ -382,13 +382,13 @@ def compute_tau_absorption(
         np.asfortranarray(kminor_start_lower),
         np.asfortranarray(kminor_start_upper),
         np.asfortranarray(tropo),
-        np.asfortranarray(col_mix.transpose(1, 0, 2, 3)),
-        np.asfortranarray(fmajor.transpose(1, 2, 3, 0, 4, 5)),
-        np.asfortranarray(fminor.transpose(1, 2, 0, 3, 4)),
+        np.asfortranarray(col_mix),
+        np.asfortranarray(fmajor),
+        np.asfortranarray(fminor),
         np.asfortranarray(play),
         np.asfortranarray(tlay),
         np.asfortranarray(col_gas),
-        np.asfortranarray(jeta.transpose(1, 0, 2, 3)),
+        np.asfortranarray(jeta),
         np.asfortranarray(jtemp),
         np.asfortranarray(jpress),
         tau,
@@ -400,6 +400,7 @@ def compute_tau_absorption(
 
 
 def compute_tau_rayleigh(
+    ncol: int,
     nlay: int,
     nbnd: int,
     ngpt: int,
@@ -424,6 +425,7 @@ def compute_tau_rayleigh(
     molecules.
 
     Args:
+        ncol: Number of atmospheric columns
         nlay: Number of atmospheric layers
         nbnd: Number of spectral bands
         ngpt: Number of g-points
@@ -446,8 +448,6 @@ def compute_tau_rayleigh(
     Returns:
         Rayleigh scattering optical depth with shape (ncol, nlay, ngpt)
     """
-    ncol = tropo.shape[0]
-
     # Initialize output array
     tau_rayleigh = np.ndarray((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
@@ -469,8 +469,8 @@ def compute_tau_rayleigh(
         idx_h2o,
         np.asfortranarray(col_dry),
         np.asfortranarray(col_gas),
-        np.asfortranarray(fminor.transpose(1, 2, 0, 3, 4)),
-        np.asfortranarray(jeta.transpose(1, 0, 2, 3)),
+        np.asfortranarray(fminor),
+        np.asfortranarray(jeta),
         np.asfortranarray(tropo),
         np.asfortranarray(jtemp),
         tau_rayleigh,
