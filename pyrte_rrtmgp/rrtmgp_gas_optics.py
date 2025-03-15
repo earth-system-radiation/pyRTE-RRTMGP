@@ -1121,9 +1121,19 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             norm = 1.0 / solar_source.sum(dim="gpt")
             default_tsi = self._dataset["tsi_default"]
             # Scale solar source to default TSI
-            site_dim = atmosphere.mapping.get_dim("site")
             toa_source = (solar_source * default_tsi * norm).rename("toa_source")
-            return toa_source.expand_dims({site_dim: atmosphere[site_dim]})
+
+            layer_dim = atmosphere.mapping.get_dim("layer")
+            level_dim = atmosphere.mapping.get_dim("level")
+            non_default_dims = [
+                d for d in atmosphere.dims if d not in [layer_dim, level_dim, "gpt"]
+            ]
+
+            # Ensure play has the same dimensions as tlay by expanding it if needed
+            if non_default_dims:
+                for dim in non_default_dims:
+                    toa_source = toa_source.expand_dims({dim: atmosphere[dim]})
+            return toa_source
 
     def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.Dataset:
         """Compute surface and solar boundary conditions.
@@ -1135,7 +1145,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             Dataset containing solar zenith angles, surface albedos and solar angle mask
         """
         layer_dim = atmosphere.mapping.get_dim("layer")
-        site_dim = atmosphere.mapping.get_dim("site")
+        level_dim = atmosphere.mapping.get_dim("level")
         solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
         surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
         surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
@@ -1184,9 +1194,16 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             data_vars.append(solar_zenith_angle)
             data_vars.append(usecol_values)
         elif "mu0" in atmosphere.data_vars:
-            atmosphere["solar_angle_mask"] = xr.full_like(
-                atmosphere[site_dim], True
+
+            non_default_dims = [
+                d for d in atmosphere.dims if d not in [layer_dim, level_dim]
+            ]
+            atmosphere["solar_angle_mask"] = xr.DataArray(
+                True,
+                dims=non_default_dims,
+                coords={d: atmosphere[d] for d in non_default_dims},
             ).rename("solar_angle_mask")
+
             atmosphere["mu0"] = atmosphere["mu0"].broadcast_like(atmosphere[layer_dim])
             data_vars.append(atmosphere["mu0"])
             data_vars.append(atmosphere["solar_angle_mask"])
@@ -1208,12 +1225,28 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             dim=pd.Index(["lower", "upper"], name="rayl_bound"),
         )
 
-        site_dim = gas_interpolation_data.mapping.get_dim("site")
         layer_dim = gas_interpolation_data.mapping.get_dim("layer")
+
+        non_default_dims = [
+            d
+            for d in gas_interpolation_data.dims
+            if d
+            not in [
+                "flavor",
+                "eta_interp",
+                "press_interp",
+                "temp_interp",
+                "pair",
+                "gas",
+                layer_dim,
+            ]
+        ]
+        gas_interpolation_data = gas_interpolation_data.stack(
+            {"stacked_cols": non_default_dims}
+        )
 
         tau_rayleigh = xr.apply_ufunc(
             compute_tau_rayleigh,
-            gas_interpolation_data.sizes[site_dim],
             gas_interpolation_data.sizes[layer_dim],
             self._dataset.sizes["bnd"],
             self._dataset.sizes["gpt"],
@@ -1234,7 +1267,6 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             gas_interpolation_data["tropopause_mask"],
             gas_interpolation_data["temperature_index"],
             input_core_dims=[
-                [],  # ncol
                 [],  # nlay
                 [],  # nbnd
                 [],  # ngpt
@@ -1246,20 +1278,19 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 ["pair", "bnd"],  # band_lims_gpt
                 ["temperature", "mixing_fraction", "gpt", "rayl_bound"],  # krayl
                 [],  # idx_h2o
-                [site_dim, layer_dim],  # col_dry
-                [site_dim, layer_dim, "gas"],  # col_gas
-                ["eta_interp", "temp_interp", site_dim, layer_dim, "flavor"],  # fminor
-                ["pair", site_dim, layer_dim, "flavor"],  # jeta
-                [site_dim, layer_dim],  # tropo
-                [site_dim, layer_dim],  # jtemp
+                [layer_dim],  # col_dry
+                [layer_dim, "gas"],  # col_gas
+                ["eta_interp", "temp_interp", layer_dim, "flavor"],  # fminor
+                ["pair", layer_dim, "flavor"],  # jeta
+                [layer_dim],  # tropo
+                [layer_dim],  # jtemp
             ],
-            output_core_dims=[[site_dim, layer_dim, "gpt"]],
+            output_core_dims=[[layer_dim, "gpt"]],
             output_dtypes=[np.float64],
-            vectorize=True,
-            dask="parallelized",
+            dask="allowed",
         )
 
-        return tau_rayleigh.rename("tau").to_dataset()
+        return tau_rayleigh.rename("tau").unstack("stacked_cols").to_dataset()
 
 
 @xr.register_dataset_accessor("compute_gas_optics")
