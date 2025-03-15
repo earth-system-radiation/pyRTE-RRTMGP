@@ -15,7 +15,6 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
 
 
 def interpolation(
-    ncol: int,
     nlay: int,
     ngas: int,
     nflav: int,
@@ -45,7 +44,6 @@ def interpolation(
     atmospheric temperature and pressure profiles.
 
     Args:
-        ncol: Number of atmospheric columns
         nlay: Number of atmospheric layers
         ngas: Number of gases
         nflav: Number of gas flavors
@@ -75,6 +73,7 @@ def interpolation(
               (2, ncol, nlay, nflav)
             - jpress: Pressure interpolation indices with shape (ncol, nlay)
     """
+    ncol = play.shape[0]
     press_ref_log = np.log(press_ref)
     press_ref_log_delta = (press_ref_log.min() - press_ref_log.max()) / (
         len(press_ref_log) - 1
@@ -125,11 +124,16 @@ def interpolation(
 
     rrtmgp_interpolation(*args)
 
+    # Transpose the arrays to make ncol the first dimension
+    fmajor = np.transpose(fmajor, (3, 0, 1, 2, 4, 5))
+    fminor = np.transpose(fminor, (2, 0, 1, 3, 4))
+    col_mix = np.transpose(col_mix, (1, 0, 2, 3))
+    jeta = np.transpose(jeta, (1, 0, 2, 3))
+
     return jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress
 
 
 def compute_planck_source(
-    ncol: int,
     nlay: int,
     nbnd: int,
     ngpt: int,
@@ -165,7 +169,6 @@ def compute_planck_source(
     longwave radiative transfer calculations.
 
     Args:
-        ncol: Number of atmospheric columns
         nlay: Number of atmospheric layers
         nbnd: Number of spectral bands
         ngpt: Number of g-points
@@ -198,6 +201,7 @@ def compute_planck_source(
             - lev_src: Level emission with shape (ncol, nlay+1, ngpt)
             - sfc_src_jac: Surface emission Jacobian with shape (ncol, ngpt)
     """
+    ncol = tlay.shape[0]
     sfc_lay = nlay if top_at_1 else 1
     gpoint_bands = np.ndarray((ngpt), dtype=np.int32, order="F")
     totplnk_delta = (temp_ref_max - temp_ref_min) / (nPlanckTemp - 1)
@@ -222,8 +226,8 @@ def compute_planck_source(
         np.asfortranarray(tlev),
         np.asfortranarray(tsfc),
         sfc_lay,
-        np.asfortranarray(fmajor),
-        np.asfortranarray(jeta),
+        np.asfortranarray(fmajor.transpose(1, 2, 3, 0, 4, 5)),
+        np.asfortranarray(jeta.transpose(1, 0, 2, 3)),
         np.asfortranarray(tropo),
         np.asfortranarray(jtemp),
         np.asfortranarray(jpress),
@@ -246,7 +250,6 @@ def compute_planck_source(
 
 
 def compute_tau_absorption(
-    ncol: int,
     nlay: int,
     nbnd: int,
     ngpt: int,
@@ -295,7 +298,6 @@ def compute_tau_absorption(
     atmosphere.
 
     Args:
-        ncol: Number of atmospheric columns
         nlay: Number of atmospheric layers
         nbnd: Number of spectral bands
         ngpt: Number of g-points
@@ -342,6 +344,8 @@ def compute_tau_absorption(
     """
     ngas = ngas - 1  # Fortran uses index 0 here
 
+    ncol = tropo.shape[0]
+
     # Initialize output array
     tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
 
@@ -378,13 +382,13 @@ def compute_tau_absorption(
         np.asfortranarray(kminor_start_lower),
         np.asfortranarray(kminor_start_upper),
         np.asfortranarray(tropo),
-        np.asfortranarray(col_mix),
-        np.asfortranarray(fmajor),
-        np.asfortranarray(fminor),
+        np.asfortranarray(col_mix.transpose(1, 0, 2, 3)),
+        np.asfortranarray(fmajor.transpose(1, 2, 3, 0, 4, 5)),
+        np.asfortranarray(fminor.transpose(1, 2, 0, 3, 4)),
         np.asfortranarray(play),
         np.asfortranarray(tlay),
         np.asfortranarray(col_gas),
-        np.asfortranarray(jeta),
+        np.asfortranarray(jeta.transpose(1, 0, 2, 3)),
         np.asfortranarray(jtemp),
         np.asfortranarray(jpress),
         tau,
