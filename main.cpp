@@ -1,7 +1,7 @@
 #include <cstdio>
 
 namespace fortran {
-#include "rte-rrtmgp/rte-kernels/api/rte_kernels.h"
+    #include "rte_kernels.h"
 }
 
 int main() {
@@ -12,7 +12,7 @@ int main() {
         arr[i] = i;
     }
 
-    fortran::zero_array_1D(&ni, arr);
+    fortran::zero_array_1D(ni, arr);
 
     for (int i = 0; i < ni; i++) {
         printf("%lf, ", arr[i]);
