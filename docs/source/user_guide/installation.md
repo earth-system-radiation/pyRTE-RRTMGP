@@ -1,3 +1,4 @@
+(installation)=
 # Installing pyRTE-RRTMGP
 
 This section contains instructions for installing pyRTE-RRTMGP. On Linux (x86_64) platforms, you can install the package with `conda`. For other platforms, you need to build the package from source.
@@ -38,7 +39,7 @@ Then, follow the instructions below for your respective platform to **install th
 After installing the system dependencies, you can install the package directly from the git repository:
 
 ```bash
-pip install git+https://github.com/earth-system-radiation/pyRTE-RRTMGP`
+pip install git+https://github.com/earth-system-radiation/pyRTE-RRTMGP
 ```
 
 ## Local installation for development
