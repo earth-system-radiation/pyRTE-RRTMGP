@@ -17,7 +17,7 @@ requirements:
     - cmake >=3.18
     - git >=2.44.0
     - libuv >=1.44.2
-    - ninja
+    - ninja >=1.10
     - python
 
   host:
