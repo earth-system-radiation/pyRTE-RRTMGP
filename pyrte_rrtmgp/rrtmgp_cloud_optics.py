@@ -77,7 +77,8 @@ class CloudOpticsAccessor:
         cloud_optics = self._obj
 
         # Get dimensions
-        ncol, nlay = cloud_properties.sizes["site"], cloud_properties.sizes["layer"]
+        ncol = cloud_properties.sizes["site"]
+        nlay = cloud_properties.sizes["layer"]
 
         # Create cloud masks
         liq_mask = cloud_properties.lwp > 0
