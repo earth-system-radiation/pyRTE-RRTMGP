@@ -277,9 +277,21 @@ class CombineOpticalPropsAccessor:
         if delta_scale:
             self.delta_scale_optical_props(op1)
 
-        ncol = op2.sizes["site"]
-        nlay = op2.sizes["layer"]
-        ngpt = op2.sizes["gpt"]
+        layer_dim = op2.mapping.get_dim("layer")
+        level_dim = op2.mapping.get_dim("level")
+        gpt_dim = "gpt"
+        bnd_dim = "bnd"
+
+        nlay = op2.sizes[layer_dim]
+        ngpt = op2.sizes[gpt_dim]
+
+        non_default_dims = [
+            d
+            for d in op2.dims
+            if d not in [layer_dim, level_dim, gpt_dim, bnd_dim, "pair"]
+        ]
+        op1 = op1.stack({"stacked_cols": non_default_dims})
+        op2 = op2.stack({"stacked_cols": non_default_dims})
 
         # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
         is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
@@ -291,40 +303,34 @@ class CombineOpticalPropsAccessor:
                     # 1-stream by 1-stream
                     xr.apply_ufunc(
                         increment_1scalar_by_1scalar,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
                         op1["tau"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # tau_in
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
                 else:
                     # 1-stream by 2-stream
                     xr.apply_ufunc(
                         increment_1scalar_by_2stream,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
                         op1["tau"],
                         op1["ssa"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # tau_in
-                            ["site", "layer", "gpt"],  # ssa_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # ssa_in
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
             else:  # 2-stream output
@@ -332,28 +338,24 @@ class CombineOpticalPropsAccessor:
                     # 2-stream by 1-stream
                     xr.apply_ufunc(
                         increment_2stream_by_1scalar,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
                         op2["ssa"],
                         op1["tau"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # tau_in
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
                 else:
                     # 2-stream by 2-stream
                     xr.apply_ufunc(
                         increment_2stream_by_2stream,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -363,17 +365,15 @@ class CombineOpticalPropsAccessor:
                         op1["ssa"],
                         op1["g"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "gpt"],  # g_inout
-                            ["site", "layer", "gpt"],  # tau_in
-                            ["site", "layer", "gpt"],  # ssa_in
-                            ["site", "layer", "gpt"],  # g_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # g_inout
+                            ["layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # ssa_in
+                            ["layer", "gpt"],  # g_in
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
         else:
@@ -388,7 +388,6 @@ class CombineOpticalPropsAccessor:
                     # 1-stream by 1-stream by band
                     xr.apply_ufunc(
                         inc_1scalar_by_1scalar_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -396,22 +395,19 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "bnd"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "bnd"],  # tau_in
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
                 else:
                     # 1-stream by 2-stream by band
                     xr.apply_ufunc(
                         inc_1scalar_by_2stream_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -420,16 +416,14 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "bnd"],  # tau_in
-                            ["site", "layer", "bnd"],  # ssa_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "bnd"],  # tau_in
+                            ["layer", "bnd"],  # ssa_in
                             [],  # nbnd
                             ["pair", "bnd"],  # bnd_limits_gpt
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
             else:
@@ -437,7 +431,6 @@ class CombineOpticalPropsAccessor:
                     # 2-stream by 1-stream by band
                     xr.apply_ufunc(
                         inc_2stream_by_1scalar_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -446,23 +439,20 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "bnd"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "bnd"],  # tau_in
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
                 else:
                     # 2-stream by 2-stream by band
                     xr.apply_ufunc(
                         inc_2stream_by_2stream_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -474,19 +464,17 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "gpt"],  # g_inout
-                            ["site", "layer", "bnd"],  # tau_in
-                            ["site", "layer", "bnd"],  # ssa_in
-                            ["site", "layer", "bnd"],  # g_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # g_inout
+                            ["layer", "bnd"],  # tau_in
+                            ["layer", "bnd"],  # ssa_in
+                            ["layer", "bnd"],  # g_in
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        vectorize=True,
                         dask="parallelized",
                     )
 

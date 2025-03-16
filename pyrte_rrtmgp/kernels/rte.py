@@ -321,7 +321,6 @@ def sw_solver_2stream(
 
 
 def increment_1scalar_by_1scalar(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
@@ -330,12 +329,12 @@ def increment_1scalar_by_1scalar(
     """Increment one set of optical properties with another set (scalar by scalar).
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
         tau_in: Input optical depth array (ncol, nlay, ngpt)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -346,9 +345,10 @@ def increment_1scalar_by_1scalar(
 
     rte_increment_1scalar_by_1scalar(*args)
 
+    return np.empty(ncol)
+
 
 def increment_1scalar_by_2stream(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
@@ -358,13 +358,13 @@ def increment_1scalar_by_2stream(
     """Increment scalar optical properties with 2-stream properties.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
         tau_in: Input optical depth array (ncol, nlay, ngpt)
         ssa_in: Input single scattering albedo array (ncol, nlay, ngpt)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -376,9 +376,10 @@ def increment_1scalar_by_2stream(
 
     rte_increment_1scalar_by_2stream(*args)
 
+    return np.empty(ncol)
+
 
 def increment_2stream_by_1scalar(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
@@ -388,13 +389,13 @@ def increment_2stream_by_1scalar(
     """Increment 2-stream optical properties with scalar properties.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
         ssa_inout: Single scattering albedo array to be modified (ncol, nlay, ngpt)
         tau_in: Input optical depth array (ncol, nlay, ngpt)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -406,9 +407,10 @@ def increment_2stream_by_1scalar(
 
     rte_increment_2stream_by_1scalar(*args)
 
+    return np.empty(ncol)
+
 
 def increment_2stream_by_2stream(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
@@ -421,7 +423,6 @@ def increment_2stream_by_2stream(
     """Increment one set of 2-stream optical properties with another.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
@@ -431,6 +432,7 @@ def increment_2stream_by_2stream(
         ssa_in: Input single scattering albedo array (ncol, nlay, ngpt)
         g_in: Input asymmetry parameter array (ncol, nlay, ngpt)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -445,20 +447,20 @@ def increment_2stream_by_2stream(
 
     rte_increment_2stream_by_2stream(*args)
 
+    return np.empty(ncol)
+
 
 def inc_1scalar_by_1scalar_bybnd(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
     tau_in: npt.NDArray[np.float64],
     nbnd: int,
     band_lims_gpoint: npt.NDArray[np.int32],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment one set of scalar optical properties with another set by band.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
@@ -466,6 +468,7 @@ def inc_1scalar_by_1scalar_bybnd(
         nbnd: Number of bands
         band_lims_gpoint: Band limits for g-points (2, nbnd)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -478,9 +481,10 @@ def inc_1scalar_by_1scalar_bybnd(
 
     rte_inc_1scalar_by_1scalar_bybnd(*args)
 
+    return np.empty(ncol)
+
 
 def inc_1scalar_by_2stream_bybnd(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
@@ -492,7 +496,6 @@ def inc_1scalar_by_2stream_bybnd(
     """Increment scalar optical properties with 2-stream properties by band.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
@@ -501,6 +504,7 @@ def inc_1scalar_by_2stream_bybnd(
         nbnd: Number of bands
         band_lims_gpoint: Band limits for g-points (2, nbnd)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -514,9 +518,10 @@ def inc_1scalar_by_2stream_bybnd(
 
     rte_inc_1scalar_by_2stream_bybnd(*args)
 
+    return np.empty(ncol)
+
 
 def inc_2stream_by_1scalar_bybnd(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
@@ -524,11 +529,10 @@ def inc_2stream_by_1scalar_bybnd(
     tau_in: npt.NDArray[np.float64],
     nbnd: int,
     band_lims_gpoint: npt.NDArray[np.int32],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment 2-stream optical properties with scalar properties by band.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
@@ -537,6 +541,7 @@ def inc_2stream_by_1scalar_bybnd(
         nbnd: Number of bands
         band_lims_gpoint: Band limits for g-points (2, nbnd)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -550,9 +555,10 @@ def inc_2stream_by_1scalar_bybnd(
 
     rte_inc_2stream_by_1scalar_bybnd(*args)
 
+    return np.empty(ncol)
+
 
 def inc_2stream_by_2stream_bybnd(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau_inout: npt.NDArray[np.float64],
@@ -563,11 +569,10 @@ def inc_2stream_by_2stream_bybnd(
     g_in: npt.NDArray[np.float64],
     nbnd: int,
     band_lims_gpoint: npt.NDArray[np.int32],
-) -> None:
+) -> npt.NDArray[np.float64]:
     """Increment one set of 2-stream optical properties with another by band.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau_inout: Optical depth array to be modified (ncol, nlay, ngpt)
@@ -579,6 +584,7 @@ def inc_2stream_by_2stream_bybnd(
         nbnd: Number of bands
         band_lims_gpoint: Band limits for g-points (2, nbnd)
     """
+    ncol = tau_inout.shape[0]
     args = [
         ncol,
         nlay,
@@ -594,6 +600,8 @@ def inc_2stream_by_2stream_bybnd(
     ]
 
     rte_inc_2stream_by_2stream_bybnd(*args)
+
+    return np.empty(ncol)
 
 
 def delta_scale_2str(
