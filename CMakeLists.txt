@@ -2,18 +2,6 @@ cmake_minimum_required(VERSION 3.18)
 
 project(rte-rrtmgp)
 
-# Determine platform
-set(LINUX FALSE)
-set(APPLE_ARM FALSE)
-
-if (UNIX AND NOT APPLE)
-    set(LINUX TRUE)
-elseif(APPLE)
-    if(CMAKE_SYSTEM_PROCESSOR STREQUAL "arm64")
-        set(APPLE_ARM TRUE)
-    endif()
-endif()
-
 find_package(rte-rrtmgp REQUIRED)
 
 # Compile Python bindings with pybind11
@@ -32,12 +20,11 @@ target_include_directories(${TARGET_NAME} PUBLIC
 target_link_libraries(${TARGET_NAME} PUBLIC
     rte-rrtmgp::rte
     rte-rrtmgp::rrtmgp
-    # gfortran
 )
 
 target_compile_definitions(${TARGET_NAME} PRIVATE
     VERSION_INFO=${VERSION_INFO}
-    DBL_EPSILON=5.8e-2
+    DBL_EPSILON=5.8e-2 #TODO: Remove when rte_types.h updates
     DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${OUTPUT_DIRECTORY}
 )
 
