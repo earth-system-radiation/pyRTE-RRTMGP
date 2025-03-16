@@ -34,6 +34,7 @@ in planetary atmospheres. RTE+RRTMGP is described in a
    :caption: Contributing to pyRTE-RRTMGP:
 
    contributor_guide/contribute
+   contributor_guide/fortran-compatibility
    contributor_guide/roadmap
 
 

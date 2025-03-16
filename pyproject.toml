@@ -1,9 +1,12 @@
 [project]
 name = "pyrte_rrtmgp"
-version = "0.0.6"
+version = "0.0.8"
 description = "A Python interface to the RTE+RRTMGP Fortran software package."
 readme = "README.md"
 requires-python = ">=3.11,<3.13"
+# when updating the tested Python versions, please also update README.md,
+# the conda.recipe/meta.yaml file, the conda.yml file for the GitHub Actions
+# workflow, and (if necessary) the .readthedocs.yaml file
 dependencies = [
   "numpy>=2.0.0",
   "xarray>=2023.5.0",
@@ -37,6 +40,10 @@ build-backend = "scikit_build_core.build"
 
 [tool.scikit-build]
 wheel.expand-macos-universal-tags = true
+cmake.args = [
+    "-G", "Ninja"
+]
+
 
 [tool.pytest.ini_options]
 minversion = "6.0"
