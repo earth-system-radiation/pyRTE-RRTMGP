@@ -11,23 +11,21 @@ from pyrte_rrtmgp.kernels.rte import lw_solver_noscat, sw_solver_2stream
 
 
 def _compute_quadrature(
-    problem_ds: xr.Dataset, site_dim: str, nmus: int
+    problem_ds: xr.Dataset, nmus: int
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Compute quadrature weights and secants for radiative transfer calculations.
 
     Args:
         problem_ds: Dataset containing the problem specification
-        site_dim: Name of the site dimension in the dataset
         nmus: Number of quadrature angles to use
 
     Returns:
         tuple containing:
             ds (xr.DataArray): Quadrature secants (directional cosines) with
-              dimensions [site, gpt, n_quad_angs].
+              dimensions [gpt, n_quad_angs].
             weights (xr.DataArray): Quadrature weights with dimension [n_quad_angs].
     """
     n_quad_angs: int = nmus
-    ncol = problem_ds.sizes[site_dim]
     ngpt = problem_ds.sizes["gpt"]
 
     # Extract quadrature secants for the specified number of angles
@@ -37,7 +35,7 @@ def _compute_quadrature(
         coords={"n_quad_angs": range(n_quad_angs)},
     )
     # Expand dimensions to match problem size
-    ds = ds.expand_dims({site_dim: ncol, "gpt": ngpt})
+    ds = ds.expand_dims({"gpt": ngpt})
 
     # Extract quadrature weights for the specified number of angles
     weights: xr.DataArray = xr.DataArray(
@@ -78,7 +76,6 @@ def _compute_lw_fluxes_absorption(
             - lw_flux_up: Spectrally resolved upward flux
             - lw_flux_down: Spectrally resolved downward flux
     """
-    site_dim = problem_ds.mapping.get_dim("site")
     layer_dim = problem_ds.mapping.get_dim("layer")
     level_dim = problem_ds.mapping.get_dim("level")
 
@@ -92,20 +89,27 @@ def _compute_lw_fluxes_absorption(
     else:
         incident_flux = problem_ds["incident_flux"]
 
-    if (
-        "gpt" not in problem_ds[surface_emissivity_var].dims
-        or site_dim not in problem_ds[surface_emissivity_var].dims
-    ):
-        expand_dims = {}
-        if "gpt" not in problem_ds[surface_emissivity_var].dims:
-            expand_dims["gpt"] = problem_ds.sizes["gpt"]
-        if site_dim not in problem_ds[surface_emissivity_var].dims:
-            expand_dims[site_dim] = problem_ds.sizes[site_dim]
+    non_default_dims = [
+        d
+        for d in problem_ds.dims
+        if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
+    ]
+
+    expand_dims = {}
+    if "gpt" not in problem_ds[surface_emissivity_var].dims:
+        expand_dims["gpt"] = problem_ds.sizes["gpt"]
+    for dim in non_default_dims:
+        if dim not in problem_ds[surface_emissivity_var].dims:
+            expand_dims[dim] = problem_ds.sizes[dim]
+    if expand_dims:
         problem_ds[surface_emissivity_var] = problem_ds[
             surface_emissivity_var
         ].expand_dims(expand_dims)
 
-    ds, weights = _compute_quadrature(problem_ds, site_dim, nmus)
+    problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
+    incident_flux = incident_flux.stack({"stacked_cols": non_default_dims})
+
+    ds, weights = _compute_quadrature(problem_ds, nmus)
     ssa: xr.DataArray = (
         problem_ds["ssa"] if "ssa" in problem_ds else problem_ds["tau"].copy()
     )
@@ -119,7 +123,6 @@ def _compute_lw_fluxes_absorption(
         _,
     ) = xr.apply_ufunc(
         lw_solver_noscat,
-        problem_ds.sizes[site_dim],
         problem_ds.sizes[layer_dim],
         problem_ds.sizes["gpt"],
         ds,
@@ -135,40 +138,41 @@ def _compute_lw_fluxes_absorption(
         incident_flux,
         kwargs={"do_broadband": not spectrally_resolved, "top_at_1": top_at_1},
         input_core_dims=[
-            [],  # ncol
             [],  # nlay
             [],  # ngpt
-            [site_dim, "gpt", "n_quad_angs"],  # ds
+            ["gpt", "n_quad_angs"],  # ds
             ["n_quad_angs"],  # weights
-            [site_dim, layer_dim, "gpt"],  # tau
-            [site_dim, layer_dim, "gpt"],  # ssa
-            [site_dim, layer_dim, "gpt"],  # g
-            [site_dim, layer_dim, "gpt"],  # lay_source
-            [site_dim, level_dim, "gpt"],  # lev_source
-            [site_dim, "gpt"],  # sfc_emis
-            [site_dim, "gpt"],  # sfc_src
-            [site_dim, "gpt"],  # sfc_src_jac
-            [site_dim, "gpt"],  # inc_flux
+            [layer_dim, "gpt"],  # tau
+            [layer_dim, "gpt"],  # ssa
+            [layer_dim, "gpt"],  # g
+            [layer_dim, "gpt"],  # lay_source
+            [level_dim, "gpt"],  # lev_source
+            ["gpt"],  # sfc_emis
+            ["gpt"],  # sfc_src
+            ["gpt"],  # sfc_src_jac
+            ["gpt"],  # inc_flux
         ],
         output_core_dims=[
-            [site_dim, level_dim],  # solver_flux_up_jacobian
-            [site_dim, level_dim],  # solver_flux_up_broadband
-            [site_dim, level_dim],  # solver_flux_down_broadband
-            [site_dim, level_dim, "gpt"],  # solver_flux_up
-            [site_dim, level_dim, "gpt"],  # solver_flux_down
+            [level_dim],  # solver_flux_up_jacobian
+            [level_dim],  # solver_flux_up_broadband
+            [level_dim],  # solver_flux_down_broadband
+            [level_dim, "gpt"],  # solver_flux_up
+            [level_dim, "gpt"],  # solver_flux_down
         ],
         output_dtypes=[np.float64, np.float64, np.float64, np.float64, np.float64],
-        vectorize=True,
         dask="parallelized",
     )
 
-    return xr.Dataset(
+    fluxes = xr.Dataset(
         {
-            "lw_flux_up_jacobian": solver_flux_up_jacobian,
-            "lw_flux_up": solver_flux_up_broadband,
-            "lw_flux_down": solver_flux_down_broadband,
+            "lw_flux_up_jacobian": solver_flux_up_jacobian.unstack("stacked_cols"),
+            "lw_flux_up": solver_flux_up_broadband.unstack("stacked_cols"),
+            "lw_flux_down": solver_flux_down_broadband.unstack("stacked_cols"),
         }
     )
+
+    transpose_order = non_default_dims + ["level"]
+    return fluxes.transpose(*transpose_order)
 
 
 def _compute_sw_fluxes(
@@ -207,12 +211,25 @@ def _compute_sw_fluxes(
     else:
         incident_flux_dif = problem_ds["incident_flux_dif"]
 
-    site_dim = problem_ds.mapping.get_dim("site")
     layer_dim = problem_ds.mapping.get_dim("layer")
     level_dim = problem_ds.mapping.get_dim("level")
 
     # Determine vertical orientation
     top_at_1: bool = problem_ds.attrs["top_at_1"]
+
+    non_default_dims = [
+        d
+        for d in problem_ds.dims
+        if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
+    ]
+    # Ensure incident_flux_dif has all the non_default_dims before stacking
+    for dim in non_default_dims:
+        if dim not in incident_flux_dif.dims and dim in problem_ds.dims:
+            incident_flux_dif = incident_flux_dif.expand_dims(
+                {dim: problem_ds.sizes[dim]}
+            )
+    problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
+    incident_flux_dif = incident_flux_dif.stack({"stacked_cols": non_default_dims})
 
     # Call solver
     (
@@ -224,7 +241,6 @@ def _compute_sw_fluxes(
         solver_flux_dir_broadband,
     ) = xr.apply_ufunc(
         sw_solver_2stream,
-        problem_ds.sizes[site_dim],
         problem_ds.sizes[layer_dim],
         problem_ds.sizes["gpt"],
         problem_ds["tau"],
@@ -237,25 +253,24 @@ def _compute_sw_fluxes(
         incident_flux_dif,
         kwargs={"top_at_1": top_at_1, "do_broadband": not spectrally_resolved},
         input_core_dims=[
-            [],  # ncol
             [],  # nlay
             [],  # ngpt
-            [site_dim, layer_dim, "gpt"],  # tau
-            [site_dim, layer_dim, "gpt"],  # ssa
-            [site_dim, layer_dim, "gpt"],  # g
-            [site_dim, layer_dim],  # mu0
-            [site_dim, "gpt"],  # sfc_alb_dir
-            [site_dim, "gpt"],  # sfc_alb_dif
-            [site_dim, "gpt"],  # inc_flux_dir
-            [site_dim, "gpt"],  # inc_flux_dif
+            [layer_dim, "gpt"],  # tau
+            [layer_dim, "gpt"],  # ssa
+            [layer_dim, "gpt"],  # g
+            [layer_dim],  # mu0
+            ["gpt"],  # sfc_alb_dir
+            ["gpt"],  # sfc_alb_dif
+            ["gpt"],  # inc_flux_dir
+            ["gpt"],  # inc_flux_dif
         ],
         output_core_dims=[
-            [site_dim, level_dim, "gpt"],  # solver_flux_up
-            [site_dim, level_dim, "gpt"],  # solver_flux_down
-            [site_dim, level_dim, "gpt"],  # solver_flux_dir
-            [site_dim, level_dim],  # solver_flux_up_broadband
-            [site_dim, level_dim],  # solver_flux_down_broadband
-            [site_dim, level_dim],  # solver_flux_dir_broadband
+            [level_dim, "gpt"],  # solver_flux_up
+            [level_dim, "gpt"],  # solver_flux_down
+            [level_dim, "gpt"],  # solver_flux_dir
+            [level_dim],  # solver_flux_up_broadband
+            [level_dim],  # solver_flux_down_broadband
+            [level_dim],  # solver_flux_dir_broadband
         ],
         output_dtypes=[
             np.float64,
@@ -268,20 +283,22 @@ def _compute_sw_fluxes(
         dask_gufunc_kwargs={
             "output_sizes": {level_dim: problem_ds.sizes[layer_dim] + 1}
         },
-        vectorize=True,
         dask="parallelized",
     )
 
     # Construct output dataset
     fluxes = xr.Dataset(
         {
-            "sw_flux_up": solver_flux_up_broadband,
-            "sw_flux_down": solver_flux_down_broadband,
-            "sw_flux_dir": solver_flux_dir_broadband,
+            "sw_flux_up": solver_flux_up_broadband.unstack("stacked_cols"),
+            "sw_flux_down": solver_flux_down_broadband.unstack("stacked_cols"),
+            "sw_flux_dir": solver_flux_dir_broadband.unstack("stacked_cols"),
         }
     )
 
-    return fluxes * problem_ds["solar_angle_mask"]
+    transpose_order = non_default_dims + ["level"]
+    fluxes = fluxes.transpose(*transpose_order)
+
+    return fluxes * problem_ds["solar_angle_mask"].unstack("stacked_cols")
 
 
 def rte_solve(

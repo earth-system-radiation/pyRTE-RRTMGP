@@ -24,7 +24,6 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
 
 
 def lw_solver_noscat(
-    ncol: int,
     nlay: int,
     ngpt: int,
     ds: npt.NDArray[np.float64],
@@ -56,7 +55,6 @@ def lw_solver_noscat(
     scattering, computing fluxes and optionally their Jacobians.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         ds: Integration weights with shape (ncol, ngpt, n_quad_angs)
@@ -84,6 +82,12 @@ def lw_solver_noscat(
             flux_up: Upward fluxes with shape (ncol, nlay+1, ngpt)
             flux_dn: Downward fluxes with shape (ncol, nlay+1, ngpt)
     """
+    ncol = tau.shape[0]
+
+    # Expand ds to include ncol as the first dimension
+    if len(ds.shape) == 2:  # If ds has shape (ngpt, n_quad_angs)
+        ds = np.expand_dims(ds, axis=0)  # Add ncol dimension
+        ds = np.repeat(ds, ncol, axis=0)  # Repeat along ncol dimension
     # Initialize output arrays
     flux_up_jac = np.full((ncol, nlay + 1), np.nan, dtype=np.float64, order="F")
     broadband_up = np.full((ncol, nlay + 1), np.nan, dtype=np.float64, order="F")
@@ -230,7 +234,6 @@ def sw_solver_noscat(
 
 
 def sw_solver_2stream(
-    ncol: int,
     nlay: int,
     ngpt: int,
     tau: npt.NDArray[np.float64],
@@ -260,7 +263,6 @@ def sw_solver_2stream(
     broadband fluxes.
 
     Args:
-        ncol: Number of columns
         nlay: Number of layers
         ngpt: Number of g-points
         tau: Optical depths with shape (ncol, nlay, ngpt)
@@ -284,6 +286,7 @@ def sw_solver_2stream(
             broadband_dn: Broadband downward fluxes with shape (ncol, nlay+1)
             broadband_dir: Broadband direct fluxes with shape (ncol, nlay+1)
     """
+    ncol = tau.shape[0]
     # Initialize output arrays
     flux_up = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")
     flux_dn = np.zeros((ncol, nlay + 1, ngpt), dtype=np.float64, order="F")

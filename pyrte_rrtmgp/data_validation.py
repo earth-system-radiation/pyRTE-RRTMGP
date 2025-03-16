@@ -1,5 +1,6 @@
 """Data validation utilities for pyRTE-RRTMGP."""
 
+import json
 from dataclasses import asdict, dataclass
 from typing import Dict, Optional
 
@@ -41,6 +42,18 @@ class DatasetMapping:
         """
         return cls(dim_mapping=d["dim_mapping"], var_mapping=d["var_mapping"])
 
+    @classmethod
+    def from_json(cls, json_str: str) -> "DatasetMapping":
+        """Create mapping from JSON string.
+
+        Args:
+            json_str: JSON string containing dim_mapping and var_mapping
+
+        Returns:
+            New DatasetMapping instance
+        """
+        return cls.from_dict(json.loads(json_str))
+
 
 @xr.register_dataset_accessor("mapping")
 class DatasetMappingAccessor:
@@ -66,7 +79,7 @@ class DatasetMappingAccessor:
         Raises:
             ValueError: If mapped dimensions don't exist in dataset
         """
-        self._obj.attrs["dataset_mapping"] = asdict(mapping)
+        self._obj.attrs["dataset_mapping"] = json.dumps(asdict(mapping))
 
     @property
     def mapping(self) -> Optional[DatasetMapping]:
@@ -77,6 +90,8 @@ class DatasetMappingAccessor:
         """
         if "dataset_mapping" not in self._obj.attrs:
             return None
+        if isinstance(self._obj.attrs["dataset_mapping"], str):
+            return DatasetMapping.from_json(self._obj.attrs["dataset_mapping"])
         return DatasetMapping.from_dict(self._obj.attrs["dataset_mapping"])
 
     def get_var(self, standard_name: str) -> Optional[str]:
