@@ -482,7 +482,6 @@ def compute_tau_rayleigh(
 
 
 def compute_cld_from_table(
-    ncol: int,
     nlay: int,
     ngpt: int,
     mask: npt.NDArray[np.bool_],
@@ -502,7 +501,6 @@ def compute_cld_from_table(
     are indexed by liquid water path (lwp) and effective radius (re).
 
     Args:
-        ncol: Number of atmospheric columns
         nlay: Number of atmospheric layers
         ngpt: Number of g-points
         mask: Cloud mask with shape (ncol, nlay)
@@ -523,6 +521,11 @@ def compute_cld_from_table(
             - taussag: Product of taussa and asymmetry parameter with shape
               (ncol, nlay, ngpt)
     """
+    if mask.ndim == 1:
+        ncol = 1
+    else:
+        ncol = mask.shape[0]
+
     # Initialize output arrays
     tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
     taussa = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")

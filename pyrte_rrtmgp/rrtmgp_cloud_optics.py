@@ -77,8 +77,12 @@ class CloudOpticsAccessor:
         cloud_optics = self._obj
 
         # Get dimensions
-        ncol = cloud_properties.sizes["site"]
         nlay = cloud_properties.sizes["layer"]
+
+        non_default_dims = [
+            d for d in cloud_properties.dims if d not in ["level", "layer", "gpt"]
+        ]
+        cloud_properties = cloud_properties.stack({"stacked_cols": non_default_dims})
 
         # Create cloud masks
         liq_mask = cloud_properties.lwp > 0
@@ -122,7 +126,6 @@ class CloudOpticsAccessor:
 
         ltau, ltaussa, ltaussag = xr.apply_ufunc(
             compute_cld_from_table,
-            ncol,
             nlay,
             ngpt,
             liq_mask,
@@ -135,12 +138,11 @@ class CloudOpticsAccessor:
             cloud_optics.ssaliq,
             cloud_optics.asyliq,
             input_core_dims=[
-                [],  # ncol
                 [],  # nlay
                 [],  # ngpt
-                ["site", "layer"],  # liq_mask
-                ["site", "layer"],  # lwp
-                ["site", "layer"],  # rel
+                ["layer"],  # liq_mask
+                ["layer"],  # lwp
+                ["layer"],  # rel
                 [],  # nsize_liq
                 [],  # step_size
                 [],  # radliq_lwr
@@ -149,13 +151,12 @@ class CloudOpticsAccessor:
                 ["nsize_liq", gpt_dim],  # asyliq
             ],
             output_core_dims=[
-                ["site", "layer", gpt_out_dim],  # ltau
-                ["site", "layer", gpt_out_dim],  # ltaussa
-                ["site", "layer", gpt_out_dim],  # ltaussag
+                ["layer", gpt_out_dim],  # ltau
+                ["layer", gpt_out_dim],  # ltaussa
+                ["layer", gpt_out_dim],  # ltaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
-            vectorize=True,
-            dask="parallelized",
+            dask="allowed",
         )
 
         # Ice phase
@@ -166,7 +167,6 @@ class CloudOpticsAccessor:
 
         itau, itaussa, itaussag = xr.apply_ufunc(
             compute_cld_from_table,
-            ncol,
             nlay,
             ngpt,
             ice_mask,
@@ -179,12 +179,11 @@ class CloudOpticsAccessor:
             cloud_optics.ssaice[ice_roughness, :, :],
             cloud_optics.asyice[ice_roughness, :, :],
             input_core_dims=[
-                [],  # ncol
                 [],  # nlay
                 [],  # ngpt
-                ["site", "layer"],  # ice_mask
-                ["site", "layer"],  # iwp
-                ["site", "layer"],  # rei
+                ["layer"],  # ice_mask
+                ["layer"],  # iwp
+                ["layer"],  # rei
                 [],  # nsize_ice
                 [],  # step_size
                 [],  # diamice_lwr
@@ -193,13 +192,12 @@ class CloudOpticsAccessor:
                 ["nsize_ice", gpt_dim],  # asyice
             ],
             output_core_dims=[
-                ["site", "layer", gpt_out_dim],  # itau
-                ["site", "layer", gpt_out_dim],  # itaussa
-                ["site", "layer", gpt_out_dim],  # itaussag
+                ["layer", gpt_out_dim],  # itau
+                ["layer", gpt_out_dim],  # itaussa
+                ["layer", gpt_out_dim],  # itaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
-            vectorize=True,
-            dask="parallelized",
+            dask="allowed",
         )
 
         # Combine liquid and ice contributions
@@ -220,7 +218,7 @@ class CloudOpticsAccessor:
         if add_to_input:
             cloud_properties.update(props)
 
-        return props
+        return props.unstack("stacked_cols")
 
 
 @xr.register_dataset_accessor("add_to")
