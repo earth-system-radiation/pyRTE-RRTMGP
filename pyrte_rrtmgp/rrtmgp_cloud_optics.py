@@ -292,8 +292,6 @@ class CombineOpticalPropsAccessor:
                             ["site", "layer", "gpt"],  # tau_inout
                             ["site", "layer", "gpt"],  # tau_in
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
-                        output_dtypes=[np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
@@ -315,8 +313,6 @@ class CombineOpticalPropsAccessor:
                             ["site", "layer", "gpt"],  # tau_in
                             ["site", "layer", "gpt"],  # ssa_in
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
-                        output_dtypes=[np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
@@ -339,11 +335,6 @@ class CombineOpticalPropsAccessor:
                             ["site", "layer", "gpt"],  # ssa_inout
                             ["site", "layer", "gpt"],  # tau_in
                         ],
-                        output_core_dims=[
-                            ["site", "layer", "gpt"],
-                            ["site", "layer", "gpt"],
-                        ],
-                        output_dtypes=[np.float64, np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
@@ -371,12 +362,6 @@ class CombineOpticalPropsAccessor:
                             ["site", "layer", "gpt"],  # ssa_in
                             ["site", "layer", "gpt"],  # g_in
                         ],
-                        output_core_dims=[
-                            ["site", "layer", "gpt"],
-                            ["site", "layer", "gpt"],
-                            ["site", "layer", "gpt"],
-                        ],
-                        output_dtypes=[np.float64, np.float64, np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
@@ -408,8 +393,6 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
-                        output_dtypes=[np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
@@ -435,8 +418,6 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # bnd_limits_gpt
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
-                        output_dtypes=[np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
@@ -463,8 +444,6 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
-                        output_dtypes=[np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
@@ -496,8 +475,6 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
-                        output_dtypes=[np.float64],
                         vectorize=True,
                         dask="parallelized",
                     )
