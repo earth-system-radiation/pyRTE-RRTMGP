@@ -6,6 +6,10 @@ import numpy as np
 import xarray as xr
 
 from pyrte_rrtmgp.data_types import CloudOpticsFiles
+from pyrte_rrtmgp.data_validation import (
+    AtmosphericMapping,
+    create_default_mapping,
+)
 from pyrte_rrtmgp.kernels.rrtmgp import compute_cld_from_table
 from pyrte_rrtmgp.kernels.rte import (
     delta_scale_2str,
@@ -62,6 +66,7 @@ class CloudOpticsAccessor:
         cloud_properties: xr.Dataset,
         problem_type: str = "two-stream",
         add_to_input: bool = False,
+        variable_mapping: AtmosphericMapping | None = None,
     ) -> xr.Dataset:
         """
         Compute cloud optical properties for liquid and ice clouds.
@@ -75,6 +80,11 @@ class CloudOpticsAccessor:
               phases
         """
         cloud_optics = self._obj
+
+        if variable_mapping is None:
+            variable_mapping = create_default_mapping()
+        # Set mapping in accessor
+        cloud_properties.mapping.set_mapping(variable_mapping)
 
         # Get dimensions
         nlay = cloud_properties.sizes["layer"]
@@ -239,6 +249,7 @@ class CloudOpticsAccessor:
             cloud_properties.update(props)
             return
 
+        props.mapping.set_mapping(cloud_properties.mapping.mapping)
         return props
 
 
@@ -494,8 +505,14 @@ class CombineOpticalPropsAccessor:
             outside [0,1]
         """
         # Get dimensions
-        ncol = optical_props.sizes["site"]
-        nlay = optical_props.sizes["layer"]
+        layer_dim = optical_props.mapping.get_dim("layer")
+        nlay = optical_props.sizes[layer_dim]
+
+        non_default_dims = [
+            d for d in optical_props.dims if d not in [layer_dim, "gpt", "bnd"]
+        ]
+        optical_props = optical_props.stack({"stacked_cols": non_default_dims})
+
         gpt_dim = "gpt" if "gpt" in optical_props.sizes else "bnd"
         ngpt = optical_props.sizes[gpt_dim]
 
@@ -503,7 +520,6 @@ class CombineOpticalPropsAccessor:
         if forward_scattering is not None:
             xr.apply_ufunc(
                 delta_scale_2str_f,
-                ncol,
                 nlay,
                 ngpt,
                 optical_props["tau"],
@@ -511,34 +527,29 @@ class CombineOpticalPropsAccessor:
                 optical_props["g"],
                 forward_scattering,
                 input_core_dims=[
-                    [],  # ncol
                     [],  # nlay
                     [],  # ngpt
-                    ["site", "layer", gpt_dim],  # tau
-                    ["site", "layer", gpt_dim],  # ssa
-                    ["site", "layer", gpt_dim],  # g
-                    ["site", "layer", gpt_dim],  # f
+                    [layer_dim, gpt_dim],  # tau
+                    [layer_dim, gpt_dim],  # ssa
+                    [layer_dim, gpt_dim],  # g
+                    [layer_dim, gpt_dim],  # f
                 ],
-                vectorize=True,
                 dask="parallelized",
             )
         else:
             xr.apply_ufunc(
                 delta_scale_2str,
-                ncol,
                 nlay,
                 ngpt,
                 optical_props["tau"],
                 optical_props["ssa"],
                 optical_props["g"],
                 input_core_dims=[
-                    [],  # ncol
                     [],  # nlay
                     [],  # ngpt
-                    ["site", "layer", gpt_dim],  # tau
-                    ["site", "layer", gpt_dim],  # ssa
-                    ["site", "layer", gpt_dim],  # g
+                    [layer_dim, gpt_dim],  # tau
+                    [layer_dim, gpt_dim],  # ssa
+                    [layer_dim, gpt_dim],  # g
                 ],
-                vectorize=True,
                 dask="parallelized",
             )
