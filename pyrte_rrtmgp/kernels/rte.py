@@ -619,7 +619,7 @@ def delta_scale_2str(
     tau: npt.NDArray[np.float64],
     ssa: npt.NDArray[np.float64],
     g: npt.NDArray[np.float64],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+) -> None:
     """Apply the delta-scaling transformation to two-stream radiative properties.
 
     Args:
@@ -644,8 +644,6 @@ def delta_scale_2str(
 
     rte_delta_scale_2str_k(*args)
 
-    return tau, ssa, g
-
 
 def delta_scale_2str_f(
     ncol: int,
@@ -655,7 +653,7 @@ def delta_scale_2str_f(
     ssa: npt.NDArray[np.float64],
     g: npt.NDArray[np.float64],
     f: npt.NDArray[np.float64],
-) -> tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+) -> None:
     """Apply the delta-scaling to two-stream with forward scattering fraction.
 
     Args:
@@ -681,5 +679,3 @@ def delta_scale_2str_f(
     ]
 
     rte_delta_scale_2str_f_k(*args)
-
-    return tau, ssa, g
