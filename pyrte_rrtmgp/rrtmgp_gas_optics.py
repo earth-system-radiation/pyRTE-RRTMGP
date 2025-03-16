@@ -395,9 +395,8 @@ class BaseGasOpticsAccessor:
         Returns:
             Dataset containing absorption optical depth
         """
-        site_dim = atmosphere.mapping.get_dim("site")
         layer_dim = atmosphere.mapping.get_dim("layer")
-
+        level_dim = atmosphere.mapping.get_dim("level")
         nlay = atmosphere[layer_dim].size
         ntemp = self._dataset["temperature"].size
         neta = self._dataset["mixing_fraction"].size
@@ -469,8 +468,18 @@ class BaseGasOpticsAccessor:
             minor_absorber_intervals_upper=slice(nminorupper)
         )
 
-        pres_layer_var = atmosphere.mapping.get_var("pres_layer")
-        temp_layer_var = atmosphere.mapping.get_var("temp_layer")
+        # Stack all non-core dimensions
+        non_default_dims = [
+            d for d in atmosphere.dims if d not in [layer_dim, level_dim, "gpt", "bnd"]
+        ]
+
+        atmosphere = atmosphere.stack({"stacked_cols": non_default_dims})
+        play = atmosphere[atmosphere.mapping.get_var("pres_layer")]
+        tlay = atmosphere[atmosphere.mapping.get_var("temp_layer")]
+
+        gas_interpolation_data = gas_interpolation_data.stack(
+            {"stacked_cols": non_default_dims}
+        )
 
         tau_absorption = xr.apply_ufunc(
             compute_tau_absorption,
@@ -508,8 +517,8 @@ class BaseGasOpticsAccessor:
             gas_interpolation_data["column_mix"],
             gas_interpolation_data["fmajor"],
             gas_interpolation_data["fminor"],
-            atmosphere[pres_layer_var],
-            atmosphere[temp_layer_var],
+            play,
+            tlay,
             gas_interpolation_data["gases_columns"],
             gas_interpolation_data["eta_index"],
             gas_interpolation_data["temperature_index"],
@@ -553,29 +562,36 @@ class BaseGasOpticsAccessor:
                 ["minor_absorber_intervals_upper"],  # idx_minor_scaling_upper
                 ["minor_absorber_intervals_lower"],  # kminor_start_lower
                 ["minor_absorber_intervals_upper"],  # kminor_start_upper
-                [site_dim, layer_dim],  # tropopause_mask
-                ["temp_interp", site_dim, layer_dim, "flavor"],  # column_mix
+                [layer_dim],  # tropopause_mask
+                ["temp_interp", layer_dim, "flavor"],  # column_mix
                 [
                     "eta_interp",
                     "press_interp",
                     "temp_interp",
-                    site_dim,
                     layer_dim,
                     "flavor",
                 ],  # fmajor
-                ["eta_interp", "temp_interp", site_dim, layer_dim, "flavor"],  # fminor
-                [site_dim, layer_dim],  # pres_layer
-                [site_dim, layer_dim],  # temp_layer
-                [site_dim, layer_dim, "gas"],  # gases_columns
-                ["pair", site_dim, layer_dim, "flavor"],  # eta_index
-                [site_dim, layer_dim],  # temperature_index
-                [site_dim, layer_dim],  # pressure_index
+                ["eta_interp", "temp_interp", layer_dim, "flavor"],  # fminor
+                [layer_dim],  # pres_layer
+                [layer_dim],  # temp_layer
+                [layer_dim, "gas"],  # gases_columns
+                ["pair", layer_dim, "flavor"],  # eta_index
+                [layer_dim],  # temperature_index
+                [layer_dim],  # pressure_index
             ],
-            output_core_dims=[[site_dim, layer_dim, "gpt"]],
-            vectorize=True,
+            output_core_dims=[[layer_dim, "gpt"]],
             output_dtypes=[np.float64],
-            dask="parallelized",
+            dask="allowed",
         )
+
+        tau_absorption = tau_absorption.unstack("stacked_cols")
+        for var in non_default_dims + ["gpt"]:
+            tau_absorption = tau_absorption.drop_vars(var)
+        dims_order = non_default_dims + [layer_dim, "gpt"]
+        tau_absorption = tau_absorption.transpose(*dims_order)
+
+        # Convert props data arrays to Fortran-contiguous arrays
+        tau_absorption.values = np.asfortranarray(tau_absorption.values)
 
         return tau_absorption.rename("tau").to_dataset()
 
@@ -988,8 +1004,8 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             ],
             output_core_dims=[
                 ["gpt"],  # sfc_src
-                ["layer", "gpt"],  # lay_source
-                ["level", "gpt"],  # lev_source
+                [layer_dim, "gpt"],  # lay_source
+                [level_dim, "gpt"],  # lev_source
                 ["gpt"],  # sfc_src_jac
             ],
             output_dtypes=[np.float64, np.float64, np.float64, np.float64],
@@ -1185,12 +1201,31 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             dim=pd.Index(["lower", "upper"], name="rayl_bound"),
         )
 
-        site_dim = gas_interpolation_data.mapping.get_dim("site")
         layer_dim = gas_interpolation_data.mapping.get_dim("layer")
+        level_dim = gas_interpolation_data.mapping.get_dim("level")
+
+        non_default_dims = [
+            d
+            for d in gas_interpolation_data.dims
+            if d
+            not in [
+                level_dim,
+                layer_dim,
+                "eta_interp",
+                "temp_interp",
+                "flavor",
+                "press_interp",
+                "pair",
+                "gas",
+            ]
+        ]
+
+        gas_interpolation_data = gas_interpolation_data.stack(
+            {"stacked_cols": non_default_dims}
+        )
 
         tau_rayleigh = xr.apply_ufunc(
             compute_tau_rayleigh,
-            gas_interpolation_data.sizes[site_dim],
             gas_interpolation_data.sizes[layer_dim],
             self._dataset.sizes["bnd"],
             self._dataset.sizes["gpt"],
@@ -1211,7 +1246,6 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
             gas_interpolation_data["tropopause_mask"],
             gas_interpolation_data["temperature_index"],
             input_core_dims=[
-                [],  # ncol
                 [],  # nlay
                 [],  # nbnd
                 [],  # ngpt
@@ -1223,18 +1257,26 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                 ["pair", "bnd"],  # band_lims_gpt
                 ["temperature", "mixing_fraction", "gpt", "rayl_bound"],  # krayl
                 [],  # idx_h2o
-                [site_dim, layer_dim],  # col_dry
-                [site_dim, layer_dim, "gas"],  # col_gas
-                ["eta_interp", "temp_interp", site_dim, layer_dim, "flavor"],  # fminor
-                ["pair", site_dim, layer_dim, "flavor"],  # jeta
-                [site_dim, layer_dim],  # tropo
-                [site_dim, layer_dim],  # jtemp
+                [layer_dim],  # col_dry
+                [layer_dim, "gas"],  # col_gas
+                ["eta_interp", "temp_interp", layer_dim, "flavor"],  # fminor
+                ["pair", layer_dim, "flavor"],  # jeta
+                [layer_dim],  # tropo
+                [layer_dim],  # jtemp
             ],
-            output_core_dims=[[site_dim, layer_dim, "gpt"]],
+            output_core_dims=[[layer_dim, "gpt"]],
             output_dtypes=[np.float64],
-            vectorize=True,
             dask="parallelized",
         )
+
+        tau_rayleigh = tau_rayleigh.unstack("stacked_cols")
+        for var in non_default_dims + ["gpt"]:
+            tau_rayleigh = tau_rayleigh.drop_vars(var)
+        dims_order = non_default_dims + [layer_dim, "gpt"]
+        tau_rayleigh = tau_rayleigh.transpose(*dims_order)
+
+        # Convert props data arrays to Fortran-contiguous arrays
+        tau_rayleigh.values = np.asfortranarray(tau_rayleigh.values)
 
         return tau_rayleigh.rename("tau").to_dataset()
 
