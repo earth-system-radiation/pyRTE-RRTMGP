@@ -156,7 +156,12 @@ class CloudOpticsAccessor:
                 ["layer", gpt_out_dim],  # ltaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
-            dask="allowed",
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    gpt_out_dim: ngpt,
+                },
+            },
+            dask="parallelized",
         )
 
         # Ice phase
@@ -197,7 +202,12 @@ class CloudOpticsAccessor:
                 ["layer", gpt_out_dim],  # itaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
-            dask="allowed",
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    gpt_out_dim: ngpt,
+                },
+            },
+            dask="parallelized",
         )
 
         # Combine liquid and ice contributions

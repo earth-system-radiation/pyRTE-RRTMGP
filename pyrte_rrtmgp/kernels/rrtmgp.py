@@ -521,10 +521,7 @@ def compute_cld_from_table(
             - taussag: Product of taussa and asymmetry parameter with shape
               (ncol, nlay, ngpt)
     """
-    if mask.ndim == 1:
-        ncol = 1
-    else:
-        ncol = mask.shape[0]
+    ncol = mask.shape[0]
 
     # Initialize output arrays
     tau = np.zeros((ncol, nlay, ngpt), dtype=np.float64, order="F")
