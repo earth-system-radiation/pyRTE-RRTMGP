@@ -2,9 +2,6 @@ cmake_minimum_required(VERSION 3.18)
 
 project(rte-rrtmgp)
 
-# Add a custom target that always runs
-add_custom_target(compile-rte-rrtmgp ALL)
-
 # Determine platform
 set(LINUX FALSE)
 set(APPLE_ARM FALSE)
@@ -28,16 +25,6 @@ set(SOURCES ${CMAKE_SOURCE_DIR}/pybind_interface.cpp)
 
 pybind11_add_module(${TARGET_NAME} ${SOURCES})
 
-# TODO: This is outdated, fix it
-if(APPLE)
-    # On macOS, explicitly link against gfortran runtime
-    if(APPLE_ARM)
-        target_link_directories(${TARGET_NAME} PUBLIC /opt/homebrew/lib/gcc/current)
-    else()
-        target_link_directories(${TARGET_NAME} PUBLIC /usr/local/lib/gcc/current)
-    endif()
-endif()
-
 target_include_directories(${TARGET_NAME} PUBLIC
     $ENV{CONDA_PREFIX}/include
 )
@@ -45,7 +32,7 @@ target_include_directories(${TARGET_NAME} PUBLIC
 target_link_libraries(${TARGET_NAME} PUBLIC
     rte-rrtmgp::rte
     rte-rrtmgp::rrtmgp
-    gfortran
+    # gfortran
 )
 
 target_compile_definitions(${TARGET_NAME} PRIVATE
