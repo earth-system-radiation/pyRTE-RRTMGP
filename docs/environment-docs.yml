@@ -1,0 +1,10 @@
+name: pyrte_rrtmgp_docs
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.12
+  - rte_rrtmgp
+  - ninja
+  - sphinx-rtd-theme=2.0.0
+  - myst-parser=2.0.0
