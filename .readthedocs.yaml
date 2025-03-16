@@ -11,8 +11,7 @@ build:
   os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
   tools:
     # python: "3.12"
-    python: "miniconda3-25.1.1-2"
-    # Feb 11, 2025 - Available Python versions: 3.12.9, 3.11.11, 3.10.16, 3.9.21
+    python: "miniconda3-4.7"
     # when updating the tested Python versions, please also update README.md,
     # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
     # for the GitHub Actions workflow
