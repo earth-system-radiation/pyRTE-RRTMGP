@@ -7,17 +7,19 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  # os: ubuntu-22.04
-  os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
+  os: ubuntu-24.04
+  # os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
   tools:
     # python: "3.12"
     python: "miniconda3-4.7"
-    # when updating the tested Python versions, please also update README.md,
-    # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
-    # for the GitHub Actions workflow
+
 
 conda:
   environment: docs/environment-docs.yml
+  # Python version to use in the conda environment is specified in this file.
+  # when updating the tested Python versions, please also update README.md,
+  # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
+  # for the GitHub Actions workflow
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
@@ -36,5 +38,3 @@ python:
   #  - requirements: docs/requirements-docs.txt
    - method: pip
      path: .
-
-# TBD switch to conda instead of pip!
