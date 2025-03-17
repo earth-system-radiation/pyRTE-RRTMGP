@@ -39,7 +39,7 @@ repos:
       ]
 
 -   repo: https://github.com/nbQA-dev/nbQA
-    rev: 1.2.2
+    rev: 1.9.1
     hooks:
     -   id: nbqa-isort
         files: \.ipynb$
@@ -51,7 +51,7 @@ repos:
         args: [--ignore=E402]
 
 -   repo: https://github.com/kynan/nbstripout
-    rev: 0.5.0
+    rev: 0.8.1
     hooks:
     -   id: nbstripout
         files: \.ipynb$
