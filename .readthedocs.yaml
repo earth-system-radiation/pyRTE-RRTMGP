@@ -10,6 +10,12 @@ build:
   os: "ubuntu-24.04"
   tools:
     python: "mambaforge-23.11"
+  apt_packages:
+    - build-essential
+    - ninja-build
+  jobs:
+    pre_create_environment:
+      - conda update --yes --quiet --name=base --channel=defaults conda
 
 conda:
   environment: docs/environment-docs.yml
