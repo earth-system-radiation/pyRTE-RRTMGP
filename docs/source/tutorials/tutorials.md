@@ -3,6 +3,13 @@
 
 The pyRTE-RRTMGP repository contains a number of tutorials in the form of  [Jupyter notebooks](https://docs.jupyter.org). These notebooks are located in the `examples` folder of the repository.
 
+Currently, the following tutorials are available:
+
+* `examples/sw_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve shortwave radiative transfer equations.
+* `examples/lw_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve longwave radiative transfer equations.
+* `examples/dask_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP with [Dask](https://docs.dask.org/en/stable/) to solve radiative transfer equations with parallel computing.
+* `examples/all_sky_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve radiative transfer equations for an all-sky scenario.
+
 The tutorials are designed to help you get started with using pyRTE-RRTMGP and to demonstrate how to use the package.
 
 ## Setting up the Tutorial Notebooks
