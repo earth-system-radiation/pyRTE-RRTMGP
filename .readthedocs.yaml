@@ -13,10 +13,6 @@ build:
   apt_packages:
     - build-essential
     - ninja-build
-  jobs:
-    pre_create_environment:
-      - conda update --yes --quiet --name=base --channel=defaults conda
-      - mamba update -y -q -n base -c defaults conda
 
 conda:
   environment: docs/environment-docs.yml
