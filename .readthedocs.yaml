@@ -17,11 +17,10 @@ build:
     pre_build:
       - conda list
       - conda config --add channels conda-forge
-      - conda config --add channels defaults
       - conda build conda.recipe
-      - ls $HOME/conda-bld  # Debug: List the contents of the build directory
-      - conda index $HOME/conda-bld  # Index the build directory
-      - conda install -c file://$HOME/conda-bld pyrte_rrtmgp
+      - ls /home/docs/checkouts/readthedocs.org/user_builds/pyrte-rrtmgp/conda/119/conda-bld/linux-64  # Debug: List the contents of the correct build directory
+      - conda index /home/docs/checkouts/readthedocs.org/user_builds/pyrte-rrtmgp/conda/119/conda-bld  # Index the correct build directory
+      - conda install -c file:///home/docs/checkouts/readthedocs.org/user_builds/pyrte-rrtmgp/conda/119/conda-bld pyrte_rrtmgp
 
 conda:
   environment: docs/environment-docs.yml
