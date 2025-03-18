@@ -17,8 +17,6 @@ build:
     pre_create_environment:
       - conda update --yes --quiet --name=base --channel=defaults conda
       - mamba update -y -q -n base -c defaults conda
-    post_create_environment:
-      - conda list
 
 conda:
   environment: docs/environment-docs.yml
