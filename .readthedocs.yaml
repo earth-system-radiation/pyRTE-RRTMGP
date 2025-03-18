@@ -13,10 +13,11 @@ build:
   apt_packages:
     - build-essential
     - ninja-build
-  pre_build:
-    - conda list
-    - conda build conda.recipe
-    - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
+  jobs:
+    pre_build:
+      - conda list
+      - conda build conda.recipe
+      - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
 
 conda:
   environment: docs/environment-docs.yml
