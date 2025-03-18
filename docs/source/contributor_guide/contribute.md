@@ -35,9 +35,9 @@ The built documentation will be located in `docs/build/html`.
 (local-install)=
 ## How to Set up a Local Development Environment
 
-Building and testing the package locally requires (conda)[https://docs.conda.io] to be installed on your system. You can install conda by following the instructions [here](https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html).
+Building and testing the package locally requires [conda](https://docs.conda.io) to be installed on your system. You can install conda by following the instructions [here](https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html).
 
-Building pyRTE-RRTMGP locally **only works with Linux (Ubuntu) and macOS (Intel/ARM)**.
+Building pyRTE-RRTMGP locally **currently works with Linux (Ubuntu) and macOS (Intel/ARM) only**.
 
 Follow the instructions below to set up a local development environment:
 
@@ -57,6 +57,26 @@ Follow the instructions below to set up a local development environment:
 
     ```bash
     cd pyRTE-RRTMGP
+    ```
+
+4. Make sure you **have a C++ compiler available on your system**.
+
+    On Debian/Ubuntu systems, you can use a tool like `apt` to install the dependencies:
+
+    ```bash
+    sudo apt install build-essential
+    ```
+
+    On macOS systems, you can use a tool like `brew` to install a compiler:
+
+    ```bash
+    brew install gcc
+    ```
+
+    You can also use conda to install a compiler, for example:
+
+    ```bash
+    conda install -c conda-forge gcc_linux-64
     ```
 
 4. **Install the main RTE-RRTMGP (Fortran) package** into the conda environment:
