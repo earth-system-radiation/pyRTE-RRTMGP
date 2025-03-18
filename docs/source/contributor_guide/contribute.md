@@ -172,11 +172,15 @@ For more details, see [](./fortran-compatibility.md).
 
 After checking the compatibility, follow these steps to make a new release:
 
-1. Update the version number in `pyproject.toml` and `conda.recipe/meta.yaml`. Also update `CITATION.cff` as necessary (for [Zenodo integration](https://zenodo.org/records/1117789)).
-2. Create a new release off the `main` branch on GitHub, using the "Draft a new release" button in [https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases](https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases).
-3. Create a new tag with the version number, and use the "Generate release notes" button to create the release notes.
+1. Update the version number (using https://semver.org/) in `pyproject.toml` and `conda.recipe/meta.yaml`. Also update `CITATION.cff` as necessary (for [Zenodo integration](https://zenodo.org/records/1117789)). e.g. ``version = "1.1.0"`` in pyproject.toml and ``version: 1.1.0`` in meta.yaml and CITATION.cff.
+2. Create a new tag with the version number off the `main` branch on GitHub, adding a ``v`` before the version number (e.g. `v1.1.0`).
+3. Create a new release, using the "Draft a new release" button in [https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases](https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases) adding a ``v`` before the release (e.g. `v1.1.0`).
 4. Review and update the the release notes as necessary, publish the release, and set it as the latest release.
 
-A PR to update the conda forge recipe should be created automatically by [regro-cf-autotick-bot](https://conda-forge.org/docs/maintainer/updating_pkgs/#pushing-to-regro-cf-autotick-bot-branch).
+A PR to update the conda forge recipe should be created automatically by [regro-cf-autotick-bot](https://conda-forge.org/docs/maintainer/updating_pkgs/#pushing-to-regro-cf-autotick-bot-branch). It can take several hours for the bot to detect the update and create the PR!
+
+The feedstock for the conda package is located at https://github.com/conda-forge/pyRTE_RRTMGP-feedstock
+
+Once the PR on the feedstock repo passes all tests, one of the pyRTE-RRTMGP maintainers can merge the PR and the new version of the package will be available on conda-forge.
 
 The documentation on [https://pyrte-rrtmgp.readthedocs.io/](https://pyrte-rrtmgp.readthedocs.io/) will update automatically. To make changes to the build process and other aspects of the readthedocs configuration, see the `.readthedocs.yml` file.
