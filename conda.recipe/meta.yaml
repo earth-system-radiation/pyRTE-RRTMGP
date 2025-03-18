@@ -1,13 +1,13 @@
 package:
   name: pyrte_rrtmgp
-  version: 0.0.7
+  version: 0.0.8
 
 source:
   path: ..
 
 build:
   script: {{ PYTHON }} -m pip install . -vv
-  number: 0
+  number: 1
 
 requirements:
   build:
@@ -17,7 +17,7 @@ requirements:
     - cmake >=3.18
     - git >=2.44.0
     - libuv >=1.44.2
-    - ninja
+    - ninja >=1.10
     - python
 
   host:
@@ -25,7 +25,7 @@ requirements:
     - pip
     - pybind11 >=2.10.0
     - python
-    - rte_rrtmgp ==v1.9.1
+    - rte_rrtmgp ==1.9.1
     - scikit-build-core
 
   run:
@@ -34,7 +34,7 @@ requirements:
     - pytest >=7.4
     - python
     - requests >=2.4.0
-    - rte_rrtmgp ==v1.9.1
+    - rte_rrtmgp ==1.9.1
     - xarray >=2023.5.0
 
 test:
@@ -45,7 +45,7 @@ test:
     - numpy >=1.21
     - pytest >=7.4
     - requests >=2.4.0
-    - rte_rrtmgp ==v1.9.1
+    - rte_rrtmgp ==1.9.1
     - xarray >=2023.5.0
   commands:
     - pyrte_rrtmgp run_tests

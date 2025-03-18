@@ -120,3 +120,20 @@ class ProblemTypes(StrEnum):
     LW_2STREAM = "Longwave 2-stream"
     SW_DIRECT = "Shortwave direct"
     SW_2STREAM = "Shortwave 2-stream"
+
+
+class OpticsProblemTypes(StrEnum):
+    """Enumeration of available optics problem types.
+
+    This enum defines the different types of optics problems that can be
+    solved with RRTMGP.
+
+    Attributes:
+        ABSORPTION: Absorption-only calculation
+        N_STREAM: N-stream calculation
+        TWO_STREAM: Two-stream approximation
+    """
+
+    ABSORPTION = "absorption"
+    N_STREAM = "n-stream"
+    TWO_STREAM = "two-stream"

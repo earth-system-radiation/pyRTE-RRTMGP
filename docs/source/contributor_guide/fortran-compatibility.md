@@ -48,7 +48,7 @@ The expected output should look something like this:
 ...
 Successfully built pyrte_rrtmgp
 Installing collected packages: pyrte_rrtmgp
-Successfully installed pyrte_rrtmgp-0.0.6
+Successfully installed pyrte_rrtmgp-0.0.8
 ```
 
 To run the tests:
