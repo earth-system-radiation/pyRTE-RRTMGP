@@ -15,12 +15,13 @@ build:
     - ninja-build
   jobs:
     pre_build:
-      - conda list
+      - conda list  # for debugging
       - conda config --add channels conda-forge
       - conda build conda.recipe
-      - ls /home/docs/checkouts/readthedocs.org/user_builds/pyrte-rrtmgp/conda/119/conda-bld/linux-64  # Debug: List the contents of the correct build directory
-      - conda index /home/docs/checkouts/readthedocs.org/user_builds/pyrte-rrtmgp/conda/119/conda-bld  # Index the correct build directory
-      - conda install -c file:///home/docs/checkouts/readthedocs.org/user_builds/pyrte-rrtmgp/conda/119/conda-bld pyrte_rrtmgp
+      - export CONDA_BLD_PATH=$(conda info --base)/conda-bld  # Dynamically determine the build path
+      - ls $CONDA_BLD_PATH/linux-64  # Debug: List the contents of the correct build directory
+      - conda index $CONDA_BLD_PATH  # Index the correct build directory
+      - conda install -c file://$CONDA_BLD_PATH pyrte_rrtmgp
 
 conda:
   environment: docs/environment-docs.yml
