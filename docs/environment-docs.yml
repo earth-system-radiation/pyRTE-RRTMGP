@@ -8,6 +8,8 @@ dependencies:
   # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
   # for the GitHub Actions workflow
   - rte_rrtmgp
+  - conda-build
+  - conda-verify
   - pip
   - pip:
     - sphinx-rtd-theme==2.0.*
