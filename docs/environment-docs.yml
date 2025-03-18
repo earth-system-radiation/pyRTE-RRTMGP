@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.11
+  - python=3.12
   # when updating the tested Python versions, please also update README.md,
   # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
   # for the GitHub Actions workflow
