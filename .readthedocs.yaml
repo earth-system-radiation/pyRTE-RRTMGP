@@ -16,7 +16,8 @@ build:
   jobs:
     pre_build:
       - conda list
-      - conda config --add channels conda-forge defaults
+      - conda config --add channels conda-forge
+      - conda config --add channels defaults
       - conda build conda.recipe
       - ls $HOME/conda-bld  # Debug: List the contents of the build directory
       - conda index $HOME/conda-bld  # Index the build directory
