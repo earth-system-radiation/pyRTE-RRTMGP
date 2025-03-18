@@ -16,6 +16,7 @@ build:
   jobs:
     pre_build:
       - conda list
+      - conda config --add channels conda-forge
       - conda build conda.recipe
       - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
 
