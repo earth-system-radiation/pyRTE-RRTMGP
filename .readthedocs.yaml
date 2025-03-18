@@ -7,12 +7,9 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  os: ubuntu-24.04
-  # os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
+  os: "ubuntu-24.04"
   tools:
-    # python: "3.12"
-    python: "miniconda3-4.7"
-
+    python: "mambaforge-22.9"
 
 conda:
   environment: docs/environment-docs.yml
