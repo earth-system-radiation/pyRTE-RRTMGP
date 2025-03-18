@@ -2,10 +2,10 @@
 
 import datetime as dt
 import os
-import sys
 import tomllib
 
-sys.path.insert(0, os.path.abspath("../../"))
+# import sys
+# sys.path.insert(0, os.path.abspath("../../"))
 
 
 def get_version_from_toml() -> str:
