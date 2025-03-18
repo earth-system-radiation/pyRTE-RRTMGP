@@ -16,9 +16,11 @@ build:
   jobs:
     pre_build:
       - conda list
-      - conda config --add channels conda-forge
+      - conda config --add channels conda-forge defaults
       - conda build conda.recipe
-      - conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
+      - ls $HOME/conda-bld  # Debug: List the contents of the build directory
+      - conda index $HOME/conda-bld  # Index the build directory
+      - conda install -c file://$HOME/conda-bld pyrte_rrtmgp
 
 conda:
   environment: docs/environment-docs.yml
