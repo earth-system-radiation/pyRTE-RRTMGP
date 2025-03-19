@@ -15,9 +15,10 @@ build:
     - ninja-build
   jobs:
     pre_build:
-      - conda list
+      # build and install the package with conda
+      - conda list  # Debug: List the installed packages
       - conda config --add channels conda-forge
-      - conda info
+      - conda info  # Debug: List the conda configuration
       - conda build conda.recipe
       - ls $(conda info --base)/conda-bld/linux-64  # Debug: List the contents of the build directory
       - conda index $(conda info --base)/conda-bld  # Index the correct build directory

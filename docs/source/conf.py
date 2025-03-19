@@ -1,11 +1,11 @@
-"""Configuration file for the Sphinx documentation builder."""
+"""Configuration file for the Sphinx documentation builder.
+
+Configuration for the readthedocs build and deployment is in /.readthedocs.yml.
+"""
 
 import datetime as dt
 import os
 import tomllib
-
-# import sys
-# sys.path.insert(0, os.path.abspath("../../"))
 
 
 def get_version_from_toml() -> str:
