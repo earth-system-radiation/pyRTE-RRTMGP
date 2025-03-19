@@ -86,47 +86,27 @@ class CloudOpticsAccessor:
         # Set mapping in accessor
         cloud_properties.mapping.set_mapping(variable_mapping)
 
+        layer_dim = cloud_properties.mapping.get_dim("layer")
+
         # Get dimensions
-        nlay = cloud_properties.sizes["layer"]
+        nlay = cloud_properties.sizes[layer_dim]
 
         non_default_dims = [
             d for d in cloud_properties.dims if d not in ["level", "layer", "gpt"]
         ]
         cloud_properties = cloud_properties.stack({"stacked_cols": non_default_dims})
-
-        # Create cloud masks
-        liq_mask = cloud_properties.lwp > 0
-        ice_mask = cloud_properties.iwp > 0
-
-        # Check if cloud optics data is initialized
-        if not hasattr(cloud_optics, "extliq"):
-            raise ValueError("Cloud optics: no data has been initialized")
-
-        # Validate particle sizes are within bounds
-        if np.any(
-            (cloud_properties.rel.where(liq_mask) < cloud_optics.radliq_lwr.values)
-            | (cloud_properties.rel.where(liq_mask) > cloud_optics.radliq_upr.values)
-        ):
-            raise ValueError("Cloud optics: liquid effective radius is out of bounds")
-
-        if np.any(
-            (cloud_properties.rei.where(ice_mask) < cloud_optics.diamice_lwr.values)
-            | (cloud_properties.rei.where(ice_mask) > cloud_optics.diamice_upr.values)
-        ):
-            raise ValueError("Cloud optics: ice effective radius is out of bounds")
-
-        # Check for negative water paths
-        if np.any(cloud_properties.lwp.where(liq_mask) < 0) or np.any(
-            cloud_properties.iwp.where(ice_mask) < 0
-        ):
-            raise ValueError(
-                "Cloud optics: negative lwp or iwp where clouds are supposed to be"
-            )
+        # Core dimensions are not chunked
+        cloud_properties = cloud_properties.chunk({layer_dim: -1})
 
         # Determine if we're using band-averaged or spectral properties
         gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
         gpt_out_dim = "bnd" if gpt_dim == "nband" else "gpt"
         ngpt = cloud_optics.sizes["nband" if gpt_dim == "nband" else "gpt"]
+
+        # Sequentially process each chunk
+        # Create cloud masks
+        liq_mask = cloud_properties.lwp > 0
+        ice_mask = cloud_properties.iwp > 0
 
         # Compute optical properties using lookup tables
         # Liquid phase
@@ -150,9 +130,9 @@ class CloudOpticsAccessor:
             input_core_dims=[
                 [],  # nlay
                 [],  # ngpt
-                ["layer"],  # liq_mask
-                ["layer"],  # lwp
-                ["layer"],  # rel
+                [layer_dim],  # liq_mask
+                [layer_dim],  # lwp
+                [layer_dim],  # rel
                 [],  # nsize_liq
                 [],  # step_size
                 [],  # radliq_lwr
@@ -161,9 +141,9 @@ class CloudOpticsAccessor:
                 ["nsize_liq", gpt_dim],  # asyliq
             ],
             output_core_dims=[
-                ["layer", gpt_out_dim],  # ltau
-                ["layer", gpt_out_dim],  # ltaussa
-                ["layer", gpt_out_dim],  # ltaussag
+                [layer_dim, gpt_out_dim],  # ltau
+                [layer_dim, gpt_out_dim],  # ltaussa
+                [layer_dim, gpt_out_dim],  # ltaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
             dask_gufunc_kwargs={
@@ -196,9 +176,9 @@ class CloudOpticsAccessor:
             input_core_dims=[
                 [],  # nlay
                 [],  # ngpt
-                ["layer"],  # ice_mask
-                ["layer"],  # iwp
-                ["layer"],  # rei
+                [layer_dim],  # ice_mask
+                [layer_dim],  # iwp
+                [layer_dim],  # rei
                 [],  # nsize_ice
                 [],  # step_size
                 [],  # diamice_lwr
@@ -207,9 +187,9 @@ class CloudOpticsAccessor:
                 ["nsize_ice", gpt_dim],  # asyice
             ],
             output_core_dims=[
-                ["layer", gpt_out_dim],  # itau
-                ["layer", gpt_out_dim],  # itaussa
-                ["layer", gpt_out_dim],  # itaussag
+                [layer_dim, gpt_out_dim],  # itau
+                [layer_dim, gpt_out_dim],  # itaussa
+                [layer_dim, gpt_out_dim],  # itaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
             dask_gufunc_kwargs={
@@ -219,6 +199,13 @@ class CloudOpticsAccessor:
             },
             dask="parallelized",
         )
+
+        ltau = ltau.unstack("stacked_cols")
+        ltaussa = ltaussa.unstack("stacked_cols")
+        ltaussag = ltaussag.unstack("stacked_cols")
+        itau = itau.unstack("stacked_cols")
+        itaussa = itaussa.unstack("stacked_cols")
+        itaussag = itaussag.unstack("stacked_cols")
 
         # Combine liquid and ice contributions
         if problem_type == "absorption":
@@ -235,7 +222,6 @@ class CloudOpticsAccessor:
 
             props = xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
 
-        props = props.unstack("stacked_cols")
         for var in non_default_dims:
             props = props.drop_vars(var)
         dims_order = non_default_dims + ["layer", gpt_out_dim]
@@ -297,6 +283,18 @@ class CombineOpticalPropsAccessor:
         is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
         is_1stream_2 = "tau" in list(op2.data_vars) and "ssa" not in list(op2.data_vars)
 
+        for var in ["tau", "ssa", "g"]:
+            if var in op1.data_vars:
+                gpt_dim = "gpt" if "gpt" in op1[var].sizes else "bnd"
+                transposed_data = op1[var].transpose("stacked_cols", "layer", gpt_dim)
+                op1[var] = (["stacked_cols", "layer", gpt_dim], transposed_data.values)
+                op1[var].values = np.asfortranarray(op1[var].values)
+            if var in op2.data_vars:
+                gpt_dim = "gpt" if "gpt" in op2[var].sizes else "bnd"
+                transposed_data = op2[var].transpose("stacked_cols", "layer", gpt_dim)
+                op2[var] = (["stacked_cols", "layer", gpt_dim], transposed_data.values)
+                op2[var].values = np.asfortranarray(op2[var].values)
+
         if "gpt" in op1["tau"].sizes:
             if is_1stream_1:
                 if is_1stream_2:
@@ -313,6 +311,7 @@ class CombineOpticalPropsAccessor:
                             ["layer", "gpt"],  # tau_inout
                             ["layer", "gpt"],  # tau_in
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
                 else:
@@ -331,6 +330,7 @@ class CombineOpticalPropsAccessor:
                             ["layer", "gpt"],  # tau_in
                             ["layer", "gpt"],  # ssa_in
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
             else:  # 2-stream output
@@ -350,6 +350,7 @@ class CombineOpticalPropsAccessor:
                             ["layer", "gpt"],  # ssa_inout
                             ["layer", "gpt"],  # tau_in
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
                 else:
@@ -374,6 +375,7 @@ class CombineOpticalPropsAccessor:
                             ["layer", "gpt"],  # ssa_in
                             ["layer", "gpt"],  # g_in
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
         else:
@@ -402,6 +404,7 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
                 else:
@@ -424,6 +427,7 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # bnd_limits_gpt
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
             else:
@@ -447,6 +451,7 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
                 else:
@@ -475,6 +480,7 @@ class CombineOpticalPropsAccessor:
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
 
@@ -504,6 +510,17 @@ class CombineOpticalPropsAccessor:
         gpt_dim = "gpt" if "gpt" in optical_props.sizes else "bnd"
         ngpt = optical_props.sizes[gpt_dim]
 
+        for var in ["tau", "ssa", "g"]:
+            if var in optical_props.data_vars:
+                transposed_data = optical_props[var].transpose(
+                    "stacked_cols", layer_dim, gpt_dim
+                )
+                optical_props[var] = (
+                    ["stacked_cols", layer_dim, gpt_dim],
+                    transposed_data.values,
+                )
+                optical_props[var].values = np.asfortranarray(optical_props[var].values)
+
         # Call kernel with forward scattering
         if forward_scattering is not None:
             xr.apply_ufunc(
@@ -522,6 +539,7 @@ class CombineOpticalPropsAccessor:
                     [layer_dim, gpt_dim],  # g
                     [layer_dim, gpt_dim],  # f
                 ],
+                output_dtypes=[np.float64],
                 dask="parallelized",
             )
         else:
@@ -539,5 +557,6 @@ class CombineOpticalPropsAccessor:
                     [layer_dim, gpt_dim],  # ssa
                     [layer_dim, gpt_dim],  # g
                 ],
+                output_dtypes=[np.float64],
                 dask="parallelized",
             )
