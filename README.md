@@ -27,6 +27,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 ## Installing pyRTE-RRTMGP
 
 ### Installing with Conda (recommended)
+[![Conda Version](https://img.shields.io/conda/vn/conda-forge/pyrte_rrtmgp.svg)](https://anaconda.org/conda-forge/pyrte_rrtmgp)
+[![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/pyrte_rrtmgp.svg)](https://anaconda.org/conda-forge/pyrte_rrtmgp)
 
 <!-- start-installation-section -->
 
