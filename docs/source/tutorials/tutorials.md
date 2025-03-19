@@ -9,6 +9,7 @@ Currently, the following tutorials are available:
 * `examples/lw_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve longwave radiative transfer equations.
 * `examples/dask_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP with [Dask](https://docs.dask.org/en/stable/) to solve radiative transfer equations with parallel computing.
 * `examples/all_sky_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve radiative transfer equations for an all-sky scenario.
+* `examples/dyamond_clouds/example.ipynb`: A tutorial using data from the [DYAMOND project (NASA/GMAO)](https://gmao.gsfc.nasa.gov/global_mesoscale/dyamond_phaseII/data_access/) together with Dask.
 
 The tutorials are designed to help you get started with using pyRTE-RRTMGP and to demonstrate how to use the package.
 
