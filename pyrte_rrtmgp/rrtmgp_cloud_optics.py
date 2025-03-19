@@ -6,6 +6,10 @@ import numpy as np
 import xarray as xr
 
 from pyrte_rrtmgp.data_types import CloudOpticsFiles
+from pyrte_rrtmgp.data_validation import (
+    AtmosphericMapping,
+    create_default_mapping,
+)
 from pyrte_rrtmgp.kernels.rrtmgp import compute_cld_from_table
 from pyrte_rrtmgp.kernels.rte import (
     delta_scale_2str,
@@ -62,6 +66,7 @@ class CloudOpticsAccessor:
         cloud_properties: xr.Dataset,
         problem_type: str = "two-stream",
         add_to_input: bool = False,
+        variable_mapping: AtmosphericMapping | None = None,
     ) -> xr.Dataset:
         """
         Compute cloud optical properties for liquid and ice clouds.
@@ -76,42 +81,30 @@ class CloudOpticsAccessor:
         """
         cloud_optics = self._obj
 
+        if variable_mapping is None:
+            variable_mapping = create_default_mapping()
+        # Set mapping in accessor
+        cloud_properties.mapping.set_mapping(variable_mapping)
+
+        layer_dim = cloud_properties.mapping.get_dim("layer")
+
         # Get dimensions
-        ncol, nlay = cloud_properties.sizes["site"], cloud_properties.sizes["layer"]
+        nlay = cloud_properties.sizes[layer_dim]
 
-        # Create cloud masks
-        liq_mask = cloud_properties.lwp > 0
-        ice_mask = cloud_properties.iwp > 0
-
-        # Check if cloud optics data is initialized
-        if not hasattr(cloud_optics, "extliq"):
-            raise ValueError("Cloud optics: no data has been initialized")
-
-        # Validate particle sizes are within bounds
-        if np.any(
-            (cloud_properties.rel.where(liq_mask) < cloud_optics.radliq_lwr.values)
-            | (cloud_properties.rel.where(liq_mask) > cloud_optics.radliq_upr.values)
-        ):
-            raise ValueError("Cloud optics: liquid effective radius is out of bounds")
-
-        if np.any(
-            (cloud_properties.rei.where(ice_mask) < cloud_optics.diamice_lwr.values)
-            | (cloud_properties.rei.where(ice_mask) > cloud_optics.diamice_upr.values)
-        ):
-            raise ValueError("Cloud optics: ice effective radius is out of bounds")
-
-        # Check for negative water paths
-        if np.any(cloud_properties.lwp.where(liq_mask) < 0) or np.any(
-            cloud_properties.iwp.where(ice_mask) < 0
-        ):
-            raise ValueError(
-                "Cloud optics: negative lwp or iwp where clouds are supposed to be"
-            )
+        non_default_dims = [
+            d for d in cloud_properties.dims if d not in ["level", "layer", "gpt"]
+        ]
+        cloud_properties = cloud_properties.stack({"stacked_cols": non_default_dims})
 
         # Determine if we're using band-averaged or spectral properties
         gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
         gpt_out_dim = "bnd" if gpt_dim == "nband" else "gpt"
         ngpt = cloud_optics.sizes["nband" if gpt_dim == "nband" else "gpt"]
+
+        # Sequentially process each chunk
+        # Create cloud masks
+        liq_mask = cloud_properties.lwp > 0
+        ice_mask = cloud_properties.iwp > 0
 
         # Compute optical properties using lookup tables
         # Liquid phase
@@ -121,7 +114,6 @@ class CloudOpticsAccessor:
 
         ltau, ltaussa, ltaussag = xr.apply_ufunc(
             compute_cld_from_table,
-            ncol,
             nlay,
             ngpt,
             liq_mask,
@@ -134,12 +126,11 @@ class CloudOpticsAccessor:
             cloud_optics.ssaliq,
             cloud_optics.asyliq,
             input_core_dims=[
-                [],  # ncol
                 [],  # nlay
                 [],  # ngpt
-                ["site", "layer"],  # liq_mask
-                ["site", "layer"],  # lwp
-                ["site", "layer"],  # rel
+                [layer_dim],  # liq_mask
+                [layer_dim],  # lwp
+                [layer_dim],  # rel
                 [],  # nsize_liq
                 [],  # step_size
                 [],  # radliq_lwr
@@ -148,12 +139,16 @@ class CloudOpticsAccessor:
                 ["nsize_liq", gpt_dim],  # asyliq
             ],
             output_core_dims=[
-                ["site", "layer", gpt_out_dim],  # ltau
-                ["site", "layer", gpt_out_dim],  # ltaussa
-                ["site", "layer", gpt_out_dim],  # ltaussag
+                [layer_dim, gpt_out_dim],  # ltau
+                [layer_dim, gpt_out_dim],  # ltaussa
+                [layer_dim, gpt_out_dim],  # ltaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
-            vectorize=True,
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    gpt_out_dim: ngpt,
+                },
+            },
             dask="parallelized",
         )
 
@@ -165,7 +160,6 @@ class CloudOpticsAccessor:
 
         itau, itaussa, itaussag = xr.apply_ufunc(
             compute_cld_from_table,
-            ncol,
             nlay,
             ngpt,
             ice_mask,
@@ -178,12 +172,11 @@ class CloudOpticsAccessor:
             cloud_optics.ssaice[ice_roughness, :, :],
             cloud_optics.asyice[ice_roughness, :, :],
             input_core_dims=[
-                [],  # ncol
                 [],  # nlay
                 [],  # ngpt
-                ["site", "layer"],  # ice_mask
-                ["site", "layer"],  # iwp
-                ["site", "layer"],  # rei
+                [layer_dim],  # ice_mask
+                [layer_dim],  # iwp
+                [layer_dim],  # rei
                 [],  # nsize_ice
                 [],  # step_size
                 [],  # diamice_lwr
@@ -192,14 +185,25 @@ class CloudOpticsAccessor:
                 ["nsize_ice", gpt_dim],  # asyice
             ],
             output_core_dims=[
-                ["site", "layer", gpt_out_dim],  # itau
-                ["site", "layer", gpt_out_dim],  # itaussa
-                ["site", "layer", gpt_out_dim],  # itaussag
+                [layer_dim, gpt_out_dim],  # itau
+                [layer_dim, gpt_out_dim],  # itaussa
+                [layer_dim, gpt_out_dim],  # itaussag
             ],
             output_dtypes=[np.float64, np.float64, np.float64],
-            vectorize=True,
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    gpt_out_dim: ngpt,
+                },
+            },
             dask="parallelized",
         )
+
+        ltau = ltau.unstack("stacked_cols")
+        ltaussa = ltaussa.unstack("stacked_cols")
+        ltaussag = ltaussag.unstack("stacked_cols")
+        itau = itau.unstack("stacked_cols")
+        itaussa = itaussa.unstack("stacked_cols")
+        itaussag = itaussag.unstack("stacked_cols")
 
         # Combine liquid and ice contributions
         if problem_type == "absorption":
@@ -218,7 +222,9 @@ class CloudOpticsAccessor:
 
         if add_to_input:
             cloud_properties.update(props)
+            return
 
+        props.mapping.set_mapping(cloud_properties.mapping.mapping)
         return props
 
 
@@ -243,12 +249,36 @@ class CombineOpticalPropsAccessor:
         op1 = self._obj
         op2 = other
 
-        if delta_scale:
-            op1 = self.delta_scale_optical_props(op1)
+        layer_dim = op2.mapping.get_dim("layer")
+        level_dim = op2.mapping.get_dim("level")
+        gpt_dim = "gpt"
+        bnd_dim = "bnd"
 
-        ncol = op2.sizes["site"]
-        nlay = op2.sizes["layer"]
-        ngpt = op2.sizes["gpt"]
+        non_default_dims = [
+            d
+            for d in op2.dims
+            if d not in [layer_dim, level_dim, gpt_dim, bnd_dim, "pair"]
+        ]
+        op1 = op1.stack({"stacked_cols": non_default_dims})
+        op2 = op2.stack({"stacked_cols": non_default_dims})
+
+        for var in ["tau", "ssa", "g"]:
+            if var in op1.data_vars:
+                gpt_dim = "gpt" if "gpt" in op1[var].sizes else "bnd"
+                transposed_data = op1[var].transpose("stacked_cols", "layer", gpt_dim)
+                op1[var] = (["stacked_cols", "layer", gpt_dim], transposed_data.values)
+                op1[var].values = np.asfortranarray(op1[var].values)
+            if var in op2.data_vars:
+                gpt_dim = "gpt" if "gpt" in op2[var].sizes else "bnd"
+                transposed_data = op2[var].transpose("stacked_cols", "layer", gpt_dim)
+                op2[var] = (["stacked_cols", "layer", gpt_dim], transposed_data.values)
+                op2[var].values = np.asfortranarray(op2[var].values)
+
+        if delta_scale:
+            self.delta_scale_optical_props(op1)
+
+        nlay = op2.sizes[layer_dim]
+        ngpt = op2.sizes[gpt_dim]
 
         # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
         is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
@@ -258,84 +288,64 @@ class CombineOpticalPropsAccessor:
             if is_1stream_1:
                 if is_1stream_2:
                     # 1-stream by 1-stream
-                    combined_tau = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         increment_1scalar_by_1scalar,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
                         op1["tau"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # tau_in
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
                         output_dtypes=[np.float64],
-                        vectorize=True,
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
                 else:
                     # 1-stream by 2-stream
-                    combined_tau = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         increment_1scalar_by_2stream,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
                         op1["tau"],
                         op1["ssa"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # tau_in
-                            ["site", "layer", "gpt"],  # ssa_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # ssa_in
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
                         output_dtypes=[np.float64],
-                        vectorize=True,
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
             else:  # 2-stream output
                 if is_1stream_2:
                     # 2-stream by 1-stream
-                    combined_tau, combined_ssa = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         increment_2stream_by_1scalar,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
                         op2["ssa"],
                         op1["tau"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # tau_in
                         ],
-                        output_core_dims=[
-                            ["site", "layer", "gpt"],
-                            ["site", "layer", "gpt"],
-                        ],
-                        output_dtypes=[np.float64, np.float64],
-                        vectorize=True,
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
-                    op2["ssa"] = combined_ssa
                 else:
                     # 2-stream by 2-stream
-                    combined_tau, combined_ssa, combined_g = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         increment_2stream_by_2stream,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -345,28 +355,18 @@ class CombineOpticalPropsAccessor:
                         op1["ssa"],
                         op1["g"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "gpt"],  # g_inout
-                            ["site", "layer", "gpt"],  # tau_in
-                            ["site", "layer", "gpt"],  # ssa_in
-                            ["site", "layer", "gpt"],  # g_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # g_inout
+                            ["layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # ssa_in
+                            ["layer", "gpt"],  # g_in
                         ],
-                        output_core_dims=[
-                            ["site", "layer", "gpt"],
-                            ["site", "layer", "gpt"],
-                            ["site", "layer", "gpt"],
-                        ],
-                        output_dtypes=[np.float64, np.float64, np.float64],
-                        vectorize=True,
+                        output_dtypes=[np.float64],
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
-                    op2["ssa"] = combined_ssa
-                    op2["g"] = combined_g
         else:
             # By-band increment (when op2's ngpt equals op1's nband)
             if op2.sizes["bnd"] != op1.sizes["bnd"]:
@@ -377,9 +377,8 @@ class CombineOpticalPropsAccessor:
             if is_1stream_1:
                 if is_1stream_2:
                     # 1-stream by 1-stream by band
-                    combined_tau = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         inc_1scalar_by_1scalar_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -387,25 +386,20 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "bnd"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "bnd"],  # tau_in
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
                         output_dtypes=[np.float64],
-                        vectorize=True,
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
                 else:
                     # 1-stream by 2-stream by band
-                    combined_tau = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         inc_1scalar_by_2stream_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -414,27 +408,22 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "bnd"],  # tau_in
-                            ["site", "layer", "bnd"],  # ssa_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "bnd"],  # tau_in
+                            ["layer", "bnd"],  # ssa_in
                             [],  # nbnd
                             ["pair", "bnd"],  # bnd_limits_gpt
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
                         output_dtypes=[np.float64],
-                        vectorize=True,
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
             else:
                 if is_1stream_2:
                     # 2-stream by 1-stream by band
-                    combined_tau = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         inc_2stream_by_1scalar_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -443,26 +432,21 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "bnd"],  # tau_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "bnd"],  # tau_in
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
                         output_dtypes=[np.float64],
-                        vectorize=True,
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
                 else:
                     # 2-stream by 2-stream by band
-                    combined_tau = xr.apply_ufunc(
+                    xr.apply_ufunc(
                         inc_2stream_by_2stream_bybnd,
-                        ncol,
                         nlay,
                         ngpt,
                         op2["tau"],
@@ -474,24 +458,20 @@ class CombineOpticalPropsAccessor:
                         op2.sizes["bnd"],
                         op2["bnd_limits_gpt"],
                         input_core_dims=[
-                            [],  # ncol
                             [],  # nlay
                             [],  # ngpt
-                            ["site", "layer", "gpt"],  # tau_inout
-                            ["site", "layer", "gpt"],  # ssa_inout
-                            ["site", "layer", "gpt"],  # g_inout
-                            ["site", "layer", "bnd"],  # tau_in
-                            ["site", "layer", "bnd"],  # ssa_in
-                            ["site", "layer", "bnd"],  # g_in
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # g_inout
+                            ["layer", "bnd"],  # tau_in
+                            ["layer", "bnd"],  # ssa_in
+                            ["layer", "bnd"],  # g_in
                             [],  # nbnd
                             ["pair", "bnd"],  # band_lims_gpoint
                         ],
-                        output_core_dims=[["site", "layer", "gpt"]],
                         output_dtypes=[np.float64],
-                        vectorize=True,
                         dask="parallelized",
                     )
-                    op2["tau"] = combined_tau
 
     def delta_scale_optical_props(
         self, optical_props: xr.Dataset, forward_scattering: np.ndarray | None = None
@@ -508,16 +488,27 @@ class CombineOpticalPropsAccessor:
             outside [0,1]
         """
         # Get dimensions
-        ncol = optical_props.sizes["site"]
-        nlay = optical_props.sizes["layer"]
+        layer_dim = optical_props.mapping.get_dim("layer")
+        nlay = optical_props.sizes[layer_dim]
+
         gpt_dim = "gpt" if "gpt" in optical_props.sizes else "bnd"
         ngpt = optical_props.sizes[gpt_dim]
 
+        for var in ["tau", "ssa", "g"]:
+            if var in optical_props.data_vars:
+                transposed_data = optical_props[var].transpose(
+                    "stacked_cols", layer_dim, gpt_dim
+                )
+                optical_props[var] = (
+                    ["stacked_cols", layer_dim, gpt_dim],
+                    transposed_data.values,
+                )
+                optical_props[var].values = np.asfortranarray(optical_props[var].values)
+
         # Call kernel with forward scattering
         if forward_scattering is not None:
-            tau, ssa, g = xr.apply_ufunc(
+            xr.apply_ufunc(
                 delta_scale_2str_f,
-                ncol,
                 nlay,
                 ngpt,
                 optical_props["tau"],
@@ -525,53 +516,31 @@ class CombineOpticalPropsAccessor:
                 optical_props["g"],
                 forward_scattering,
                 input_core_dims=[
-                    [],  # ncol
                     [],  # nlay
                     [],  # ngpt
-                    ["site", "layer", gpt_dim],  # tau
-                    ["site", "layer", gpt_dim],  # ssa
-                    ["site", "layer", gpt_dim],  # g
-                    ["site", "layer", gpt_dim],  # f
+                    [layer_dim, gpt_dim],  # tau
+                    [layer_dim, gpt_dim],  # ssa
+                    [layer_dim, gpt_dim],  # g
+                    [layer_dim, gpt_dim],  # f
                 ],
-                output_core_dims=[
-                    ["site", "layer", gpt_dim],
-                    ["site", "layer", gpt_dim],
-                    ["site", "layer", gpt_dim],
-                ],
-                output_dtypes=[np.float64, np.float64, np.float64],
-                vectorize=True,
+                output_dtypes=[np.float64],
                 dask="parallelized",
             )
         else:
-            tau, ssa, g = xr.apply_ufunc(
+            xr.apply_ufunc(
                 delta_scale_2str,
-                ncol,
                 nlay,
                 ngpt,
                 optical_props["tau"],
                 optical_props["ssa"],
                 optical_props["g"],
                 input_core_dims=[
-                    [],  # ncol
                     [],  # nlay
                     [],  # ngpt
-                    ["site", "layer", gpt_dim],  # tau
-                    ["site", "layer", gpt_dim],  # ssa
-                    ["site", "layer", gpt_dim],  # g
+                    [layer_dim, gpt_dim],  # tau
+                    [layer_dim, gpt_dim],  # ssa
+                    [layer_dim, gpt_dim],  # g
                 ],
-                output_core_dims=[
-                    ["site", "layer", gpt_dim],
-                    ["site", "layer", gpt_dim],
-                    ["site", "layer", gpt_dim],
-                ],
-                output_dtypes=[np.float64, np.float64, np.float64],
-                vectorize=True,
+                output_dtypes=[np.float64],
                 dask="parallelized",
             )
-
-        # Update the dataset with modified values
-        optical_props["tau"] = tau
-        optical_props["ssa"] = ssa
-        optical_props["g"] = g
-
-        return optical_props
