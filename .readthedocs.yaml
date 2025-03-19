@@ -7,13 +7,29 @@ version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
-  # os: ubuntu-22.04
-  os: ubuntu-lts-latest # Refers to the latest Ubuntu LTS version of Ubuntu available on Read the Docs, which may not match the latest Ubuntu LTS officially released.
+  os: "ubuntu-24.04"
   tools:
-    python: "3.11"
-    # when updating the tested Python versions, please also update README.md,
-    # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
-    # for the GitHub Actions workflow
+    python: "mambaforge-23.11"
+  apt_packages:
+    - build-essential
+    - ninja-build
+  jobs:
+    pre_build:
+      # build and install the package with conda
+      - conda list  # Debug: List the installed packages
+      - conda config --add channels conda-forge
+      - conda info  # Debug: List the conda configuration
+      - conda build conda.recipe
+      - ls $(conda info --base)/conda-bld/linux-64  # Debug: List the contents of the build directory
+      - conda index $(conda info --base)/conda-bld  # Index the correct build directory
+      - conda install -c file://$(conda info --base)/conda-bld/linux-64 pyrte_rrtmgp
+
+conda:
+  environment: docs/environment-docs.yml
+  # Python version to use in the conda environment is specified in this file.
+  # when updating the tested Python versions, please also update README.md,
+  # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
+  # for the GitHub Actions workflow
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
@@ -27,6 +43,8 @@ sphinx:
 # Optional but recommended, declare the Python requirements required
 # to build your documentation
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-python:
-   install:
-   - requirements: docs/requirements-docs.txt
+# python:
+#    install:
+#   #  - requirements: docs/requirements-docs.txt
+#    - method: pip
+#      path: .

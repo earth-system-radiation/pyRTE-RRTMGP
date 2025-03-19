@@ -55,7 +55,25 @@ def load_cloud_optics(
 
 @xr.register_dataset_accessor("compute_cloud_optics")
 class CloudOpticsAccessor:
-    """Accessor for computing cloud optical properties."""
+    """Accessor for computing cloud optical properties.
+
+    This accessor allows you to compute cloud optical properties using the
+    `compute_cloud_optics` method.
+
+    Example usage:
+        `dataset.compute_cloud_optics(cloud_properties)`
+
+    Args:
+        cloud_properties (xr.Dataset): Dataset containing cloud properties.
+        problem_type (str): Type of problem to solve, either "two-stream" (default)
+            or "absorption".
+        add_to_input (bool): Whether to add the computed properties to the input
+            dataset (default: False).
+
+    Returns:
+        xr.Dataset: Dataset containing optical properties for both liquid and ice
+            phases.
+    """
 
     def __init__(self, xarray_obj: xr.Dataset):
         """Initialize the accessor."""
@@ -72,12 +90,15 @@ class CloudOpticsAccessor:
         Compute cloud optical properties for liquid and ice clouds.
 
         Args:
-            cloud_properties: Dataset containing cloud properties
-            lw: Whether to compute liquid water phase (True) or ice water phase (False)
+            cloud_properties: Dataset containing cloud properties.
+            lw: Whether to compute liquid water phase (True) or ice water phase
+                (False).
+            add_to_input (bool): Whether to add the computed properties to the
+                input dataset (default: False).
 
         Returns:
-            xr.Dataset: Dataset containing optical properties for both liquid and ice
-              phases
+            xr.Dataset: Dataset containing optical properties for both liquid
+                and ice phases.
         """
         cloud_optics = self._obj
 
@@ -230,7 +251,22 @@ class CloudOpticsAccessor:
 
 @xr.register_dataset_accessor("add_to")
 class CombineOpticalPropsAccessor:
-    """Accessor for combining optical properties."""
+    """Accessor for combining optical properties.
+
+    This accessor allows you to combine two sets of optical properties using
+    the `add_to` method.
+
+    Example usage:
+        `dataset.add_to(other_dataset)`
+
+    Args:
+        other (xr.Dataset): Second set of optical properties to add.
+        delta_scale (bool): Whether to apply delta scaling to the optical
+            properties (default: False).
+
+    Returns:
+        xr.Dataset: Combined optical properties.
+    """
 
     def __init__(self, xarray_obj: xr.Dataset):
         """Initialize the accessor."""

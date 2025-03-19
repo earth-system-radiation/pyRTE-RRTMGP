@@ -1288,6 +1288,9 @@ class GasOpticsAccessor:
     This class determines whether to return a longwave (LW) or shortwave (SW) gas optics
     accessor by checking for the presence of internal source variables in the dataset.
 
+    Example usage:
+    `dataset.compute_gas_optics(selected_gases=["gas_a", "gas_b"])`
+
     Args:
         xarray_obj (xr.Dataset): The xarray Dataset containing gas optics data
         selected_gases (list[str] | None): Optional list of gas names to include.

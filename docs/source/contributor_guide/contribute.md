@@ -17,11 +17,31 @@ Please file a feature request on the [GitHub page](https://github.com/earth-syst
 
 The documentation uses [Sphinx](https://www.sphinx-doc.org/en/master/) with [MystMD](https://myst-parser.readthedocs.io/en/latest/) for Markdown support. The source for the documentation is in the `docs` directory.
 
-To build the documentation locally, first install the required documentation dependencies (optimally in a dedicated virtual environment):
+To build the documentation locally, first install the required documentation dependencies with ``conda``:
 
 ```bash
-pip install -r docs/requirements-doc.txt
+conda env create -f docs/environment-docs.yml
 ```
+
+Enter the newly created environment:
+
+```bash
+conda activate pyrte_rrtmgp_docs
+```
+
+Then, install the pyRTE-RRTMGP package into this environment, using one of these three options:
+
+* Install the package from the **conda-forge channel**:
+
+    ```bash
+    conda install -c conda-forge pyrte_rrtmgp
+    ```
+
+    This installs the published version of the package from the conda-forge channel. Any changes you have made to the package locally will not be reflected in your documentation build.
+
+* Build and install the package locally with conda (see {ref}`local-conda-build`). This installs the locally built version of the package into the documentation environment and will reflect any changes you have made to the package locally.
+
+* Build and install the package in editable mode with pip (see {ref}`local-install`). This installs the package in editable mode, which means that any changes you make to the package will be reflected in the documentation build right after you make them, without needing to reinstall the package.
 
 Then, build the documentation:
 
@@ -30,43 +50,76 @@ cd docs
 make html
 ```
 
-The built documentation will be located in `docs/build/html`.
+The built documentation will be located in `docs/build/html`. You can use a web browser to open the `index.html` file in this directory to view the documentation.
+
+The documentation is automatically built and deployed to [Read the Docs](https://pyrte-rrtmgp.readthedocs.io/) whenever a new commit is pushed to the `main` branch. The configuration for the Read the Docs build is in the `.readthedocs.yml` file.
 
 (local-install)=
 ## How to Set up a Local Development Environment
 
-To build and test the package locally, you need to install two sets of dependencies: the system dependencies and the package itself (using [pip in "editable" mode](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs)).
+Building and testing the package locally requires [conda](https://docs.conda.io) to be installed on your system. You can install conda by following the instructions [here](https://docs.conda.io/projects/conda/en/stable/user-guide/install/index.html).
 
-Before installing the package, you should **create a virtual environment** to avoid conflicts with other packages. You can create a virtual environment in a folder of your choice using the following commands:
+Building pyRTE-RRTMGP locally **currently works with Linux (Ubuntu) and macOS (Intel/ARM) only**.
 
-```bash
-python -m venv .venv
-source .venv/bin/activate
-```
+Follow the instructions below to set up a local development environment:
 
-Then, follow the instructions below for your respective platform to **install the system dependencies**:
+1. Once `conda` is available on your system, you should **create a new conda environment** to avoid conflicts with other packages. You should specify a Python version that works with the version of pyRTE-RRTMGP you want to work on (currently Python *{{ python_requires }}*). For example:
 
-* Debian/Ubuntu: On Debian/Ubuntu systems, you can use a tool like `apt` to install the dependencies: ``sudo apt install build-essential gfortran cmake git``
-* Other Linux distributions: Install the dependencies using the package manager of your distribution.
-* Mac OS: On MacOS systems you can use a tool like `brew` to install the dependencies: ``brew install git gcc cmake``
+    ```bash
+    conda create -n pyrte_rrtmgp_dev python=3.12
+    ```
 
-Next, **download the source code**. Clone the repository to your local machine using
+2. **Clone the GitHub repository**:
 
-```bash
-git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
-```
+    ```bash
+    git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
+    ```
 
-After cloning the repository, **enter the repository directory**:
+3. After cloning the repository, **enter the repository directory**:
 
-```bash
-cd pyRTE-RRTMGP
-```
+    ```bash
+    cd pyRTE-RRTMGP
+    ```
 
-Then, **install the package** in "editable" mode:
+4. Make sure you **have a C++ compiler available on your system**.
 
-```bash
-pip install -e .
-```
+    On Debian/Ubuntu systems, you can use a tool like `apt` to install the compiler:
+
+    ```bash
+    sudo apt install build-essential
+    ```
+
+    On macOS systems, you can use a tool like `brew` to install a compiler:
+
+    ```bash
+    brew install gcc
+    ```
+
+    You can also use conda to install a compiler, for example:
+
+    ```bash
+    conda install -c conda-forge gcc_linux-64
+    ```
+
+4. **Install the main RTE-RRTMGP (Fortran) package** into the conda environment:
+
+    ```bash
+    conda install -c conda-forge rte_rrtmgp
+    ```
+
+    See the [RTE-RRTMGP GitHub repository](https://github.com/earth-system-radiation/rte-rrtmgp) for more information about the Fortran package.
+
+5. **Install the Ninja build system** into the conda environment:
+
+    ```bash
+    conda install -c conda-forge ninja
+    ```
+
+5. Finally, **install the package** in ["editable" mode](https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs):
+
+    ```bash
+    pip install -e .
+    ```
 
 ### How to Set up Pre-Commit Hooks
 
@@ -103,52 +156,36 @@ Then, run the tests:
 pytest tests
 ```
 
+(local-conda-build)=
 ## How to Locally Build and Test the Conda Package
 
-Before creating a new release and updating the conda package, you should test the package locally to ensure that it builds correctly. To build the conda package locally, follow these steps:
+Before creating a new release and updating the conda package, you should test the package locally to ensure that it builds correctly.
 
-1. **Clone the repository** (if you haven't already):
+To build the conda package locally, first set up a local development environment as described in the {ref}`local-install` section above.
 
-    ```bash
-    git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
-    ```
-
-    After cloning the repository, enter the repository directory:
-
-    ```bash
-    cd pyRTE-RRTMGP
-    ```
-
-2. **Make sure you have conda installed**. If not, you can install it from [here](https://docs.conda.io/en/latest/miniconda.html).
-    To make sure your conda setup is working, run the command below:
-
-    ```bash
-    conda --version
-    ```
-
-    If this runs without errors, you are good to go.
-
-3. **Install the conda build requirements** (if you haven't already):
+1. Make sure your local development environment is active (e.g. `conda activate pyrte_rrtmgp_dev`). Before you can build the conda package locally, you need to **install the conda build requirements** (if they aren't already on your system):
 
     ```bash
     conda install conda-build conda-verify
     ```
 
 4. **Build the conda package locally**:
+
     ```bash
     conda build conda.recipe
     ```
 
-5. **Install the package** in your current conda environment:
+5. **Install the locally built package** in your current conda environment:
+
     ```bash
     conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
     ```
 
     ```{note}
-    This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
+    Make sure to remove any other versions of the package that might be installed in your environment (e.g. if you used `pip install -e .` before)!
     ```
 
-The recipe for the conda package is located in the `conda.recipe` directory. The recipe contains the metadata for the package, including the dependencies and the build instructions.
+The recipe for the conda package is located in the `conda.recipe` directory in the GitHub repository. This recipe contains the metadata for the package, including the dependencies and the build instructions.
 
 ## How to Contribute a Patch That Fixes a Bug
 
@@ -178,11 +215,13 @@ For more details, see [](./fortran-compatibility.md).
 
 After checking the compatibility, follow these steps to make a new release:
 
-1. Update the version number in `pyproject.toml` and `conda.recipe/meta.yaml`. Also update `CITATION.cff` as necessary (for [Zenodo integration](https://zenodo.org/records/1117789)).
-2. Create a new release off the `main` branch on GitHub, using the "Draft a new release" button in [https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases](https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases).
-3. Create a new tag with the version number, and use the "Generate release notes" button to create the release notes.
+1. Update the version number (using https://semver.org/) in `pyproject.toml` and `conda.recipe/meta.yaml`. Also update `CITATION.cff` as necessary (for [Zenodo integration](https://zenodo.org/records/1117789)). e.g. ``version = "1.1.0"`` in pyproject.toml and ``version: 1.1.0`` in meta.yaml and CITATION.cff.
+2. Create a new tag with the version number off the `main` branch on GitHub, adding a ``v`` before the version number (e.g. `v1.1.0`).
+3. Create a new release, using the "Draft a new release" button in [https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases](https://github.com/earth-system-radiation/pyRTE-RRTMGP/releases) adding a ``v`` before the release (e.g. `v1.1.0`).
 4. Review and update the the release notes as necessary, publish the release, and set it as the latest release.
 
-A PR to update the conda forge recipe should be created automatically by [regro-cf-autotick-bot](https://conda-forge.org/docs/maintainer/updating_pkgs/#pushing-to-regro-cf-autotick-bot-branch).
+A PR to update the conda forge recipe should be created automatically by [regro-cf-autotick-bot](https://conda-forge.org/docs/maintainer/updating_pkgs/#pushing-to-regro-cf-autotick-bot-branch). It can take several hours for the bot to detect the update and create the PR!
+
+The feedstock for the conda package is located at [https://github.com/conda-forge/pyRTE_RRTMGP-feedstock](https://github.com/conda-forge/pyRTE_RRTMGP-feedstock). Once the PR on the feedstock repo passes all tests, one of the pyRTE-RRTMGP maintainers can merge the PR and the new version of the package will be available on conda-forge.
 
 The documentation on [https://pyrte-rrtmgp.readthedocs.io/](https://pyrte-rrtmgp.readthedocs.io/) will update automatically. To make changes to the build process and other aspects of the readthedocs configuration, see the `.readthedocs.yml` file.
