@@ -95,8 +95,6 @@ class CloudOpticsAccessor:
             d for d in cloud_properties.dims if d not in ["level", "layer", "gpt"]
         ]
         cloud_properties = cloud_properties.stack({"stacked_cols": non_default_dims})
-        # Core dimensions are not chunked
-        cloud_properties = cloud_properties.chunk({layer_dim: -1})
 
         # Determine if we're using band-averaged or spectral properties
         gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
@@ -222,15 +220,6 @@ class CloudOpticsAccessor:
 
             props = xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
 
-        for var in non_default_dims:
-            props = props.drop_vars(var)
-        dims_order = non_default_dims + ["layer", gpt_out_dim]
-        props = props.transpose(*dims_order)
-
-        # Convert props data arrays to Fortran-contiguous arrays
-        for var in props.data_vars:
-            props[var].values = np.asfortranarray(props[var].values)
-
         if add_to_input:
             cloud_properties.update(props)
             return
@@ -260,16 +249,10 @@ class CombineOpticalPropsAccessor:
         op1 = self._obj
         op2 = other
 
-        if delta_scale:
-            self.delta_scale_optical_props(op1)
-
         layer_dim = op2.mapping.get_dim("layer")
         level_dim = op2.mapping.get_dim("level")
         gpt_dim = "gpt"
         bnd_dim = "bnd"
-
-        nlay = op2.sizes[layer_dim]
-        ngpt = op2.sizes[gpt_dim]
 
         non_default_dims = [
             d
@@ -278,10 +261,6 @@ class CombineOpticalPropsAccessor:
         ]
         op1 = op1.stack({"stacked_cols": non_default_dims})
         op2 = op2.stack({"stacked_cols": non_default_dims})
-
-        # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
-        is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
-        is_1stream_2 = "tau" in list(op2.data_vars) and "ssa" not in list(op2.data_vars)
 
         for var in ["tau", "ssa", "g"]:
             if var in op1.data_vars:
@@ -294,6 +273,16 @@ class CombineOpticalPropsAccessor:
                 transposed_data = op2[var].transpose("stacked_cols", "layer", gpt_dim)
                 op2[var] = (["stacked_cols", "layer", gpt_dim], transposed_data.values)
                 op2[var].values = np.asfortranarray(op2[var].values)
+
+        if delta_scale:
+            self.delta_scale_optical_props(op1)
+
+        nlay = op2.sizes[layer_dim]
+        ngpt = op2.sizes[gpt_dim]
+
+        # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
+        is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
+        is_1stream_2 = "tau" in list(op2.data_vars) and "ssa" not in list(op2.data_vars)
 
         if "gpt" in op1["tau"].sizes:
             if is_1stream_1:
@@ -501,11 +490,6 @@ class CombineOpticalPropsAccessor:
         # Get dimensions
         layer_dim = optical_props.mapping.get_dim("layer")
         nlay = optical_props.sizes[layer_dim]
-
-        non_default_dims = [
-            d for d in optical_props.dims if d not in [layer_dim, "gpt", "bnd"]
-        ]
-        optical_props = optical_props.stack({"stacked_cols": non_default_dims})
 
         gpt_dim = "gpt" if "gpt" in optical_props.sizes else "bnd"
         ngpt = optical_props.sizes[gpt_dim]
