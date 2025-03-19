@@ -17,11 +17,31 @@ Please file a feature request on the [GitHub page](https://github.com/earth-syst
 
 The documentation uses [Sphinx](https://www.sphinx-doc.org/en/master/) with [MystMD](https://myst-parser.readthedocs.io/en/latest/) for Markdown support. The source for the documentation is in the `docs` directory.
 
-To build the documentation locally, first install the required documentation dependencies (optimally in a dedicated virtual environment):
+To build the documentation locally, first install the required documentation dependencies with ``conda``:
 
 ```bash
-pip install -r docs/requirements-doc.txt
+conda env create -f docs/environment-docs.yml
 ```
+
+Enter the newly created environment:
+
+```bash
+conda activate pyrte_rrtmgp_docs
+```
+
+Then, install the pyRTE-RRTMGP package into this environment, using one of these three options:
+
+* Install the package from the **conda-forge channel**:
+
+    ```bash
+    conda install -c conda-forge pyrte_rrtmgp
+    ```
+
+    This installs the published version of the package from the conda-forge channel. Any changes you have made to the package locally will not be reflected in your documentation build.
+
+* Build and install the package locally with conda (see {ref}`local-conda-build`). This installs the locally built version of the package into the documentation environment and will reflect any changes you have made to the package locally.
+
+* Build and install the package in editable mode with pip (see {ref}`local-install`). This installs the package in editable mode, which means that any changes you make to the package will be reflected in the documentation build right after you make them, without needing to reinstall the package.
 
 Then, build the documentation:
 
@@ -30,7 +50,9 @@ cd docs
 make html
 ```
 
-The built documentation will be located in `docs/build/html`.
+The built documentation will be located in `docs/build/html`. You can use a web browser to open the `index.html` file in this directory to view the documentation.
+
+The documentation is automatically built and deployed to [Read the Docs](https://pyrte-rrtmgp.readthedocs.io/) whenever a new commit is pushed to the `main` branch. The configuration for the Read the Docs build is in the `.readthedocs.yml` file.
 
 (local-install)=
 ## How to Set up a Local Development Environment
@@ -61,7 +83,7 @@ Follow the instructions below to set up a local development environment:
 
 4. Make sure you **have a C++ compiler available on your system**.
 
-    On Debian/Ubuntu systems, you can use a tool like `apt` to install the dependencies:
+    On Debian/Ubuntu systems, you can use a tool like `apt` to install the compiler:
 
     ```bash
     sudo apt install build-essential
@@ -134,6 +156,7 @@ Then, run the tests:
 pytest tests
 ```
 
+(local-conda-build)=
 ## How to Locally Build and Test the Conda Package
 
 Before creating a new release and updating the conda package, you should test the package locally to ensure that it builds correctly.
@@ -199,8 +222,6 @@ After checking the compatibility, follow these steps to make a new release:
 
 A PR to update the conda forge recipe should be created automatically by [regro-cf-autotick-bot](https://conda-forge.org/docs/maintainer/updating_pkgs/#pushing-to-regro-cf-autotick-bot-branch). It can take several hours for the bot to detect the update and create the PR!
 
-The feedstock for the conda package is located at https://github.com/conda-forge/pyRTE_RRTMGP-feedstock
-
-Once the PR on the feedstock repo passes all tests, one of the pyRTE-RRTMGP maintainers can merge the PR and the new version of the package will be available on conda-forge.
+The feedstock for the conda package is located at [https://github.com/conda-forge/pyRTE_RRTMGP-feedstock](https://github.com/conda-forge/pyRTE_RRTMGP-feedstock). Once the PR on the feedstock repo passes all tests, one of the pyRTE-RRTMGP maintainers can merge the PR and the new version of the package will be available on conda-forge.
 
 The documentation on [https://pyrte-rrtmgp.readthedocs.io/](https://pyrte-rrtmgp.readthedocs.io/) will update automatically. To make changes to the build process and other aspects of the readthedocs configuration, see the `.readthedocs.yml` file.
