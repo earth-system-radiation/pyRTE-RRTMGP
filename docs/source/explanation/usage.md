@@ -16,6 +16,8 @@ Specifically, this Python package contains tools for:
 
 See the paper [Balancing Accuracy, Efficiency, and Flexibility in Radiation Calculations for Dynamical Models](https://doi.org/10.1029/2019MS001621) for more details about the Fortran code.
 
+Additionally, pyRTE-RRTMGP is able to use [Dask](https://docs.dask.org/en/stable/) for parallel computing, which can be useful for solving problems with large datasets on multi-core machines or clusters.
+
 ## Defining and Solving Radiative Transfer Problems
 
 A typical workflow with pyRTE-RRTMGP consists of the following steps:
