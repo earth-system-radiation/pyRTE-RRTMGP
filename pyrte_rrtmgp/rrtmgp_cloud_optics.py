@@ -509,6 +509,10 @@ class CombineOpticalPropsAccessor:
                         dask="parallelized",
                     )
 
+        for var in ["tau", "ssa", "g"]:
+            if var in op2.data_vars:
+                other[var] = op2[var].unstack("stacked_cols")
+
     def delta_scale_optical_props(
         self, optical_props: xr.Dataset, forward_scattering: np.ndarray | None = None
     ) -> xr.Dataset:

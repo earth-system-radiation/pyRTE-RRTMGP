@@ -52,27 +52,20 @@ def test_sw_solver_with_clouds() -> None:
         gas_optics_file=GasOpticsFiles.SW_G224
     )
 
-    # Add SW-specific surface and angle properties
-    ngpt = gas_optics_sw.sizes["gpt"]
-    atmosphere["surface_albedo_dir"] = xr.DataArray(
-        np.full((ncol, ngpt), 0.06), dims=["site", "gpt"]
-    )
-    atmosphere["surface_albedo_dif"] = xr.DataArray(
-        np.full((ncol, ngpt), 0.06), dims=["site", "gpt"]
-    )
-    atmosphere["mu0"] = xr.DataArray(
-        np.full((ncol, nlay), 0.86), dims=["site", "layer"]
-    )
-
     # Calculate gas optical properties
-    clear_sky_optical_props = gas_optics_sw.compute_gas_optics(
+    optical_props = gas_optics_sw.compute_gas_optics(
         atmosphere, problem_type="two-stream", add_to_input=False
     )
 
     # Combine optical properties and solve RTE
-    clouds_optical_props.add_to(clear_sky_optical_props, delta_scale=True)
+    clouds_optical_props.add_to(optical_props, delta_scale=True)
 
-    fluxes = rte_solve(clear_sky_optical_props, add_to_input=False)
+    # Add SW-specific surface and angle properties
+    optical_props["surface_albedo_direct"] = 0.06
+    optical_props["surface_albedo_diffuse"] = 0.06
+    optical_props["mu0"] = 0.86
+
+    fluxes = rte_solve(optical_props, add_to_input=False)
     assert fluxes is not None
 
     # Load reference data and verify results

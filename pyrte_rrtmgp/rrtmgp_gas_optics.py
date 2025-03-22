@@ -241,17 +241,6 @@ class BaseGasOpticsAccessor:
         """
         raise NotImplementedError()
 
-    def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.Dataset:
-        """Compute boundary conditions.
-
-        Args:
-            atmosphere: Dataset containing atmospheric conditions
-
-        Raises:
-            NotImplementedError: Must be implemented by subclasses
-        """
-        raise NotImplementedError()
-
     def interpolate(
         self, atmosphere: xr.Dataset, gas_name_map: dict[str, str]
     ) -> xr.Dataset:
@@ -587,11 +576,6 @@ class BaseGasOpticsAccessor:
         tau_absorption = tau_absorption.unstack("stacked_cols")
         for var in non_default_dims + ["gpt"]:
             tau_absorption = tau_absorption.drop_vars(var)
-        dims_order = non_default_dims + [layer_dim, "gpt"]
-        tau_absorption = tau_absorption.transpose(*dims_order)
-
-        # Convert props data arrays to Fortran-contiguous arrays
-        tau_absorption.values = np.asfortranarray(tau_absorption.values)
 
         return tau_absorption.rename("tau").to_dataset()
 
@@ -803,10 +787,9 @@ class BaseGasOpticsAccessor:
         gas_interpolation_data = self.interpolate(atmosphere, gas_mapping)
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
         sources = self.compute_sources(atmosphere, gas_interpolation_data)
-        boundary_conditions = self.compute_boundary_conditions(atmosphere)
         gas_data = self._dataset["bnd_limits_gpt"].to_dataset()
 
-        gas_optics = xr.merge([sources, problem, boundary_conditions, gas_data])
+        gas_optics = xr.merge([sources, problem, gas_data])
 
         # Add problem type to dataset attributes
         if problem_type == "absorption" and self.is_internal:
@@ -870,34 +853,6 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             Dataset containing Planck source terms
         """
         return self.compute_planck(atmosphere, gas_interpolation_data)
-
-    def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.DataArray:
-        """Compute surface emissivity boundary conditions.
-
-        Args:
-            atmosphere: Dataset containing atmospheric conditions
-
-        Returns:
-            DataArray containing surface emissivity values
-        """
-        surface_emissivity_var = atmosphere.mapping.get_var("surface_emissivity")
-        layer_dim = atmosphere.mapping.get_dim("layer")
-        level_dim = atmosphere.mapping.get_dim("level")
-        non_default_dims = [
-            d for d in atmosphere.dims if d not in [layer_dim, level_dim]
-        ]
-
-        if surface_emissivity_var not in atmosphere.data_vars:
-            # Add surface emissivity directly to atmospheric conditions
-            shape = tuple(atmosphere.sizes[d] for d in non_default_dims)
-            return xr.DataArray(
-                np.ones(shape),
-                dims=non_default_dims,
-                coords={d: atmosphere[d] for d in non_default_dims},
-                name=surface_emissivity_var,
-            )
-        else:
-            return atmosphere[surface_emissivity_var]
 
     def compute_planck(
         self, atmosphere: xr.Dataset, gas_interpolation_data: xr.Dataset
@@ -1112,80 +1067,6 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
                     toa_source = toa_source.expand_dims({dim: atmosphere[dim]})
             return toa_source
 
-    def compute_boundary_conditions(self, atmosphere: xr.Dataset) -> xr.Dataset:
-        """Compute surface and solar boundary conditions.
-
-        Args:
-            atmosphere: Dataset containing atmospheric conditions
-
-        Returns:
-            Dataset containing solar zenith angles, surface albedos and solar angle mask
-        """
-        layer_dim = atmosphere.mapping.get_dim("layer")
-        level_dim = atmosphere.mapping.get_dim("level")
-        solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
-        surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
-        surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_dir")
-        surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_dif")
-
-        if surface_albedo_dir_var not in atmosphere.data_vars:
-            surface_albedo_direct = atmosphere[surface_albedo_var]
-            surface_albedo_direct = surface_albedo_direct.rename(
-                "surface_albedo_direct"
-            )
-            surface_albedo_diffuse = atmosphere[surface_albedo_var]
-            surface_albedo_diffuse = surface_albedo_diffuse.rename(
-                "surface_albedo_diffuse"
-            )
-        else:
-            surface_albedo_direct = atmosphere[surface_albedo_dir_var]
-            surface_albedo_direct = surface_albedo_direct.rename(
-                "surface_albedo_direct"
-            )
-            surface_albedo_diffuse = atmosphere[surface_albedo_dif_var]
-            surface_albedo_diffuse = surface_albedo_diffuse.rename(
-                "surface_albedo_diffuse"
-            )
-
-        data_vars = [
-            surface_albedo_direct,
-            surface_albedo_diffuse,
-        ]
-
-        if solar_zenith_angle_var in atmosphere.data_vars:
-            usecol_values = atmosphere[solar_zenith_angle_var] < (
-                90.0 - 2.0 * np.spacing(90.0)
-            )
-            if layer_dim in usecol_values.dims:
-                usecol_values = usecol_values.rename("solar_angle_mask").isel(
-                    {layer_dim: 0}
-                )
-            else:
-                usecol_values = usecol_values.rename("solar_angle_mask")
-            mu0 = xr.where(
-                usecol_values,
-                np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
-                1.0,
-            )
-            solar_zenith_angle = mu0.broadcast_like(atmosphere[layer_dim]).rename("mu0")
-            data_vars.append(solar_zenith_angle)
-            data_vars.append(usecol_values)
-        elif "mu0" in atmosphere.data_vars:
-            non_default_dims = [
-                d for d in atmosphere.dims if d not in [layer_dim, level_dim, "gpt"]
-            ]
-            atmosphere["solar_angle_mask"] = xr.DataArray(
-                True,
-                dims=non_default_dims,
-                coords={d: atmosphere[d] for d in non_default_dims},
-            ).rename("solar_angle_mask")
-
-            atmosphere["mu0"] = atmosphere["mu0"].broadcast_like(atmosphere[layer_dim])
-            data_vars.append(atmosphere["mu0"])
-            data_vars.append(atmosphere["solar_angle_mask"])
-
-        return xr.merge(data_vars)
-
     def tau_rayleigh(self, gas_interpolation_data: xr.Dataset) -> xr.Dataset:
         """Compute Rayleigh scattering optical depth.
 
@@ -1272,11 +1153,6 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         tau_rayleigh = tau_rayleigh.unstack("stacked_cols")
         for var in non_default_dims + ["gpt"]:
             tau_rayleigh = tau_rayleigh.drop_vars(var)
-        dims_order = non_default_dims + [layer_dim, "gpt"]
-        tau_rayleigh = tau_rayleigh.transpose(*dims_order)
-
-        # Convert props data arrays to Fortran-contiguous arrays
-        tau_rayleigh.values = np.asfortranarray(tau_rayleigh.values)
 
         return tau_rayleigh.rename("tau").to_dataset()
 
