@@ -587,11 +587,6 @@ class BaseGasOpticsAccessor:
         tau_absorption = tau_absorption.unstack("stacked_cols")
         for var in non_default_dims + ["gpt"]:
             tau_absorption = tau_absorption.drop_vars(var)
-        dims_order = non_default_dims + [layer_dim, "gpt"]
-        tau_absorption = tau_absorption.transpose(*dims_order)
-
-        # Convert props data arrays to Fortran-contiguous arrays
-        tau_absorption.values = np.asfortranarray(tau_absorption.values)
 
         return tau_absorption.rename("tau").to_dataset()
 
@@ -1272,11 +1267,6 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         tau_rayleigh = tau_rayleigh.unstack("stacked_cols")
         for var in non_default_dims + ["gpt"]:
             tau_rayleigh = tau_rayleigh.drop_vars(var)
-        dims_order = non_default_dims + [layer_dim, "gpt"]
-        tau_rayleigh = tau_rayleigh.transpose(*dims_order)
-
-        # Convert props data arrays to Fortran-contiguous arrays
-        tau_rayleigh.values = np.asfortranarray(tau_rayleigh.values)
 
         return tau_rayleigh.rename("tau").to_dataset()
 
