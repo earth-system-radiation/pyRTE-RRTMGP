@@ -33,22 +33,22 @@ class CloudOpticsFiles(StrEnum):
     """
 
     LW_BND = "rrtmgp-clouds-lw-bnd.nc"
-    """LW_BND: Longwave cloud optics file with band points"""
+    """Longwave cloud optics file with band points"""
 
     LW_G128 = "rrtmgp-clouds-lw-g128.nc"
-    """LW_128: Longwave cloud optics file with 128 g-points"""
+    """Longwave cloud optics file with 128 g-points"""
 
     LW_G256 = "rrtmgp-clouds-lw-g256.nc"
-    """LW_256: Longwave cloud optics file with 256 g-points"""
+    """Longwave cloud optics file with 256 g-points"""
 
     SW_BND = "rrtmgp-clouds-sw-bnd.nc"
-    """SW_BND: Shortwave cloud optics file with band points"""
+    """Shortwave cloud optics file with band points"""
 
     SW_G112 = "rrtmgp-clouds-sw-g112.nc"
-    """SW_112: Shortwave cloud optics file with 112 g-points"""
+    """Shortwave cloud optics file with 112 g-points"""
 
     SW_G224 = "rrtmgp-clouds-sw-g224.nc"
-    """SW_224: Shortwave cloud optics file with 224 g-points"""
+    """Shortwave cloud optics file with 224 g-points"""
 
 
 class AerosolOpticsFiles(StrEnum):
@@ -115,16 +115,16 @@ class ProblemTypes(StrEnum):
     """
 
     LW_ABSORPTION = "Longwave absorption"
-    """LW_ABSORPTION: Longwave absorption-only calculation"""
+    """Longwave absorption-only calculation"""
 
     LW_2STREAM = "Longwave 2-stream"
-    """LW_2STREAM: Longwave two-stream approximation calculation"""
+    """Longwave two-stream approximation calculation"""
 
     SW_DIRECT = "Shortwave direct"
-    """SW_DIRECT: Shortwave direct beam calculation"""
+    """Shortwave direct beam calculation"""
 
     SW_2STREAM = "Shortwave 2-stream"
-    """SW_2STREAM: Shortwave two-stream approximation calculation"""
+    """Shortwave two-stream approximation calculation"""
 
 
 class OpticsProblemTypes(StrEnum):
@@ -135,10 +135,10 @@ class OpticsProblemTypes(StrEnum):
     """
 
     ABSORPTION = "absorption"
-    """ABSORPTION: Absorption-only calculation"""
+    """Absorption-only calculation"""
 
     N_STREAM = "n-stream"
-    """N_STREAM: N-stream calculation"""
+    """N-stream calculation"""
 
     TWO_STREAM = "two-stream"
-    """TWO_STREAM: Two-stream approximation"""
+    """Two-stream approximation"""
