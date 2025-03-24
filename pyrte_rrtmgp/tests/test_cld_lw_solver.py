@@ -53,15 +53,15 @@ def test_lw_solver_with_clouds() -> None:
     gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
-    clear_sky_optical_props = gas_optics_lw.compute_gas_optics(
+    optical_props = gas_optics_lw.compute_gas_optics(
         atmosphere, problem_type="absorption", add_to_input=False
     )
-    clear_sky_optical_props["surface_emissivity"] = 0.98
+    optical_props["surface_emissivity"] = 0.98
 
     # Combine optical properties and solve RTE
-    clouds_optical_props.add_to(clear_sky_optical_props)
+    clouds_optical_props.add_to(optical_props)
 
-    fluxes = rte_solve(clear_sky_optical_props, add_to_input=False)
+    fluxes = rte_solve(optical_props, add_to_input=False)
     assert fluxes is not None
 
     # Load reference data and verify results
