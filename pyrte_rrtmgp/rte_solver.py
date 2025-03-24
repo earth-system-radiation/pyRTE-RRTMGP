@@ -8,9 +8,10 @@ import xarray as xr
 from pyrte_rrtmgp.constants import GAUSS_DS, GAUSS_WTS
 from pyrte_rrtmgp.data_types import ProblemTypes
 from pyrte_rrtmgp.kernels.rte import lw_solver_noscat, sw_solver_2stream
+from pyrte_rrtmgp.utils import expand_variable_dims
 
 
-def _compute_quadrature(
+def compute_quadrature(
     problem_ds: xr.Dataset, nmus: int
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Compute quadrature weights and secants for radiative transfer calculations.
@@ -45,6 +46,61 @@ def _compute_quadrature(
     )
 
     return ds, weights
+
+
+def compute_sw_boundary_conditions(atmosphere: xr.Dataset) -> xr.Dataset:
+    """Compute surface and solar boundary conditions.
+
+    Args:
+        atmosphere: Dataset containing atmospheric conditions
+
+    Returns:
+        Dataset containing solar zenith angles, surface albedos and solar angle mask
+    """
+    layer_dim = atmosphere.mapping.get_dim("layer")
+    solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
+    surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
+    surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_direct")
+    surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_diffuse")
+
+    if surface_albedo_dir_var not in atmosphere.data_vars:
+        surface_albedo_direct = atmosphere[surface_albedo_var]
+        surface_albedo_direct = surface_albedo_direct.rename("surface_albedo_direct")
+        surface_albedo_diffuse = atmosphere[surface_albedo_var]
+        surface_albedo_diffuse = surface_albedo_diffuse.rename("surface_albedo_diffuse")
+    else:
+        surface_albedo_direct = atmosphere[surface_albedo_dir_var]
+        surface_albedo_direct = surface_albedo_direct.rename("surface_albedo_direct")
+        surface_albedo_diffuse = atmosphere[surface_albedo_dif_var]
+        surface_albedo_diffuse = surface_albedo_diffuse.rename("surface_albedo_diffuse")
+
+    data_vars = [
+        surface_albedo_direct,
+        surface_albedo_diffuse,
+    ]
+
+    if solar_zenith_angle_var in atmosphere.data_vars:
+        usecol_values = atmosphere[solar_zenith_angle_var] < (
+            90.0 - 2.0 * np.spacing(90.0)
+        )
+        if layer_dim in usecol_values.dims:
+            usecol_values = usecol_values.rename("solar_angle_mask").isel(
+                {layer_dim: 0}
+            )
+        else:
+            usecol_values = usecol_values.rename("solar_angle_mask")
+        mu0 = xr.where(
+            usecol_values,
+            np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
+            1.0,
+        )
+        data_vars.append(mu0.rename("mu0"))
+        data_vars.append(usecol_values)
+    elif "mu0" in atmosphere.data_vars:
+        data_vars.append(atmosphere["mu0"])
+        data_vars.append(xr.DataArray(True).rename("solar_angle_mask"))
+
+    return xr.merge(data_vars)
 
 
 def _compute_lw_fluxes_absorption(
@@ -95,21 +151,14 @@ def _compute_lw_fluxes_absorption(
         if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
     ]
 
-    expand_dims = {}
-    if "gpt" not in problem_ds[surface_emissivity_var].dims:
-        expand_dims["gpt"] = problem_ds.sizes["gpt"]
-    for dim in non_default_dims:
-        if dim not in problem_ds[surface_emissivity_var].dims:
-            expand_dims[dim] = problem_ds.sizes[dim]
-    if expand_dims:
-        problem_ds[surface_emissivity_var] = problem_ds[
-            surface_emissivity_var
-        ].expand_dims(expand_dims)
+    # Expand surface emissivity dimensions if needed
+    needed_dims = non_default_dims + ["gpt"]
+    problem_ds = expand_variable_dims(problem_ds, surface_emissivity_var, needed_dims)
 
     problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
     incident_flux = incident_flux.stack({"stacked_cols": non_default_dims})
 
-    ds, weights = _compute_quadrature(problem_ds, nmus)
+    ds, weights = compute_quadrature(problem_ds, nmus)
     ssa: xr.DataArray = (
         problem_ds["ssa"] if "ssa" in problem_ds else problem_ds["tau"].copy()
     )
@@ -195,41 +244,47 @@ def _compute_sw_fluxes(
             - sw_flux_down: Downward spectral flux
             - sw_flux_dir: Direct spectral flux
     """
-    # Expand surface albedo dimensions if needed
-    if "gpt" not in problem_ds["surface_albedo_direct"].dims:
-        problem_ds["surface_albedo_direct"] = problem_ds[
-            "surface_albedo_direct"
-        ].expand_dims({"gpt": problem_ds.sizes["gpt"]}, axis=1)
-    if "gpt" not in problem_ds["surface_albedo_diffuse"].dims:
-        problem_ds["surface_albedo_diffuse"] = problem_ds[
-            "surface_albedo_diffuse"
-        ].expand_dims({"gpt": problem_ds.sizes["gpt"]}, axis=1)
-
-    # Set diffuse incident flux
-    if "incident_flux_dif" not in problem_ds:
-        incident_flux_dif = xr.zeros_like(problem_ds["toa_source"])
-    else:
-        incident_flux_dif = problem_ds["incident_flux_dif"]
-
     layer_dim = problem_ds.mapping.get_dim("layer")
     level_dim = problem_ds.mapping.get_dim("level")
-
-    # Determine vertical orientation
-    top_at_1: bool = problem_ds.attrs["top_at_1"]
 
     non_default_dims = [
         d
         for d in problem_ds.dims
         if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
     ]
-    # Ensure incident_flux_dif has all the non_default_dims before stacking
-    for dim in non_default_dims:
-        if dim not in incident_flux_dif.dims and dim in problem_ds.dims:
-            incident_flux_dif = incident_flux_dif.expand_dims(
-                {dim: problem_ds.sizes[dim]}
-            )
+
+    boundary_conditions = compute_sw_boundary_conditions(problem_ds)
+    problem_ds = xr.merge([problem_ds, boundary_conditions])
+
+    needed_dims = non_default_dims + ["gpt"]
+    if "surface_albedo_direct" in problem_ds.data_vars:
+        problem_ds = expand_variable_dims(
+            problem_ds, "surface_albedo_direct", needed_dims
+        )
+    if "surface_albedo_diffuse" in problem_ds.data_vars:
+        problem_ds = expand_variable_dims(
+            problem_ds, "surface_albedo_diffuse", needed_dims
+        )
+
+    # Expand mu0 dimensions if needed
+    needed_dims = non_default_dims + [layer_dim]
+    if "mu0" in problem_ds.data_vars:
+        problem_ds = expand_variable_dims(problem_ds, "mu0", needed_dims)
+
+    needed_dims = non_default_dims + [level_dim]
+    problem_ds = expand_variable_dims(problem_ds, "solar_angle_mask", needed_dims)
+
+    # Set diffuse incident flux
+    needed_dims = non_default_dims + ["gpt"]
+    if "incident_flux_dif" not in problem_ds:
+        problem_ds["incident_flux_dif"] = 0
+    problem_ds = expand_variable_dims(problem_ds, "incident_flux_dif", needed_dims)
+    problem_ds = expand_variable_dims(problem_ds, "toa_source", needed_dims)
+
+    # Determine vertical orientation
+    top_at_1: bool = problem_ds.attrs["top_at_1"]
+
     problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
-    incident_flux_dif = incident_flux_dif.stack({"stacked_cols": non_default_dims})
 
     # Call solver
     (
@@ -250,7 +305,7 @@ def _compute_sw_fluxes(
         problem_ds["surface_albedo_direct"],
         problem_ds["surface_albedo_diffuse"],
         problem_ds["toa_source"],
-        incident_flux_dif,
+        problem_ds["incident_flux_dif"],
         kwargs={"top_at_1": top_at_1, "do_broadband": not spectrally_resolved},
         input_core_dims=[
             [],  # nlay
