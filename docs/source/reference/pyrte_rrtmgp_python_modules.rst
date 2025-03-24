@@ -53,6 +53,7 @@ pyrte\_rrtmgp.rrtmgp_data module
 .. .. automodule:: pyrte_rrtmgp.data_types
 ..    :members:
 ..    :undoc-members:
+..    :no-index:
 ..    :show-inheritance:
 
 .. pyrte\_rrtmgp.data_validation module
@@ -71,13 +72,12 @@ pyrte\_rrtmgp.rrtmgp_data module
 ..    :undoc-members:
 ..    :show-inheritance:
 
-.. pyrte\_rrtmgp.config module
-.. ---------------------------
+pyrte\_rrtmgp.config module
+---------------------------
 
-.. .. automodule:: pyrte_rrtmgp.config
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.config
+   :members:
+   :show-inheritance:
 
 pyrte\_rrtmgp.cli module
 ------------------------
