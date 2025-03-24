@@ -116,10 +116,13 @@ class ProblemTypes(StrEnum):
 
     LW_ABSORPTION = "Longwave absorption"
     """LW_ABSORPTION: Longwave absorption-only calculation"""
+
     LW_2STREAM = "Longwave 2-stream"
     """LW_2STREAM: Longwave two-stream approximation calculation"""
+
     SW_DIRECT = "Shortwave direct"
     """SW_DIRECT: Shortwave direct beam calculation"""
+
     SW_2STREAM = "Shortwave 2-stream"
     """SW_2STREAM: Shortwave two-stream approximation calculation"""
 
@@ -133,7 +136,9 @@ class OpticsProblemTypes(StrEnum):
 
     ABSORPTION = "absorption"
     """ABSORPTION: Absorption-only calculation"""
+
     N_STREAM = "n-stream"
     """N_STREAM: N-stream calculation"""
+
     TWO_STREAM = "two-stream"
     """TWO_STREAM: Two-stream approximation"""
