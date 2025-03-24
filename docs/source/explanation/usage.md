@@ -1,6 +1,6 @@
 # Basic Usage
 
-This section provides a brief overview of how to use `pyrte_rrtmgp` with Python.
+This section provides a brief overview of how to use the pyRTE-RRTMGP package.
 
 ## RRTMGP and RTE
 
@@ -26,16 +26,18 @@ A typical workflow with pyRTE-RRTMGP consists of the following steps:
 
 The `load_gas_optics` function retrieves essential gas optics data for radiative transfer calculations. This data includes absorption coefficients and other optical properties for various atmospheric gases at different temperatures, pressures, and concentrations. See [](pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics) for more details.
 
-The package includes four default gas optics files, which can be accessed via the `GasOpticsFiles` enum:
+The package includes four default gas optics files, which can be accessed via the [](pyrte_rrtmgp.data_types.GasOpticsFiles) enum:
 
 *   **Longwave:**
-    *   `GasOpticsFiles.LW_G128`: Longwave gas optics file with 128 g-points.
-    *   `GasOpticsFiles.LW_G256`: Longwave gas optics file with 256 g-points.
+    *   [``LW_G128``](pyrte_rrtmgp.data_types.GasOpticsFiles.LW_G128): Longwave gas optics file with 128 g-points.
+    *   [``LW_G256``](pyrte_rrtmgp.data_types.GasOpticsFiles.LW_G256): Longwave gas optics file with 256 g-points.
 *   **Shortwave:**
-    *   `GasOpticsFiles.SW_G112`: Shortwave gas optics file with 112 g-points.
-    *   `GasOpticsFiles.SW_G224`: Shortwave gas optics file with 224 g-points.
+    *   [``SW_G112``](pyrte_rrtmgp.data_types.GasOpticsFiles.SW_G112): Shortwave gas optics file with 112 g-points.
+    *   [``SW_G224``](pyrte_rrtmgp.data_types.GasOpticsFiles.SW_G224): Shortwave gas optics file with 224 g-points.
 
-These files can be loaded using the [load_gas_optics](pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics) function in conjunction with the [GasOpticsFiles](pyrte_rrtmgp.data_types.GasOpticsFiles) enum. For example:
+These files can be loaded using the [](pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics) function in conjunction with the [](pyrte_rrtmgp.data_types.GasOpticsFiles) enum.
+
+For example:
 
 ```python
 gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
@@ -47,18 +49,20 @@ gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
 
 The `load_cloud_optics` function retrieves essential cloud optics data for radiative transfer calculations. See [](pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics) for more details.
 
-The package includes two default cloud optics files, which can be accessed via the `CloudOpticsFiles` enum:
+The package includes two default cloud optics files, which can be accessed via the [](pyrte_rrtmgp.data_types.CloudOpticsFiles) enum:
 
 *   **Longwave:**
-    *   `CloudOpticsFiles.LW_BND`: Longwave cloud optics file with band points.
-    *   `CloudOpticsFiles.LW_G128`: Longwave cloud optics file with 128 g-points.
-    *   `CloudOpticsFiles.LW_G256`: Longwave cloud optics file with 256 g-points.
+    *   [`CloudOpticsFiles.LW_BND`](pyrte_rrtmgp.data_types.CloudOpticsFiles.LW_BND): Longwave cloud optics file with band points.
+    *   [`CloudOpticsFiles.LW_G128`](pyrte_rrtmgp.data_types.CloudOpticsFiles.LW_G128): Longwave cloud optics file with 128 g-points.
+    *   [`CloudOpticsFiles.LW_G256`](pyrte_rrtmgp.data_types.CloudOpticsFiles.LW_G256): Longwave cloud optics file with 256 g-points.
 *   **Shortwave:**
-    *   `CloudOpticsFiles.SW_BND`: Shortwave cloud optics file with band points.
-    *   `CloudOpticsFiles.SW_G112`: Shortwave cloud optics file with 112 g-points.
-    *   `CloudOpticsFiles.SW_G224`: Shortwave cloud optics file with 224 g-points.
+    *   [`CloudOpticsFiles.SW_BND`](pyrte_rrtmgp.data_types.CloudOpticsFiles.SW_BND_BND): Shortwave cloud optics file with band points.
+    *   [`CloudOpticsFiles.SW_G112`](pyrte_rrtmgp.data_types.CloudOpticsFiles.SW_G112): Shortwave cloud optics file with 112 g-points.
+    *   [`CloudOpticsFiles.SW_G224`](pyrte_rrtmgp.data_types.CloudOpticsFiles.SW_G224): Shortwave cloud optics file with 224 g-points.
 
-These files can be loaded using the [load_cloud_optics](pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics) function in conjunction with the [CloudOpticsFiles](pyrte_rrtmgp.data_types.CloudOpticsFiles) enum. For example:
+These files can be loaded using the [load_cloud_optics](pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics) function in conjunction with the [CloudOpticsFiles](pyrte_rrtmgp.data_types.CloudOpticsFiles) enum.
+
+For example:
 
 ```python
 cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
@@ -118,11 +122,15 @@ For instance, consider a dataset with these dimensions:
 
 In this case, the radiative transfer calculations will be executed independently for each unique combination of latitude, longitude, and time, across all atmospheric levels.
 
-To get started quickly, you can load a preconfigured sample atmosphere dataset using the [load_rrtmgp_file](pyrte_rrtmgp.utils.load_rrtmgp_file) function.
+To get started quickly, you can load a preconfigured sample atmosphere dataset using the [``load_rrtmgp_file``](pyrte_rrtmgp.utils.load_rrtmgp_file) function.
 
 ### 4. Computing gas optics using the [compute_gas_optics](pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor) accessor
 
-This function can handle two different types of problems: `absorption` (longwave) and `two-stream` (shortwave). Here you can use a mapping dictionary to map gas names to their corresponding indices in the atmosphere data. eg:
+This function can handle two different types of problems:
+* [](pyrte_rrtmgp.data_types.OpticsProblemTypes.ABSORPTION) (longwave)
+* [](pyrte_rrtmgp.data_types.OpticsProblemTypes.TWO_STREAM) (shortwave)
+
+Use a mapping dictionary to map gas names to their corresponding indices in the atmosphere data. For example:
 
 ```python
 gas_mapping = {
@@ -141,12 +149,13 @@ With the atmosphere data and the gas mapping dictionary, you can compute the gas
 
 ```python
 gas_optics = rrtmgp_gas_optics.compute_gas_optics(
-    atmosphere, problem_type="absorption", gas_name_map=gas_mapping
+    atmosphere,
+    problem_type=OpticsProblemTypes.ABSORPTION,
+    gas_name_map=gas_mapping,
 )
 ```
 
 See [](pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor) for more details.
-
 
 ### 5. Define the cloud optics atmosphere
 
@@ -157,15 +166,20 @@ The cloud optics atmosphere requires the following variables in the input datase
 *   `rel`: Effective radius of liquid cloud particles (microns)
 *   `rei`: Effective radius of ice cloud particles (microns)
 
-They are defined in the `layer` dimension and as in the gas optics atmosphere, any additional dimensions will be processed independently.
+They are defined in the `layer` dimension. Similar to the gas optics atmosphere, any additional dimensions will be processed independently.
 
 ### 6. Computing cloud optics using the [compute_cloud_optics](pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor) accessor
 
-You can compute the cloud optics using the [compute_cloud_optics](pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor) accessor. This function can handle two different types of problems: `absorption` and `two-stream`.
+You can compute the cloud optics using the [compute_cloud_optics](pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor) accessor.
+
+This function can handle two different types of problems:
+* [](pyrte_rrtmgp.data_types.OpticsProblemTypes.ABSORPTION) (longwave)
+* [](pyrte_rrtmgp.data_types.OpticsProblemTypes.TWO_STREAM) (shortwave)
 
 ```python
 cloud_optics = rrtmgp_cloud_optics.compute_cloud_optics(
-    atmosphere, problem_type="absorption"
+    atmosphere,
+    problem_type=problem_type=OpticsProblemTypes.ABSORPTION,
 )
 ```
 

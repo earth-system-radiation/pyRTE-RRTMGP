@@ -47,14 +47,13 @@ pyrte\_rrtmgp.rrtmgp_data module
    :undoc-members:
    :show-inheritance:
 
-.. pyrte\_rrtmgp.data_types module
-.. -------------------------------
+pyrte\_rrtmgp.data_types module
+-------------------------------
 
-.. .. automodule:: pyrte_rrtmgp.data_types
-..    :members:
-..    :undoc-members:
-..    :no-index:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.data_types
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 .. pyrte\_rrtmgp.data_validation module
 .. -------------------------------------
