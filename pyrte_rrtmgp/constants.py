@@ -11,23 +11,40 @@ import numpy as np
 from numpy.typing import NDArray
 
 # Gravitational parameters from Helmert's equation (m/s^2)
-HELMERT1: Final[float] = 9.80665  # Standard gravity at sea level
-HELMERT2: Final[float] = 0.02586  # Gravity variation with latitude
+
+HELMERT1: Final[float] = 9.80665
+"""Standard gravity at sea level"""
+
+HELMERT2: Final[float] = 0.02586
+"""Gravity variation with latitude"""
 
 # Molecular masses (kg/mol)
-M_DRY: Final[float] = 0.028964  # Dry air
-M_H2O: Final[float] = 0.018016  # Water vapor
+
+M_DRY: Final[float] = 0.028964
+"""Dry air (molecular mass in kg/mol)"""
+
+M_H2O: Final[float] = 0.018016
+"""Water vapor (molecular mass in kg/mol)"""
 
 # Avogadro's number (molecules/mol)
+
 AVOGAD: Final[float] = 6.02214076e23
+"""Avogadro's number (molecules/mol)"""
 
 # Solar constants for orbit calculations
+
 SOLAR_CONSTANTS: Final[Dict[str, float]] = {
     "A_OFFSET": 0.1495954,  # Semi-major axis offset (AU)
     "B_OFFSET": 0.00066696,  # Orbital eccentricity factor
 }
+"""Solar constants for orbit calculations. Contains the following keys:
+
+- ``A_OFFSET``: Semi-major axis offset (AU)
+- ``B_OFFSET``: Orbital eccentricity factor
+"""
 
 # Gaussian quadrature constants for radiative transfer
+
 GAUSS_DS: NDArray[np.float64] = np.reciprocal(
     np.array(
         [
@@ -38,6 +55,7 @@ GAUSS_DS: NDArray[np.float64] = np.reciprocal(
         ]
     )
 )
+"""Gaussian quadrature points for the RRTMGP radiation scheme."""
 
 GAUSS_WTS: NDArray[np.float64] = np.array(
     [
@@ -47,3 +65,4 @@ GAUSS_WTS: NDArray[np.float64] = np.array(
         [0.0092068785, 0.1285704278, 0.4323381850, 0.4298845087],
     ]
 )
+"""Gaussian quadrature weights for the RRTMGP radiation scheme."""

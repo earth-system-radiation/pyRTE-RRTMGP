@@ -55,21 +55,21 @@ pyrte\_rrtmgp.data_types module
    :undoc-members:
    :show-inheritance:
 
-.. pyrte\_rrtmgp.data_validation module
-.. -------------------------------------
+pyrte\_rrtmgp.data_validation module
+-------------------------------------
 
-.. .. automodule:: pyrte_rrtmgp.data_validation
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.data_validation
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. pyrte\_rrtmgp.constants module
-.. -------------------------------
+pyrte\_rrtmgp.constants module
+-------------------------------
 
-.. .. automodule:: pyrte_rrtmgp.constants
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 pyrte\_rrtmgp.config module
 ---------------------------
