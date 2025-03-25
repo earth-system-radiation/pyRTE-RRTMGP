@@ -28,6 +28,12 @@ DEFAULT_GAS_MAPPING: Final[Dict[str, list[str]]] = {
     "cf4": ["cf4", "cf-4", "carbon_tetrafluoride"],
     "no2": ["no2", "nitrogen_dioxide"],
 }
+"""
+A mapping of standard gas names to their corresponding RRTMGP-specific names.
+
+Each key is a standard gas name (e.g., "h2o" for water vapor), and the value is
+a list of alternative names used in the RRTMGP model for the same gas.
+"""
 
 # Mapping of standard dimension names to dataset-specific names
 DEFAULT_DIM_MAPPING: Final[Dict[str, str]] = {
@@ -35,6 +41,12 @@ DEFAULT_DIM_MAPPING: Final[Dict[str, str]] = {
     "layer": "layer",
     "level": "level",
 }
+"""
+A mapping of standard dimension names to their corresponding dataset-specific names.
+
+Each key is a standard dimension name (e.g., "site"), and the value is the corresponding
+name used in the dataset for that dimension.
+"""
 
 # Mapping of standard variable names to dataset-specific names
 DEFAULT_VAR_MAPPING: Final[Dict[str, str]] = {
@@ -50,3 +62,10 @@ DEFAULT_VAR_MAPPING: Final[Dict[str, str]] = {
     "surface_emissivity": "surface_emissivity",
     "surface_emissivity_jacobian": "surface_emissivity_jacobian",
 }
+"""
+A mapping of standard variable names to their corresponding dataset-specific names.
+
+Each key is a standard variable name (e.g., "pres_layer" for pressure at layer
+midpoints), and the value is the corresponding name used in the dataset for that
+variable.
+"""

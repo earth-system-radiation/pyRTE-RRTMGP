@@ -47,37 +47,36 @@ pyrte\_rrtmgp.rrtmgp_data module
    :undoc-members:
    :show-inheritance:
 
-.. pyrte\_rrtmgp.data_types module
-.. -------------------------------
+pyrte\_rrtmgp.data_types module
+-------------------------------
 
-.. .. automodule:: pyrte_rrtmgp.data_types
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.data_types
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. pyrte\_rrtmgp.data_validation module
-.. -------------------------------------
+pyrte\_rrtmgp.data_validation module
+-------------------------------------
 
-.. .. automodule:: pyrte_rrtmgp.data_validation
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.data_validation
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. pyrte\_rrtmgp.constants module
-.. -------------------------------
+pyrte\_rrtmgp.constants module
+-------------------------------
 
-.. .. automodule:: pyrte_rrtmgp.constants
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.constants
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
-.. pyrte\_rrtmgp.config module
-.. ---------------------------
+pyrte\_rrtmgp.config module
+---------------------------
 
-.. .. automodule:: pyrte_rrtmgp.config
-..    :members:
-..    :undoc-members:
-..    :show-inheritance:
+.. automodule:: pyrte_rrtmgp.config
+   :members:
+   :show-inheritance:
 
 pyrte\_rrtmgp.cli module
 ------------------------

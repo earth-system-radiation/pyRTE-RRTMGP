@@ -14,17 +14,13 @@ from pyrte_rrtmgp.config import (
 
 @dataclass
 class DatasetMapping:
-    """Container for dimension and variable name mappings.
-
-    Attributes:
-        dim_mapping: Dictionary mapping standard dimension names to dataset-specific
-          names
-        var_mapping: Dictionary mapping standard variable names to dataset-specific
-          names
-    """
+    """Container for dimension and variable name mappings."""
 
     dim_mapping: Dict[str, str]
+    """Dictionary mapping standard dimension names to dataset-specific names"""
+
     var_mapping: Dict[str, str]
+    """Dictionary mapping standard variable names to dataset-specific names"""
 
     def __post_init__(self) -> None:
         """Validate mappings upon initialization."""
