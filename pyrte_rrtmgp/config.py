@@ -45,8 +45,8 @@ DEFAULT_VAR_MAPPING: Final[Dict[str, str]] = {
     "surface_temperature": "surface_temperature",
     "solar_zenith_angle": "solar_zenith_angle",
     "surface_albedo": "surface_albedo",
-    "surface_albedo_dir": "surface_albedo_dir",
-    "surface_albedo_dif": "surface_albedo_dif",
+    "surface_albedo_direct": "surface_albedo_direct",
+    "surface_albedo_diffuse": "surface_albedo_diffuse",
     "surface_emissivity": "surface_emissivity",
     "surface_emissivity_jacobian": "surface_emissivity_jacobian",
 }
