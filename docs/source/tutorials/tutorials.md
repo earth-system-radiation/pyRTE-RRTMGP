@@ -3,13 +3,13 @@
 
 The pyRTE-RRTMGP repository contains a number of tutorials in the form of  [Jupyter notebooks](https://docs.jupyter.org). These notebooks are located in the `examples` folder of the repository.
 
-Currently, the following tutorials are available:
+Currently, the following tutorials are available in directory `examples/`:
 
-* `examples/sw_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve shortwave radiative transfer equations.
-* `examples/lw_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve longwave radiative transfer equations.
-* `examples/dask_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP with [Dask](https://docs.dask.org/en/stable/) to solve radiative transfer equations with parallel computing.
-* `examples/all_sky_example.ipynb`: A tutorial on how to use pyRTE-RRTMGP to solve radiative transfer equations for an all-sky scenario.
-* `examples/dyamond_clouds/example.ipynb`: A tutorial using data from the [DYAMOND project (NASA/GMAO)](https://gmao.gsfc.nasa.gov/global_mesoscale/dyamond_phaseII/data_access/) together with Dask.
+* `sw_example.ipynb`: How to use pyRTE-RRTMGP to compute clear-sky shortwave fluxes.
+* `lw_example.ipynb`: How to use pyRTE-RRTMGP to compute clear-sky longwave fluxes.
+* `dask_example.ipynb`: How to use pyRTE-RRTMGP with [Dask](https://docs.dask.org/en/stable/) to compute clear-sky fluxes with parallel computing (the example is trivally small).
+* `all_sky_example.ipynb`: How to use pyRTE-RRTMGP to compute both longwave and shortwave fluxes for an idealized all-sky (gases and clouds) scenario.
+* `dyamond_clouds/example.ipynb`: Using a very large (global 3-km) snapshot from the [NASA/GMAO contribution to the DYAMOND 2 project](https://gmao.gsfc.nasa.gov/global_mesoscale/dyamond_phaseII/data_access/) together with Dask to compute cloud optical properties.
 
 The tutorials are designed to help you get started with using pyRTE-RRTMGP and to demonstrate how to use the package.
 
