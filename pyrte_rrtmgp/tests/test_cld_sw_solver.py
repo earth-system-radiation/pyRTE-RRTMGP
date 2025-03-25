@@ -2,8 +2,16 @@ import netCDF4  # noqa (avoids warning https://github.com/pydata/xarray/issues/7
 
 from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp import rrtmgp_gas_optics
-from pyrte_rrtmgp.data_types import CloudOpticsFiles, GasOpticsFiles, AllSkyExampleFiles
-from pyrte_rrtmgp.utils import compute_profiles, compute_clouds, load_rrtmgp_file
+
+from pyrte_rrtmgp.data_types import AllSkyExampleFiles
+from pyrte_rrtmgp.data_types import CloudOpticsFiles
+from pyrte_rrtmgp.data_types import GasOpticsFiles
+from pyrte_rrtmgp.data_types import OpticsProblemTypes
+
+from pyrte_rrtmgp.utils import compute_profiles
+from pyrte_rrtmgp.utils import compute_clouds
+from pyrte_rrtmgp.utils import load_rrtmgp_file
+
 from pyrte_rrtmgp.rte_solver import rte_solve
 
 import xarray as xr
@@ -64,7 +72,9 @@ def test_sw_solver_with_clouds() -> None:
 
     # Calculate gas optical properties
     optical_props = gas_optics_sw.compute_gas_optics(
-        atmosphere, problem_type="two-stream", add_to_input=False
+        atmosphere,
+        problem_type=OpticsProblemTypes.TWO_STREAM,
+        add_to_input=False
     )
 
     # Combine optical properties and solve RTE
@@ -80,5 +90,7 @@ def test_sw_solver_with_clouds() -> None:
 
     # Load reference data and verify results
     ref_data = load_rrtmgp_file(AllSkyExampleFiles.SW_NO_AEROSOL)
-    assert np.isclose(fluxes["sw_flux_up"], ref_data["sw_flux_up"].T, atol=1e-7).all()
-    assert np.isclose(fluxes["sw_flux_down"], ref_data["sw_flux_dn"].T, atol=1e-7).all()
+    assert np.isclose(fluxes["sw_flux_up"],
+                      ref_data["sw_flux_up"].T, atol=1e-7).all()
+    assert np.isclose(fluxes["sw_flux_down"],
+                      ref_data["sw_flux_dn"].T, atol=1e-7).all()

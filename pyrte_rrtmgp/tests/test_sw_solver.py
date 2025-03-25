@@ -1,6 +1,6 @@
 import numpy as np
-import xarray as xr
 
+from pyrte_rrtmgp.data_types import OpticsProblemTypes
 from pyrte_rrtmgp.data_types import RFMIPExampleFiles
 from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 from pyrte_rrtmgp.rte_solver import rte_solve
@@ -41,7 +41,9 @@ def test_sw_solver_noscat() -> None:
 
     # Compute gas optics for the atmosphere
     gas_optics_sw.compute_gas_optics(
-        atmosphere, problem_type="two-stream", gas_name_map=gas_mapping
+        atmosphere,
+        problem_type=OpticsProblemTypes.TWO_STREAM,
+        gas_name_map=gas_mapping
     )
 
     # Solve RTE
@@ -55,5 +57,7 @@ def test_sw_solver_noscat() -> None:
     ref_flux_down = rsd.isel(expt=0)["rsd"]
 
     # Compare results with reference data
-    assert np.isclose(fluxes["sw_flux_up"], ref_flux_up, atol=ERROR_TOLERANCE).all()
-    assert np.isclose(fluxes["sw_flux_down"], ref_flux_down, atol=ERROR_TOLERANCE).all()
+    assert np.isclose(fluxes["sw_flux_up"],
+                      ref_flux_up, atol=ERROR_TOLERANCE).all()
+    assert np.isclose(fluxes["sw_flux_down"],
+                      ref_flux_down, atol=ERROR_TOLERANCE).all()
