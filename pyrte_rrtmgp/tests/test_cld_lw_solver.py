@@ -3,8 +3,16 @@ import numpy as np
 
 from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp import rrtmgp_gas_optics
-from pyrte_rrtmgp.data_types import CloudOpticsFiles, GasOpticsFiles, AllSkyExampleFiles
-from pyrte_rrtmgp.utils import compute_profiles, compute_clouds, load_rrtmgp_file
+
+from pyrte_rrtmgp.data_types import AllSkyExampleFiles
+from pyrte_rrtmgp.data_types import CloudOpticsFiles
+from pyrte_rrtmgp.data_types import GasOpticsFiles
+from pyrte_rrtmgp.data_types import OpticsProblemTypes
+
+from pyrte_rrtmgp.utils import compute_profiles
+from pyrte_rrtmgp.utils import compute_clouds
+from pyrte_rrtmgp.utils import load_rrtmgp_file
+
 from pyrte_rrtmgp.rte_solver import rte_solve
 
 
@@ -46,7 +54,7 @@ def test_lw_solver_with_clouds() -> None:
 
     # Calculate cloud optical properties
     clouds_optical_props = cloud_optics_lw.compute_cloud_optics(
-        atmosphere, problem_type="absorption"
+        atmosphere, problem_type=OpticsProblemTypes.ABSORPTION
     )
 
     # Calculate gas optical properties
@@ -54,7 +62,9 @@ def test_lw_solver_with_clouds() -> None:
         gas_optics_file=GasOpticsFiles.LW_G256
     )
     optical_props = gas_optics_lw.compute_gas_optics(
-        atmosphere, problem_type="absorption", add_to_input=False
+        atmosphere,
+        problem_type=OpticsProblemTypes.ABSORPTION,
+        add_to_input=False
     )
     optical_props["surface_emissivity"] = 0.98
 
@@ -66,5 +76,7 @@ def test_lw_solver_with_clouds() -> None:
 
     # Load reference data and verify results
     ref_data = load_rrtmgp_file(AllSkyExampleFiles.LW_NO_AEROSOL)
-    assert np.isclose(fluxes["lw_flux_up"], ref_data["lw_flux_up"].T, atol=1e-7).all()
-    assert np.isclose(fluxes["lw_flux_down"], ref_data["lw_flux_dn"].T, atol=1e-7).all()
+    assert np.isclose(fluxes["lw_flux_up"],
+                      ref_data["lw_flux_up"].T, atol=1e-7).all()
+    assert np.isclose(fluxes["lw_flux_down"],
+                      ref_data["lw_flux_dn"].T, atol=1e-7).all()
