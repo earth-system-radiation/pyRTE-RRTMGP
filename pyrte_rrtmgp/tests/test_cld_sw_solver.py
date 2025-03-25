@@ -1,11 +1,21 @@
-import xarray as xr
-import numpy as np
+import netCDF4  # noqa (avoids warning https://github.com/pydata/xarray/issues/7259)
 
 from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import CloudOpticsFiles, GasOpticsFiles, AllSkyExampleFiles
 from pyrte_rrtmgp.utils import compute_profiles, compute_clouds, load_rrtmgp_file
 from pyrte_rrtmgp.rte_solver import rte_solve
+
+import xarray as xr
+import numpy as np
+
+
+def test_load_cloud_optics() -> None:
+
+    cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
+        cloud_optics_file=CloudOpticsFiles.SW_BND
+    )
+    assert cloud_optics_sw is not None
 
 
 def test_sw_solver_with_clouds() -> None:
