@@ -47,7 +47,6 @@ def lw_solver_noscat(
     npt.NDArray[np.float64],
     npt.NDArray[np.float64],
     npt.NDArray[np.float64],
-    npt.NDArray[np.float64],
 ]:
     """Perform longwave radiation transfer calculations without scattering.
 
@@ -124,7 +123,7 @@ def lw_solver_noscat(
 
     rte_lw_solver_noscat(*args)
 
-    return flux_up_jac, broadband_up, broadband_dn, flux_up, flux_dn
+    return broadband_up, broadband_dn, flux_up, flux_dn
 
 
 def lw_solver_2stream(
