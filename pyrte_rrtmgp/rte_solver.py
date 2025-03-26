@@ -126,7 +126,6 @@ def _compute_lw_fluxes_absorption(
 
     Returns:
         Dataset containing the computed fluxes:
-            - lw_flux_up_jacobian: Upward flux Jacobian
             - lw_flux_up_broadband: Broadband upward flux
             - lw_flux_down_broadband: Broadband downward flux
             - lw_flux_up: Spectrally resolved upward flux
@@ -165,7 +164,6 @@ def _compute_lw_fluxes_absorption(
     g: xr.DataArray = problem_ds["g"] if "g" in problem_ds else problem_ds["tau"].copy()
 
     (
-        solver_flux_up_jacobian,
         solver_flux_up_broadband,
         solver_flux_down_broadband,
         _,
@@ -202,7 +200,6 @@ def _compute_lw_fluxes_absorption(
             ["gpt"],  # inc_flux
         ],
         output_core_dims=[
-            [level_dim],  # solver_flux_up_jacobian
             [level_dim],  # solver_flux_up_broadband
             [level_dim],  # solver_flux_down_broadband
             [level_dim, "gpt"],  # solver_flux_up
@@ -214,7 +211,6 @@ def _compute_lw_fluxes_absorption(
 
     fluxes = xr.Dataset(
         {
-            "lw_flux_up_jacobian": solver_flux_up_jacobian.unstack("stacked_cols"),
             "lw_flux_up": solver_flux_up_broadband.unstack("stacked_cols"),
             "lw_flux_down": solver_flux_down_broadband.unstack("stacked_cols"),
         }
