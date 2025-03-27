@@ -18,7 +18,14 @@ def run_tests() -> None:
     try:
         print("Running tests...")
         result = subprocess.run(
-            [sys.executable, "-m", "pytest", tests_path],
+            [
+                sys.executable,
+                "-m",
+                "pytest",
+                "--cov=pyrte_rrtmgp",
+                "--cov-report=term:skip-covered",
+                tests_path,
+            ],
             check=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
