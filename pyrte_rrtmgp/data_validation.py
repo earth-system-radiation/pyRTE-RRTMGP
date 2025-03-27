@@ -176,8 +176,6 @@ def _validate_problem_dataset_vars(dataset: xr.Dataset) -> Tuple[bool, str]:
             f"Pressure layer ({pressure_layer_name}) values must be greater than 1.0",
         )
 
-    breakpoint()
-
     return True, ""
 
 
