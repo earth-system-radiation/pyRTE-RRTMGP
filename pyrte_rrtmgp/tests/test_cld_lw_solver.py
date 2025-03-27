@@ -1,3 +1,4 @@
+import netCDF4 as nc  # noqa
 import xarray as xr
 import numpy as np
 
@@ -68,10 +69,8 @@ def test_lw_solver_with_clouds() -> None:
     )
     optical_props["surface_emissivity"] = 0.98
 
-    # Combine optical properties and solve RTE
-    clouds_optical_props.add_to(optical_props)
-
-    fluxes = rte_solve(optical_props, add_to_input=False)
+    fluxes = rte_solve(clouds_optical_props.add_to(optical_props),
+                       add_to_input=False)
     assert fluxes is not None
 
     # Load reference data and verify results

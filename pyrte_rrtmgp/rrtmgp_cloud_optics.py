@@ -513,6 +513,8 @@ class CombineOpticalPropsAccessor:
             if var in op2.data_vars:
                 other[var] = op2[var].unstack("stacked_cols")
 
+        return other
+
     def delta_scale_optical_props(
         self, optical_props: xr.Dataset, forward_scattering: np.ndarray | None = None
     ) -> xr.Dataset:

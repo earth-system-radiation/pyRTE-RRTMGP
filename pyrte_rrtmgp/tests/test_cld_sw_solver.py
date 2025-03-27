@@ -77,15 +77,13 @@ def test_sw_solver_with_clouds() -> None:
         add_to_input=False
     )
 
-    # Combine optical properties and solve RTE
-    clouds_optical_props.add_to(optical_props, delta_scale=True)
-
     # Add SW-specific surface and angle properties
     optical_props["surface_albedo_direct"] = 0.06
     optical_props["surface_albedo_diffuse"] = 0.06
     optical_props["mu0"] = 0.86
 
-    fluxes = rte_solve(optical_props, add_to_input=False)
+    fluxes = rte_solve(clouds_optical_props.add_to(optical_props, delta_scale=True),
+                       add_to_input=False)
     assert fluxes is not None
 
     # Load reference data and verify results
