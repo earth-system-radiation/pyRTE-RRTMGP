@@ -1,5 +1,7 @@
+from typing import Dict, Optional
 import netCDF4  # noqa
 import pytest
+import xarray as xr
 
 from pyrte_rrtmgp.data_types import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
@@ -11,12 +13,13 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.data_validation import validate_problem_dataset
 
 
-def _load_problem_dataset(gas_mapping=None):
-    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]]) -> xr.Dataset:
+
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
 
-    atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+    atmosphere: xr.Dataset = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
     atmosphere = atmosphere.sel(expt=0)  # only one experiment
 
     if gas_mapping is None:
@@ -51,15 +54,15 @@ def _load_problem_dataset(gas_mapping=None):
     return atmosphere
 
 
-def test_validate_problem_dataset_success():
+def test_validate_problem_dataset_success() -> None:
     """Test validate_problem_dataset function."""
 
-    ds = _load_problem_dataset()
+    ds: xr.Dataset = _load_problem_dataset(None)
     assert validate_problem_dataset(ds)
 
 
-def test_raises_value_error_for_invalid_pressure():
-    ds = _load_problem_dataset()
+def test_raises_value_error_for_invalid_pressure() -> None:
+    ds: xr.Dataset = _load_problem_dataset(None)
     ds["pres_layer"] = ds["pres_layer"] - 100.0
 
     with pytest.raises(ValueError):
