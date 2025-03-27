@@ -2,7 +2,7 @@
 
 import json
 from dataclasses import asdict, dataclass
-from typing import Dict, Optional
+from typing import Dict, Optional, Tuple
 
 import xarray as xr
 
@@ -153,3 +153,46 @@ def create_default_mapping() -> AtmosphericMapping:
         dim_mapping=DEFAULT_DIM_MAPPING,
         var_mapping=DEFAULT_VAR_MAPPING,
     )
+
+
+# PROBLEM DATASET VALIDATION
+def _validate_problem_dataset_dims(dataset: xr.Dataset) -> Tuple[bool, str]:
+    return True, ""
+
+
+def _validate_problem_dataset_vars(dataset: xr.Dataset) -> Tuple[bool, str]:
+
+    pressure_layer_name: str = dataset.mapping.mapping.var_mapping.get("pres_layer")
+    if pressure_layer_name is None:
+        return False, "Pressure layer variable not found in dataset"
+
+    pressure_arr: xr.DataArray = dataset.get(pressure_layer_name)
+    if pressure_arr is None:
+        return False, "Pressure layer named in variable mapping not found in dataset"
+
+    if (pressure_arr < 1.0).any().item():
+        return (
+            False,
+            f"Pressure layer ({pressure_layer_name}) values must be greater than 1.0",
+        )
+
+    breakpoint()
+
+    return True, ""
+
+
+def validate_problem_dataset(dataset: xr.Dataset) -> bool:
+    """Validate that a dataset contains required dimensions and variables.
+
+    Args:
+        dataset: Dataset to validate
+    """
+    vars_valid, vars_msg = _validate_problem_dataset_vars(dataset)
+    if not vars_valid:
+        raise ValueError(vars_msg)
+
+    dims_valid, dims_msg = _validate_problem_dataset_dims(dataset)
+    if not dims_valid:
+        raise ValueError(dims_msg)
+
+    return True
