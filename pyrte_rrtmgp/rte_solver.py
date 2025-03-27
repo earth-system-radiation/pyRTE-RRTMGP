@@ -7,6 +7,7 @@ import xarray as xr
 
 from pyrte_rrtmgp.constants import GAUSS_DS, GAUSS_WTS
 from pyrte_rrtmgp.data_types import ProblemTypes
+from pyrte_rrtmgp.data_validation import validate_problem_dataset
 from pyrte_rrtmgp.kernels.rte import lw_solver_noscat, sw_solver_2stream
 from pyrte_rrtmgp.utils import expand_variable_dims
 
@@ -369,6 +370,8 @@ def rte_solve(
     Returns:
         Dataset containing computed fluxes if add_to_input is False, None otherwise
     """
+    validate_problem_dataset(problem_ds)
+
     if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
         fluxes = _compute_lw_fluxes_absorption(problem_ds, spectrally_resolved)
     elif problem_ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
