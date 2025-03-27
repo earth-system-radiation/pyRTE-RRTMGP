@@ -167,10 +167,7 @@ def _validate_problem_dataset_vars(dataset: xr.Dataset) -> Tuple[bool, str]:
         return False, "Pressure layer variable not found in dataset"
 
     pressure_arr: xr.DataArray = dataset.get(pressure_layer_name)
-    if pressure_arr is None:
-        return False, "Pressure layer named in variable mapping not found in dataset"
-
-    if (pressure_arr < 1.0).any().item():
+    if pressure_arr is not None and (pressure_arr < 1.0).any().item():
         return (
             False,
             f"Pressure layer ({pressure_layer_name}) values must be greater than 1.0",
