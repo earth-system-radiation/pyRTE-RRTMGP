@@ -81,6 +81,12 @@ def main() -> None:
     )
     run_tests_parser.set_defaults(func=run_tests)
 
+    run_code_coverage_parser = subparsers.add_parser(
+        "run_code_coverage",
+        help="Run code coverage using pytest",
+    )
+    run_code_coverage_parser.set_defaults(func=run_code_coverage)
+
     args = parser.parse_args()
 
     if args.command:
