@@ -74,6 +74,9 @@ def load_gas_optics(
     return dataset
 
 
+REQUIRED_GASES: tuple = ("h2o", "co2", "o3", "n2o", "co", "o2")
+
+
 class BaseGasOpticsAccessor:
     """Base class for gas optics calculations.
 
@@ -126,12 +129,12 @@ class BaseGasOpticsAccessor:
 
             self._gas_names = available_gases
 
-        if "h2o" not in self._gas_names:
-            raise ValueError(
-                "'h2o' must be included in gas mapping as it is required to compute "
-                "Dry air"
-            )
-
+        for required_gas in REQUIRED_GASES:
+            if required_gas not in self._gas_names:
+                raise ValueError(
+                    f"'{required_gas}' must be included in gas mapping as it is "
+                    "required for radiative transfer calculations."
+                )
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
