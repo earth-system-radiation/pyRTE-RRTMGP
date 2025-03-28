@@ -89,7 +89,7 @@ class BaseGasOpticsAccessor:
         selected_gases (list[str] | None): List of gases to include in calculations
 
     Raises:
-        ValueError: If missing a required gas ({REQUIRED_GASES}) in the gas mapping.
+        ValueError: If missing a required gas in the gas mapping (e.g. 'co', or 'h2o').
     """
 
     def __init__(
@@ -107,7 +107,7 @@ class BaseGasOpticsAccessor:
                 If None, all gases in the file will be used.
 
         Raises:
-            ValueError: If missing a required gas ({REQUIRED_GASES}) in the gas mapping.
+            ValueError: If missing required gas in gas mapping (e.g. 'co', or 'h2o').
         """
         self._dataset = xarray_obj
         self.is_internal = is_internal
