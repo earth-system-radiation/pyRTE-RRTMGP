@@ -34,6 +34,8 @@ from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 
 logger = logging.getLogger(__name__)
 
+REQUIRED_GASES: tuple = ("h2o", "co2", "o3", "n2o", "co", "o2")
+
 
 def load_gas_optics(
     file_path: str | None = None,
@@ -87,7 +89,7 @@ class BaseGasOpticsAccessor:
         selected_gases (list[str] | None): List of gases to include in calculations
 
     Raises:
-        ValueError: If 'h2o' is not included in the gas mapping
+        ValueError: If missing a required gas in the gas mapping (e.g. 'co', or 'h2o').
     """
 
     def __init__(
@@ -105,7 +107,7 @@ class BaseGasOpticsAccessor:
                 If None, all gases in the file will be used.
 
         Raises:
-            ValueError: If 'h2o' is not included in the gas mapping.
+            ValueError: If missing required gas in gas mapping (e.g. 'co', or 'h2o').
         """
         self._dataset = xarray_obj
         self.is_internal = is_internal
@@ -126,12 +128,12 @@ class BaseGasOpticsAccessor:
 
             self._gas_names = available_gases
 
-        if "h2o" not in self._gas_names:
-            raise ValueError(
-                "'h2o' must be included in gas mapping as it is required to compute "
-                "Dry air"
-            )
-
+        for required_gas in REQUIRED_GASES:
+            if required_gas not in self._gas_names:
+                raise ValueError(
+                    f"'{required_gas}' must be included in gas mapping as it is "
+                    "required for gas optics calculations."
+                )
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
@@ -149,6 +151,7 @@ class BaseGasOpticsAccessor:
         """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
+
         # Replace values smaller than min_press with min_press at min_index
         atmosphere[pres_level_var] = xr.where(
             atmosphere[pres_level_var] < min_press,
