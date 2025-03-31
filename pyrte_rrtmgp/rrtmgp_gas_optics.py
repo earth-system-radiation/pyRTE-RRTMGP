@@ -34,8 +34,6 @@ from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 
 logger = logging.getLogger(__name__)
 
-REQUIRED_GASES: tuple = ("h2o", "co2", "o3", "n2o", "co", "o2")
-
 
 def load_gas_optics(
     file_path: str | None = None,
@@ -112,12 +110,15 @@ class BaseGasOpticsAccessor:
         self._dataset = xarray_obj
         self.is_internal = is_internal
 
+        breakpoint()
+
         # Get the gas names from the dataset
         self._gas_names: tuple[str, ...] = tuple(
             self.extract_names(self._dataset["gas_names"].values)
         )
 
         if selected_gases is not None:
+
             # Filter gas names to only include those that exist in the dataset
             available_gases = tuple(g for g in selected_gases if g in self._gas_names)
 
@@ -128,10 +129,15 @@ class BaseGasOpticsAccessor:
 
             self._gas_names = available_gases
 
-        for required_gas in REQUIRED_GASES:
-            if required_gas not in self._gas_names:
+        # get required gases
+        uniq_key_species = np.unique(self._dataset.key_species.values)
+        required_gases = self._dataset.gas_names.values[uniq_key_species]
+        required_gases = [g.decode().strip() for g in required_gases]
+
+        for req_gas in required_gases:
+            if req_gas not in self._gas_names:
                 raise ValueError(
-                    f"'{required_gas}' must be included in gas mapping as it is "
+                    f"'{req_gas}' must be included in gas mapping as it is "
                     "required for gas optics calculations."
                 )
         # Set the gas names as coordinate in the dataset
