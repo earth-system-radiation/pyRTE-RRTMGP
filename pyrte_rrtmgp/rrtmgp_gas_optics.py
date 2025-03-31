@@ -110,8 +110,6 @@ class BaseGasOpticsAccessor:
         self._dataset = xarray_obj
         self.is_internal = is_internal
 
-        breakpoint()
-
         # Get the gas names from the dataset
         self._gas_names: tuple[str, ...] = tuple(
             self.extract_names(self._dataset["gas_names"].values)
