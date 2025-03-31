@@ -350,7 +350,7 @@ class BaseGasOpticsAccessor:
                 np.int32,
                 np.int32,
             ],
-            dask="allowed",
+            dask="parallelized",
         )
 
         interpolation_results = xr.Dataset(
@@ -570,7 +570,7 @@ class BaseGasOpticsAccessor:
             ],
             output_core_dims=[[layer_dim, "gpt"]],
             output_dtypes=[np.float64],
-            dask="allowed",
+            dask="parallelized",
         )
 
         tau_absorption = tau_absorption.unstack("stacked_cols")
@@ -964,7 +964,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
                 ["gpt"],  # sfc_src_jac
             ],
             output_dtypes=[np.float64, np.float64, np.float64, np.float64],
-            dask="allowed",
+            dask="parallelized",
         )
 
         return xr.Dataset(
