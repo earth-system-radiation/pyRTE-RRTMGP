@@ -127,17 +127,6 @@ class BaseGasOpticsAccessor:
 
             self._gas_names = available_gases
 
-        # get required gases
-        uniq_key_species = np.unique(self._dataset.key_species.values)
-        required_gases = self._dataset.gas_names.values[uniq_key_species]
-        required_gases = [g.decode().strip() for g in required_gases]
-
-        for req_gas in required_gases:
-            if req_gas not in self._gas_names:
-                raise ValueError(
-                    f"'{req_gas}' must be included in gas mapping as it is "
-                    "required for gas optics calculations."
-                )
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
@@ -779,8 +768,19 @@ class BaseGasOpticsAccessor:
 
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
+
         # Set mapping in accessor
         atmosphere.mapping.set_mapping(variable_mapping)
+
+        uniq_key_species = np.unique(self._dataset.key_species.values)
+        required_gases = self._dataset.gas_names.values[uniq_key_species]
+        required_gases = set([g.decode().strip() for g in required_gases])
+
+        gas_validation_set = set(required_gases) - set(gas_mapping.keys())
+        if len(gas_validation_set) > 0:
+            raise ValueError(
+                f"Missing required gases in gas mapping: {gas_validation_set}"
+            )
 
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         top_at_1 = (

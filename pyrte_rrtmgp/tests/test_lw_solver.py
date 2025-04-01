@@ -48,8 +48,7 @@ def test_lw_solver_noscat() -> None:
 
     # Compute gas optics for the atmosphere
     gas_optics_lw.compute_gas_optics(
-        atmosphere,
-        problem_type=OpticsProblemTypes.ABSORPTION,
+        atmosphere, problem_type=OpticsProblemTypes.ABSORPTION,
         gas_name_map=gas_mapping
     )
 
@@ -84,19 +83,15 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
         gas_optics_file=GasOpticsFiles.LW_G256
     )
 
-    gas_optics_lw = gas_optics_lw.where(gas_optics_lw.gas_names != "co", drop=True)
-
     # Load atmosphere data
     atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
-    atmosphere = atmosphere.sel(expt=0)  # only one experiment
-    atmosphere = atmosphere.drop_vars("carbon_monoxide_GM")
 
     gas_mapping = {
         "h2o": "water_vapor",
         "co2": "carbon_dioxide_GM",
         "o3": "ozone",
         "n2o": "nitrous_oxide_GM",
-        "co": "carbon_monoxide_GM",
+        # "co": "carbon_monoxide_GM",
         "ch4": "methane_GM",
         "o2": "oxygen_GM",
         "n2": "nitrogen_GM",
@@ -114,9 +109,10 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
     }
 
     # Compute gas optics for the atmosphere
-    gas_optics_lw.compute_gas_optics(
-        atmosphere,
-        problem_type=OpticsProblemTypes.ABSORPTION,
-        gas_name_map=gas_mapping
-    )
-    _ = rte_solve(atmosphere, add_to_input=False)
+    with pytest.raises(ValueError):
+        gas_optics_lw.compute_gas_optics(
+            atmosphere,
+            problem_type=OpticsProblemTypes.ABSORPTION,
+            gas_name_map=gas_mapping
+        )
+        _ = rte_solve(atmosphere, add_to_input=False)
