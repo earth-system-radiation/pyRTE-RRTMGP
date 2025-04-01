@@ -87,7 +87,7 @@ class BaseGasOpticsAccessor:
         selected_gases (list[str] | None): List of gases to include in calculations
 
     Raises:
-        ValueError: If 'h2o' is not included in the gas mapping
+        ValueError: If missing a required gas in the gas mapping (e.g. 'co', or 'h2o').
     """
 
     def __init__(
@@ -105,7 +105,7 @@ class BaseGasOpticsAccessor:
                 If None, all gases in the file will be used.
 
         Raises:
-            ValueError: If 'h2o' is not included in the gas mapping.
+            ValueError: If missing required gas in gas mapping (e.g. 'co', or 'h2o').
         """
         self._dataset = xarray_obj
         self.is_internal = is_internal
@@ -116,6 +116,7 @@ class BaseGasOpticsAccessor:
         )
 
         if selected_gases is not None:
+
             # Filter gas names to only include those that exist in the dataset
             available_gases = tuple(g for g in selected_gases if g in self._gas_names)
 
@@ -126,11 +127,8 @@ class BaseGasOpticsAccessor:
 
             self._gas_names = available_gases
 
-        if "h2o" not in self._gas_names:
-            raise ValueError(
-                "'h2o' must be included in gas mapping as it is required to compute "
-                "Dry air"
-            )
+            if "h2o" not in self._gas_names:
+                raise ValueError("Dry air calc requires 'h2o' to be in gas mapping")
 
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
@@ -149,6 +147,7 @@ class BaseGasOpticsAccessor:
         """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
         min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
+
         # Replace values smaller than min_press with min_press at min_index
         atmosphere[pres_level_var] = xr.where(
             atmosphere[pres_level_var] < min_press,
@@ -772,8 +771,19 @@ class BaseGasOpticsAccessor:
 
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
+
         # Set mapping in accessor
         atmosphere.mapping.set_mapping(variable_mapping)
+
+        uniq_key_species = np.unique(self._dataset.key_species.values)
+        required_gases = self._dataset.gas_names.values[uniq_key_species]
+        required_gases = set([g.decode().strip() for g in required_gases])
+
+        gas_validation_set = set(required_gases) - set(gas_mapping.keys())
+        if len(gas_validation_set) > 0:
+            raise ValueError(
+                f"Missing required gases in gas mapping: {gas_validation_set}"
+            )
 
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         top_at_1 = (
