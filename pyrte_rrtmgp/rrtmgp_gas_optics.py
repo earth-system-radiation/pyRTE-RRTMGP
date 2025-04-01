@@ -127,6 +127,9 @@ class BaseGasOpticsAccessor:
 
             self._gas_names = available_gases
 
+            if "h2o" not in self._gas_names:
+                raise ValueError("Dry air calc requires 'h2o' to be in gas mapping")
+
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
