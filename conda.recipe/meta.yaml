@@ -37,6 +37,7 @@ requirements:
     - requests >=2.4.0
     - rte_rrtmgp ==1.9.1
     - xarray >=2023.5.0
+    - dask >=2023.5.0
 
 test:
   imports:
@@ -49,6 +50,7 @@ test:
     - requests >=2.4.0
     - rte_rrtmgp ==1.9.1
     - xarray >=2023.5.0
+    - dask >=2023.5.0
   commands:
     - pyrte_rrtmgp run_tests
 

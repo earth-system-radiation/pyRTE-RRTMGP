@@ -13,14 +13,17 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.data_validation import validate_problem_dataset
 
 
-def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]]) -> xr.Dataset:
+def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
+                          use_dask: bool = False) -> xr.Dataset:
 
     gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
 
     atmosphere: xr.Dataset = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
-    atmosphere = atmosphere.sel(expt=0)  # only one experiment
+
+    if use_dask:
+        atmosphere = atmosphere.chunk({"expt": 3})
 
     if gas_mapping is None:
         gas_mapping = {
@@ -63,6 +66,21 @@ def test_validate_problem_dataset_success() -> None:
 
 def test_raises_value_error_for_invalid_pressure() -> None:
     ds: xr.Dataset = _load_problem_dataset(None)
+    ds["pres_layer"] = ds["pres_layer"] - 100.0
+
+    with pytest.raises(ValueError):
+        assert validate_problem_dataset(ds)
+
+
+def test_dask_validate_problem_dataset_success() -> None:
+    """Test validate_problem_dataset function."""
+
+    ds: xr.Dataset = _load_problem_dataset(None, use_dask=True)
+    assert validate_problem_dataset(ds)
+
+
+def test_dask_raises_value_error_for_invalid_pressure() -> None:
+    ds: xr.Dataset = _load_problem_dataset(None, use_dask=True)
     ds["pres_layer"] = ds["pres_layer"] - 100.0
 
     with pytest.raises(ValueError):
