@@ -14,7 +14,7 @@ from pyrte_rrtmgp.data_validation import validate_problem_dataset
 
 
 def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
-                          use_dask=False) -> xr.Dataset:
+                          use_dask: bool = False) -> xr.Dataset:
 
     gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
         gas_optics_file=GasOpticsFiles.LW_G256
