@@ -206,7 +206,7 @@ def _compute_lw_fluxes_absorption(
             [level_dim, "gpt"],  # solver_flux_up
             [level_dim, "gpt"],  # solver_flux_down
         ],
-        output_dtypes=[np.float64, np.float64, np.float64, np.float64, np.float64],
+        output_dtypes=[np.float64, np.float64, np.float64, np.float64],
         dask="parallelized",
     )
 
