@@ -9,33 +9,12 @@ from pyrte_rrtmgp.data_types import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 from pyrte_rrtmgp.data_types import RFMIPExampleFiles
 
+from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
+from pyrte_rrtmgp.tests import ERROR_TOLERANCE
+
 from pyrte_rrtmgp.utils import load_rrtmgp_file
 from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.rte_solver import rte_solve
-
-ERROR_TOLERANCE = 1e-7
-
-DEFAULT_GAS_MAPPING = {
-    "h2o": "water_vapor",
-    "co2": "carbon_dioxide_GM",
-    "o3": "ozone",
-    "n2o": "nitrous_oxide_GM",
-    "co": "carbon_monoxide_GM",
-    "ch4": "methane_GM",
-    "o2": "oxygen_GM",
-    "n2": "nitrogen_GM",
-    "ccl4": "carbon_tetrachloride_GM",
-    "cfc11": "cfc11_GM",
-    "cfc12": "cfc12_GM",
-    "cfc22": "hcfc22_GM",
-    "hfc143a": "hfc143a_GM",
-    "hfc125": "hfc125_GM",
-    "hfc23": "hfc23_GM",
-    "hfc32": "hfc32_GM",
-    "hfc134a": "hfc134a_GM",
-    "cf4": "cf4_GM",
-    "no2": "no2",
-}
 
 
 def test_lw_solver_noscat() -> None:
