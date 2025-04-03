@@ -63,11 +63,11 @@ def test_sw_solver_noscat_dask() -> None:
     # Load reference data
     rsu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSU)
     rsd = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSD)
-    ref_flux_up = rsu.isel(expt=0)["rsu"]
-    ref_flux_down = rsd.isel(expt=0)["rsd"]
+    ref_flux_up = rsu["rsu"]
+    ref_flux_down = rsd["rsd"]
 
     # Compare results with reference data
-    assert np.isclose(fluxes["sw_flux_up"],
+    assert np.isclose(fluxes["sw_flux_up"].transpose("expt", "site", "level"),
                       ref_flux_up, atol=ERROR_TOLERANCE).all()
-    assert np.isclose(fluxes["sw_flux_down"],
+    assert np.isclose(fluxes["sw_flux_down"].transpose("expt", "site", "level"),
                       ref_flux_down, atol=ERROR_TOLERANCE).all()
