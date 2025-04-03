@@ -98,13 +98,13 @@ def test_lw_solver_noscat_dask() -> None:
     rlu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLU)
     rld = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLD)
 
-    ref_flux_up = rlu.isel(expt=0)["rlu"]
-    ref_flux_down = rld.isel(expt=0)["rld"]
+    ref_flux_up = rlu["rlu"]
+    ref_flux_down = rld["rld"]
 
     # Compare results with reference data
-    assert np.isclose(fluxes["lw_flux_up"],
+    assert np.isclose(fluxes["lw_flux_up"].transpose("expt", "site", "level"),
                       ref_flux_up, atol=ERROR_TOLERANCE).all()
-    assert np.isclose(fluxes["lw_flux_down"],
+    assert np.isclose(fluxes["lw_flux_down"].transpose("expt", "site", "level"),
                       ref_flux_down, atol=ERROR_TOLERANCE).all()
 
 
