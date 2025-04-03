@@ -281,9 +281,9 @@ class BaseGasOpticsAccessor:
             for dim in missing_dims:
                 play = play.expand_dims({dim: atmosphere[dim].size})
 
-        play_stacked = play.stack({"stacked_cols": stack_dims})
-        tlay_stacked = tlay.stack({"stacked_cols": stack_dims})
-        col_gas_stacked = col_gas.stack({"stacked_cols": stack_dims})
+        play_stacked = play.compute().stack({"stacked_cols": stack_dims})
+        tlay_stacked = tlay.compute().stack({"stacked_cols": stack_dims})
+        col_gas_stacked = col_gas.compute().stack({"stacked_cols": stack_dims})
 
         jtemp, fmajor, fminor, col_mix, tropo, jeta, jpress = xr.apply_ufunc(
             interpolation,
