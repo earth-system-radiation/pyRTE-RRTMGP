@@ -5,6 +5,7 @@ import os
 import sys
 from typing import Iterable, cast
 
+import dask.array as da
 import numpy as np
 import numpy.typing as npt
 import pandas as pd
@@ -146,7 +147,7 @@ class BaseGasOpticsAccessor:
             Modified atmosphere dataset if inplace=False, otherwise None
         """
         pres_level_var = atmosphere.mapping.get_var("pres_level")
-        min_press = self._dataset["press_ref"].min().item() + sys.float_info.epsilon
+        min_press = self._dataset["press_ref"].min() + sys.float_info.epsilon
 
         # Replace values smaller than min_press with min_press at min_index
         atmosphere[pres_level_var] = xr.where(
@@ -636,6 +637,12 @@ class BaseGasOpticsAccessor:
         zero_mask = np.all(all_flavors == [0, 0], axis=1)
         all_flavors[zero_mask] = [2, 2]
 
+        # NOTE: This is a workaround for the fact that dask array
+        # doesn't support np.unique with axis=0
+
+        if isinstance(all_flavors, da.Array):
+            all_flavors = all_flavors.compute()
+
         # Get unique flavors while preserving original order
         _, unique_indices = np.unique(all_flavors, axis=0, return_index=True)
         unique_flavors = all_flavors[np.sort(unique_indices)]
@@ -678,6 +685,9 @@ class BaseGasOpticsAccessor:
         Returns:
             Tuple of decoded and cleaned names
         """
+        if isinstance(names, da.Array):
+            names = names.compute()
+
         output = np.array(
             [gas.tobytes().decode().strip().split("_")[0] for gas in names]
         )
@@ -977,6 +987,8 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             dask="parallelized",
         )
 
+        # TODO: should chunks be added / perserved here for surface source arrays?
+        # TODO: should surface source arrays be dask arrays?
         return xr.Dataset(
             {
                 "surface_source": sfc_src.unstack("stacked_cols"),
