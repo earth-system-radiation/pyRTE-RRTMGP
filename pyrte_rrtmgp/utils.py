@@ -67,8 +67,8 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
     """Construct atmospheric profiles following the RCEMIP protocol.
 
     Computes vertical profiles of pressure, temperature, humidity, and ozone
-    for radiative transfer calculations. Based on the RCEMIP (Radiative-Convective
-    Equilibrium Model Intercomparison Project) protocol.
+    for radiative transfer calculations. Based on the RCEMIP:
+    (Radiative-Convective Equilibrium Model Intercomparison Project) protocol.
 
     Args:
         sst: Surface temperature [K]
@@ -228,14 +228,45 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
 def compute_clouds(
     cloud_optics: xr.Dataset, p_lay: xr.DataArray, t_lay: xr.DataArray
 ) -> xr.Dataset:
-    """Compute cloud properties for radiative transfer calculations.
+    """
+    Compute cloud properties required for radiative transfer calculations.
+
+    Using cloud optics data, atmospheric pressure and temperature layers,
+    This function calculates cloud properties including:
+      - liquid water path (lwp)
+      - ice water path (iwp)
+      - effective liquid water radius (rel)
+      - effective ice radius (rei)
+
+    The effective radii are computed as the average of the corresponding lower
+    and upper bounds provided in the cloud_optics dataset.
 
     Args:
-        cloud_optics: Dataset containing cloud optics data
-        atmosphere: Dataset with atmospheric data
+        cloud_optics : xr.Dataset
+            Dataset containing cloud optical properties.
+            It must include the following keys:
+            - 'radliq_lwr': Lower bound for liquid water effective radius.
+            - 'radliq_upr': Upper bound for liquid water effective radius.
+            - 'diamice_lwr': Lower bound for ice effective radius.
+            - 'diamice_upr': Upper bound for ice effective radius.
+        p_lay : xr.DataArray
+            Pressure levels of the atmospheric layers,
+            where the dimension 'site' corresponds to spatial columns.
+        t_lay : xr.DataArray
+            Temperature values associated with the pressure layers.
 
     Returns:
-        xr.Dataset: Dataset containing cloud properties (lwp, iwp, rel, rei)
+        xr.Dataset
+            A dataset containing the computed cloud properties
+            with the following variables:
+            - lwp: Liquid Water Path, assigned a value of 10.0
+              in cloud regions where the temperature exceeds 263 K.
+            - iwp: Ice Water Path, assigned a value of 10.0
+              in cloud regions where the temperature is below 273 K.
+            - rel: Effective liquid water radius, computed as the average of
+              'radliq_lwr' and 'radliq_upr' in cloud regions.
+            - rei: Effective ice radius, computed as the average
+              of 'diamice_lwr' and 'diamice_upr' in cloud regions.
     """
     # Get dimensions from atmosphere
     ncol = p_lay.sizes["site"]
