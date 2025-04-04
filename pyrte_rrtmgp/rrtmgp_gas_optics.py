@@ -987,6 +987,8 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
             dask="parallelized",
         )
 
+        # TODO: should chunks be added / perserved here for surface source arrays?
+        # TODO: should surface source arrays be dask arrays?
         return xr.Dataset(
             {
                 "surface_source": sfc_src.unstack("stacked_cols"),
