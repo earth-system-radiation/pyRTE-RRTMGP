@@ -54,4 +54,4 @@ pyrte_rrtmgp run_tests
 
 <!-- end-installation-section -->
 
-For **platforms other than Linux for x64 processors** and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/how_to/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/contributor_guide/contribute.html#how-to-set-up-a-local-development-environment).
+For **platforms other than Linux for x64 processors and MacOS** and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/how_to/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/contributor_guide/contribute.html#how-to-set-up-a-local-development-environment).
