@@ -32,7 +32,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to t
 
 <!-- start-installation-section -->
 
-pyRTE-RRTMGP is available as a [conda package for Linux (x86_64)](https://anaconda.org/conda-forge/pyrte_rrtmgp). You can install it from the `conda-forge` channel:
+pyRTE-RRTMGP is available as a [conda package for Linux (x86_64) and MacOS](https://anaconda.org/conda-forge/pyrte_rrtmgp). You can install it from the `conda-forge` channel:
 
 ```bash
 conda install -c conda-forge pyrte_rrtmgp
@@ -54,4 +54,4 @@ pyrte_rrtmgp run_tests
 
 <!-- end-installation-section -->
 
-For **platforms other than Linux for x64 processors** and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/user_guide/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/contributor_guide/contribute.html#how-to-set-up-a-local-development-environment).
+For **platforms other than Linux for x64 processors and MacOS** and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/how_to/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/contributor_guide/contribute.html#how-to-set-up-a-local-development-environment).
