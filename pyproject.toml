@@ -12,7 +12,8 @@ dependencies = [
   "xarray>=2023.5.0",
   "netcdf4>=1.7.2",
   "requests>=2.4.0",
-  "pytest>=6.0.0"
+  "pytest>=6.0.0",
+  "dask>=2023.3.0",
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -25,10 +26,12 @@ classifiers = [
 [project.optional-dependencies]
 test = [
   "pytest>=6.0.0",
+  "pytest-cov",
   "numpy>=2.0.0",
   "xarray>=2023.5.0",
   "netcdf4>=1.7.2",
   "requests>=2.4.0"
+  "dask>=2023.3.0",
 ]
 
 [project.scripts]
