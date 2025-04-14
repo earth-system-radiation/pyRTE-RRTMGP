@@ -12,25 +12,14 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
-from pyrte_rrtmgp.constants import (
-    AVOGAD,
-    HELMERT1,
-    HELMERT2,
-    M_DRY,
-    M_H2O,
-    SOLAR_CONSTANTS,
-)
+from pyrte_rrtmgp.constants import (AVOGAD, HELMERT1, HELMERT2, M_DRY, M_H2O,
+                                    SOLAR_CONSTANTS)
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
-from pyrte_rrtmgp.data_validation import (
-    AtmosphericMapping,
-    create_default_mapping,
-)
-from pyrte_rrtmgp.kernels.rrtmgp import (
-    compute_planck_source,
-    compute_tau_absorption,
-    compute_tau_rayleigh,
-    interpolation,
-)
+from pyrte_rrtmgp.data_validation import (AtmosphericMapping,
+                                          create_default_mapping)
+from pyrte_rrtmgp.kernels.rrtmgp import (compute_planck_source,
+                                         compute_tau_absorption,
+                                         compute_tau_rayleigh, interpolation)
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 
 logger = logging.getLogger(__name__)

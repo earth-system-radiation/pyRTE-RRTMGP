@@ -6,23 +6,18 @@ import numpy as np
 import xarray as xr
 
 from pyrte_rrtmgp.data_types import CloudOpticsFiles
-from pyrte_rrtmgp.data_validation import (
-    AtmosphericMapping,
-    create_default_mapping,
-)
+from pyrte_rrtmgp.data_validation import (AtmosphericMapping,
+                                          create_default_mapping)
 from pyrte_rrtmgp.kernels.rrtmgp import compute_cld_from_table
-from pyrte_rrtmgp.kernels.rte import (
-    delta_scale_2str,
-    delta_scale_2str_f,
-    inc_1scalar_by_1scalar_bybnd,
-    inc_1scalar_by_2stream_bybnd,
-    inc_2stream_by_1scalar_bybnd,
-    inc_2stream_by_2stream_bybnd,
-    increment_1scalar_by_1scalar,
-    increment_1scalar_by_2stream,
-    increment_2stream_by_1scalar,
-    increment_2stream_by_2stream,
-)
+from pyrte_rrtmgp.kernels.rte import (delta_scale_2str, delta_scale_2str_f,
+                                      inc_1scalar_by_1scalar_bybnd,
+                                      inc_1scalar_by_2stream_bybnd,
+                                      inc_2stream_by_1scalar_bybnd,
+                                      inc_2stream_by_2stream_bybnd,
+                                      increment_1scalar_by_1scalar,
+                                      increment_1scalar_by_2stream,
+                                      increment_2stream_by_1scalar,
+                                      increment_2stream_by_2stream)
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
 
 

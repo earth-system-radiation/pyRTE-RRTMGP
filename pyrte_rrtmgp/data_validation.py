@@ -6,10 +6,7 @@ from typing import Dict, Optional, Tuple
 
 import xarray as xr
 
-from pyrte_rrtmgp.config import (
-    DEFAULT_DIM_MAPPING,
-    DEFAULT_VAR_MAPPING,
-)
+from pyrte_rrtmgp.config import DEFAULT_DIM_MAPPING, DEFAULT_VAR_MAPPING
 
 
 @dataclass
