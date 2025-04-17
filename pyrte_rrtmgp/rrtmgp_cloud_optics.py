@@ -24,6 +24,7 @@ from pyrte_rrtmgp.kernels.rte import (
     increment_2stream_by_2stream,
 )
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.utils import safer_divide
 
 
 def load_cloud_optics(
@@ -235,9 +236,26 @@ class CloudOpticsAccessor:
             taussa = ltaussa + itaussa
             taussag = ltaussag + itaussag
 
-            # Calculate derived quantities
-            ssa = xr.where(tau > np.finfo(float).eps, taussa / tau, 0.0)
-            g = xr.where(taussa > np.finfo(float).eps, taussag / taussa, 0.0)
+            # Apply the function with dask awareness.
+            ssa = xr.apply_ufunc(
+                safer_divide,
+                taussa,
+                tau,
+                dask="allowed",  # Allows lazy evaluation with dask arrays.
+                output_dtypes=[
+                    taussa.dtype
+                ],  # Ensure the output data type is correctly specified.
+            )
+
+            g = xr.apply_ufunc(
+                safer_divide,
+                taussag,
+                taussa,
+                dask="allowed",  # Allows lazy evaluation with dask arrays.
+                output_dtypes=[
+                    taussa.dtype
+                ],  # Ensure the output data type is correctly specified.
+            )
 
             props = xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
 

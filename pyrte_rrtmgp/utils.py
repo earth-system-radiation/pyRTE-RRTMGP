@@ -1,6 +1,7 @@
 """Utility functions for pyRTE-RRTMGP."""
 
 import os
+from typing import Any
 
 import numpy as np
 import xarray as xr
@@ -317,3 +318,8 @@ def load_rrtmgp_file(file: AllSkyExampleFiles | RFMIPExampleFiles) -> xr.Dataset
     rte_rrtmgp_dir = download_rrtmgp_data()
     ref_path = os.path.join(rte_rrtmgp_dir, file.value)
     return xr.load_dataset(ref_path, decode_cf=False)
+
+
+def safer_divide(a: Any, b: Any) -> Any:
+    """Safer np.divide util func."""
+    return np.divide(a, b, out=np.zeros_like(a), where=b > np.finfo(float).eps)
