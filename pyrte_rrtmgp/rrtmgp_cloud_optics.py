@@ -171,6 +171,7 @@ class CloudOpticsAccessor:
                     gpt_out_dim: ngpt,
                 },
             },
+            allow_rechunk=True,
             dask="parallelized",
         )
 
@@ -217,6 +218,7 @@ class CloudOpticsAccessor:
                     gpt_out_dim: ngpt,
                 },
             },
+            allow_rechunk=True,
             dask="parallelized",
         )
 
