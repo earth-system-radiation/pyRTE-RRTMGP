@@ -103,6 +103,12 @@ class CloudOpticsAccessor:
         """
         cloud_optics = self._obj
 
+        non_dim_coords = {
+            coord: cloud_properties[coord].copy()
+            for coord in cloud_properties.coords
+            if coord not in cloud_properties.dims
+        }
+
         if variable_mapping is None:
             variable_mapping = create_default_mapping()
         # Set mapping in accessor
@@ -260,6 +266,12 @@ class CloudOpticsAccessor:
             )
 
             props = xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
+
+        # Get coordinates that are not dimensions and make sure that they keep the same
+        # shape as the input
+        if non_dim_coords:
+            for coord, data in non_dim_coords.items():
+                props[coord] = data
 
         if add_to_input:
             cloud_properties.update(props)
