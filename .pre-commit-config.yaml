@@ -56,4 +56,4 @@ repos:
     -   id: nbstripout
         files: \.ipynb$
 
-exclude: examples/*
+exclude: examples/
