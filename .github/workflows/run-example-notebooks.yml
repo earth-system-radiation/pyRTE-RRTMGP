@@ -16,8 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-latest] #[ubuntu-latest, macos-13, macos-latest]
-        python-version: ["3.11"] #["3.11", "3.12"]
+        platform: [ubuntu-latest, macos-13, macos-latest]
+        python-version: ["3.11", "3.12"]
         # when updating the tested Python versions, please also update README.md,
         # the conda.recipe/meta.yaml file, pyproject.toml, and (if necessary) the
         # .readthedocs.yaml file
