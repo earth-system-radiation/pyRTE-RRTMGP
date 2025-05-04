@@ -55,10 +55,8 @@ jobs:
 
       - name: Install pyRTE
         run: |
-          echo `pwd`
           python -m pip install --upgrade pip
           pip install -e .
 
       - name: Run notebooks
-        run: |
-          python examples/*.py
+        run: python examples/*.py
