@@ -8,8 +8,6 @@ on:
     paths-ignore:
       - 'docs/**/*'
   push:
-    branches:
-      - main
     paths-ignore:
       - 'docs/**/*'
 
@@ -55,6 +53,7 @@ jobs:
 
       - name: Install pyRTE
         run: |
+          echo `pwd`
           python -m pip install --upgrade pip
           pip install -e .
 
