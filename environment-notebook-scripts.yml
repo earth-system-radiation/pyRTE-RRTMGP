@@ -1,0 +1,12 @@
+#
+# Python modules below are needed to run example notebook scripts
+#
+name: pyrte_notebook_tests
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python >=3.11,<3.13
+  - rte_rrtmgp
+  - dask
+  - matplotlib
