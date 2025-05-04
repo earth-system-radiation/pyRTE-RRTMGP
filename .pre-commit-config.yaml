@@ -55,3 +55,5 @@ repos:
     hooks:
     -   id: nbstripout
         files: \.ipynb$
+
+exclude: examples/*
