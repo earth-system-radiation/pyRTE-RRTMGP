@@ -25,7 +25,7 @@ Follow these steps to run the tutorial notebooks:
 
 2. **Go to the ``pyRTE-RRTMGP`` directory**
 
-    After cloning the repository, enter the root directory: 
+    After cloning the repository, enter the root directory:
     ```bash
     cd pyRTE-RRTMGP
     ```
@@ -34,11 +34,11 @@ Follow these steps to run the tutorial notebooks:
 
     ```bash
     conda env create -f example-notebooks-interactive.yml
-    conda activate pyrte_notebooks 
+    conda activate pyrte_notebooks
     ```
 
     ```{note}
-    This will create an environment named `pyrte_notebooks` that you need to activate. 
+    This will create an environment named `pyrte_notebooks` that you need to activate.
     ```
 
     See {ref}`installation` for more information on how to install the package.
