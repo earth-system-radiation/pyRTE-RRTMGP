@@ -42,7 +42,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           use-mamba: true
           channels: conda-forge
-          environment-file: example-notebooks-scripts.yml
+          environment-file: example-notebooks-interactive.yml
           auto-activate-base: false
           activate-environment: pyrte_notebook_tests
 
