@@ -147,4 +147,4 @@ assert np.isclose(
     atol=1e-7,
 ).all(), "Shortwave flux down mismatch"
 
-print("Shortwave radiation transfer calculations validated successfully!")
+print("Shortwave clear-sky (RFMIP) calculations validated successfully!")

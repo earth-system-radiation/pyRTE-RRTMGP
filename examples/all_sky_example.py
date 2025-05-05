@@ -185,7 +185,7 @@ assert np.isclose(
     atol=1e-7,
 ).all()
 
-print("All Checks Passed!")
+print("Longwave all-sky examples passes tests!")
 
 # %% [markdown]
 # # Shortwave calculations
@@ -270,7 +270,7 @@ assert np.isclose(
     atol=1e-7,
 ).all()
 
-print("All Checks Passed!")
+print("Shortwave all-sky example passes tests!")
 
 # %%
 

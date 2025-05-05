@@ -145,4 +145,4 @@ assert np.isclose(
     atol=1e-7,
 ).all(), "Longwave flux down mismatch"
 
-print("Longwave radiation transfer calculations validated successfully!")
+print("Longwave clear-sky (RFMIP) calculations validated successfully!")
