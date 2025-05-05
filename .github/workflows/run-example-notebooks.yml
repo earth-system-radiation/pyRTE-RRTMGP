@@ -41,6 +41,7 @@ jobs:
           miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
           use-mamba: true
+          conda-remove-defaults: true
           channels: conda-forge
           environment-file: example-notebooks-interactive.yml
           auto-activate-base: false
