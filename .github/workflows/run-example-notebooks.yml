@@ -58,4 +58,4 @@ jobs:
           pip install -e .
 
       - name: Run notebooks
-        run: python examples/*.py
+        run: for t in examples/*.py; do python $t; done
