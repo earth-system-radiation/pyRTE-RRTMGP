@@ -19,9 +19,9 @@
 #
 # ## Overview
 #
-# PyRTE-RRTMGP provides a flexible and efficient framework for computing radiative fluxes in planetary atmospheres. This example shows an end-to-end problem with both clear skies and clouds.
+# PyRTE-RRTMGP provides a flexible and efficient framework for computing radiative fluxes in planetary atmospheres. This example shows an end-to-end problem with both clear skies and clouds. 
 #
-# 1. Loading data for cloud and gas optics
+# 1. Loading data for cloud and gas optics 
 # 2. Computing gas and cloud optical properties and combining them to produce an all-sky problem
 # 3. Solving the radiative transfer equation to obtain upward and downward fluxes
 # 4. Validating results against reference solutions generated with the original RTE fortran code
@@ -46,6 +46,9 @@
 # %%
 import numpy as np
 
+# %% [markdown]
+# ### Importing pyRTE components
+
 # %%
 from pyrte_rrtmgp import rrtmgp_cloud_optics, rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import (
@@ -61,16 +64,11 @@ from pyrte_rrtmgp.utils import (
     load_rrtmgp_file,
 )
 
-# %% [markdown]
-# ### Importing pyRTE components
-#
-#
 
 # %% [markdown]
 # ### Setting up the problem
 #
-# The routine `compute_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed. Clouds are distributed in 2/3 of the columns
-
+# The routine `compute_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed. Clouds are distributed in 2/3 of the columns 
 
 # %%
 def make_profiles(ncol=24, nlay=72):
@@ -102,7 +100,7 @@ atmosphere
 # In this example datasets are saved to intermediate variables at each step
 
 # %% [markdown]
-# ### Initialize the cloud and gas optics data
+# ### Initialize the cloud and gas optics data 
 
 # %%
 cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
@@ -131,7 +129,7 @@ atmosphere = atmosphere.merge(cloud_props)
 atmosphere
 
 # %% [markdown]
-# ### Clear-sky (gases) optical properties; surface boundary conditions
+# ### Clear-sky (gases) optical properties; surface boundary conditions 
 
 # %%
 optical_props = gas_optics_lw.compute_gas_optics(
@@ -185,7 +183,7 @@ assert np.isclose(
     atol=1e-7,
 ).all()
 
-print("Longwave all-sky examples passes tests!")
+print("All Checks Passed!")
 
 # %% [markdown]
 # # Shortwave calculations
@@ -193,7 +191,7 @@ print("Longwave all-sky examples passes tests!")
 # In this example steps are combined where possible
 
 # %% [markdown]
-# ## Initialize optics data
+# ## Initialize optics data 
 
 # %%
 cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
@@ -215,7 +213,9 @@ atmosphere = make_profiles()
 #    that's set as the mid-point of the valid range from cloud_optics
 #
 atmosphere = atmosphere.merge(
-    compute_clouds(cloud_optics_sw, atmosphere["pres_layer"], atmosphere["temp_layer"])
+    compute_clouds(
+        cloud_optics_sw, atmosphere["pres_layer"], atmosphere["temp_layer"]
+    )
 )
 atmosphere
 
@@ -224,18 +224,16 @@ atmosphere
 
 # %%
 # compute_cloud_optics() returns two-stream properties by default?
-atmosphere["surface_albedo"] = 0.06
-atmosphere["surface_albedo_direct"] = 0.06
-atmosphere["surface_albedo_diffuse"] = 0.06
 optical_props = gas_optics_sw.compute_gas_optics(
     atmosphere, problem_type=OpticsProblemTypes.TWO_STREAM, add_to_input=False
 )
 # add_to() changes the values in optical_props
-cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(optical_props, delta_scale=True)
+cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
+    optical_props, delta_scale=True
+)
 #
 # Add SW-specific surface and angle properties
 #
-optical_props["surface_albedo"] = 0.06
 optical_props["surface_albedo_direct"] = 0.06
 optical_props["surface_albedo_diffuse"] = 0.06
 # Could also specific a single "surface_albedo"
@@ -270,4 +268,4 @@ assert np.isclose(
     atol=1e-7,
 ).all()
 
-print("Shortwave all-sky example passes tests!")
+print("All Checks Passed!")
