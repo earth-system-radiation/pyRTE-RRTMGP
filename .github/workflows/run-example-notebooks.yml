@@ -1,4 +1,4 @@
-name: Example notebooks
+name: Pytests and example notebooks
 
 on:
   workflow_dispatch:
@@ -57,6 +57,9 @@ jobs:
           echo `pwd`
           python -m pip install --upgrade pip
           pip install -e .
+
+      - name: Run pytest tests via CLI
+        run: pyrte_rrtmgp run_tests
 
       - name: Run notebooks
         run: for t in examples/*.py; do python $t; done
