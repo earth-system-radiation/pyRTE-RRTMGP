@@ -271,9 +271,3 @@ assert np.isclose(
 ).all()
 
 print("Shortwave all-sky example passes tests!")
-
-# %%
-
-# %%
-
-# %%

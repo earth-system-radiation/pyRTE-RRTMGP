@@ -43,7 +43,7 @@ jobs:
           channels: conda-forge
           auto-activate-base: false
           activate-environment: pyrte_notebook_tests
-          environment-file: environment-notebook-scripts.yml
+          environment-file: example-notebooks-scripts.yml
 
       #
       # Check out repository under $GITHUB_WORKSPACE
