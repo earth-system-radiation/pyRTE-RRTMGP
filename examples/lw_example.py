@@ -57,10 +57,9 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import (
     GasOpticsFiles,
     OpticsProblemTypes,
-    RFMIPExampleFiles,
 )
 from pyrte_rrtmgp.rte_solver import rte_solve
-from pyrte_rrtmgp.utils import load_rrtmgp_file
+from pyrte_rrtmgp.examples import RFMIP_FILES, load_example_file
 
 # %% [markdown]
 # ## Loading Gas Optics Data
@@ -75,7 +74,7 @@ from pyrte_rrtmgp.utils import load_rrtmgp_file
 gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
     gas_optics_file=GasOpticsFiles.LW_G256
 )
-atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
 
 # %% [markdown]
 # ## Computing Gas Optics
@@ -131,8 +130,8 @@ fluxes
 # We compare both upward (`rlu`) and downward (`rld`) longwave fluxes to ensure our implementation produces accurate results within the specified error tolerance (`ERROR_TOLERANCE = 1e-7`).
 
 # %%
-rlu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLU)
-rld = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLD)
+rlu = load_example_file(RFMIP_FILES.REFERENCE_RLU)
+rld = load_example_file(RFMIP_FILES.REFERENCE_RLD)
 
 assert np.isclose(
     fluxes["lw_flux_up"].transpose("expt", "site", "level"),

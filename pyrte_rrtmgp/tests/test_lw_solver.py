@@ -7,12 +7,13 @@ import xarray as xr
 
 from pyrte_rrtmgp.data_types import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.data_types import RFMIPExampleFiles
 
 from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
 from pyrte_rrtmgp.tests import ERROR_TOLERANCE
 
-from pyrte_rrtmgp.utils import load_rrtmgp_file
+from pyrte_rrtmgp.examples import load_example_file
+from pyrte_rrtmgp.examples import RFMIP_FILES
+
 from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.rte_solver import rte_solve
 
@@ -24,7 +25,7 @@ def test_lw_solver_noscat() -> None:
     )
 
     # Load atmosphere data
-    atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+    atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.sel(expt=0)  # only one experiment
 
     # Compute gas optics for the atmosphere
@@ -38,8 +39,8 @@ def test_lw_solver_noscat() -> None:
     assert fluxes is not None
 
     # Load reference data
-    rlu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLU)
-    rld = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLD)
+    rlu = load_example_file(RFMIP_FILES.REFERENCE_RLU)
+    rld = load_example_file(RFMIP_FILES.REFERENCE_RLD)
     ref_flux_up = rlu.isel(expt=0)["rlu"]
     ref_flux_down = rld.isel(expt=0)["rld"]
 
@@ -57,7 +58,7 @@ def test_lw_solver_noscat_dask() -> None:
     )
 
     # Load atmosphere data
-    atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+    atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.chunk({"expt": 3})
 
     assert isinstance(atmosphere, xr.Dataset)
@@ -74,8 +75,8 @@ def test_lw_solver_noscat_dask() -> None:
     assert fluxes is not None
 
     # Load reference data
-    rlu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLU)
-    rld = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RLD)
+    rlu = load_example_file(RFMIP_FILES.REFERENCE_RLU)
+    rld = load_example_file(RFMIP_FILES.REFERENCE_RLD)
 
     ref_flux_up = rlu["rlu"]
     ref_flux_down = rld["rld"]
@@ -102,7 +103,7 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
     )
 
     # Load atmosphere data
-    atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+    atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
 
     gas_mapping = DEFAULT_GAS_MAPPING.copy()
     del gas_mapping["co"]

@@ -7,14 +7,14 @@ import dask.array as da
 from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp import rrtmgp_gas_optics
 
-from pyrte_rrtmgp.data_types import AllSkyExampleFiles
 from pyrte_rrtmgp.data_types import CloudOpticsFiles
 from pyrte_rrtmgp.data_types import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 
-from pyrte_rrtmgp.utils import compute_profiles
-from pyrte_rrtmgp.utils import compute_clouds
-from pyrte_rrtmgp.utils import load_rrtmgp_file
+from pyrte_rrtmgp.examples import ALLSKY_EXAMPLES
+from pyrte_rrtmgp.examples import compute_profiles
+from pyrte_rrtmgp.examples import compute_clouds
+from pyrte_rrtmgp.examples import load_example_file
 
 from pyrte_rrtmgp.rte_solver import rte_solve
 
@@ -76,7 +76,7 @@ def test_lw_solver_with_clouds() -> None:
     assert fluxes is not None
 
     # Load reference data and verify results
-    ref_data = load_rrtmgp_file(AllSkyExampleFiles.LW_NO_AEROSOL)
+    ref_data = load_example_file(ALLSKY_EXAMPLES.REF_LW_NO_AEROSOL)
     assert np.isclose(fluxes["lw_flux_up"],
                       ref_data["lw_flux_up"].T, atol=1e-7).all()
     assert np.isclose(fluxes["lw_flux_down"],
@@ -167,7 +167,7 @@ def test_lw_solver_with_clouds_dask() -> None:
     assert fluxes is not None
 
     # Load reference data and verify results
-    ref_data = load_rrtmgp_file(AllSkyExampleFiles.LW_NO_AEROSOL)
+    ref_data = load_example_file(ALLSKY_EXAMPLES.REF_LW_NO_AEROSOL)
     assert np.isclose(fluxes["lw_flux_up"],
                       ref_data["lw_flux_up"].T, atol=1e-7).all()
     assert np.isclose(fluxes["lw_flux_down"],

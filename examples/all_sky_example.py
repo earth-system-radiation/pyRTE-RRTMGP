@@ -52,16 +52,16 @@ import numpy as np
 # %%
 from pyrte_rrtmgp import rrtmgp_cloud_optics, rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import (
-    AllSkyExampleFiles,
     CloudOpticsFiles,
     GasOpticsFiles,
     OpticsProblemTypes,
 )
 from pyrte_rrtmgp.rte_solver import rte_solve
-from pyrte_rrtmgp.utils import (
+from pyrte_rrtmgp.examples import (
     compute_clouds,
     compute_profiles,
-    load_rrtmgp_file,
+    load_example_file,
+    ALLSKY_EXAMPLES,
 )
 
 
@@ -170,7 +170,7 @@ fluxes
 
 # %%
 # Load reference data and verify results
-ref_data = load_rrtmgp_file(AllSkyExampleFiles.LW_NO_AEROSOL)
+ref_data = load_example_file(ALLSKY_EXAMPLES.REF_LW_NO_AEROSOL)
 assert np.isclose(
     fluxes["lw_flux_up"],
     ref_data["lw_flux_up"].T,
@@ -251,7 +251,7 @@ fluxes
 # ### Compare to reference results
 
 # %%
-ref_data = load_rrtmgp_file(AllSkyExampleFiles.SW_NO_AEROSOL)
+ref_data = load_example_file(ALLSKY_EXAMPLES.REF_SW_NO_AEROSOL)
 assert np.isclose(
     fluxes["sw_flux_up"],
     ref_data["sw_flux_up"].T,

@@ -42,7 +42,7 @@
 # ## Plotting - off by default 
 
 # %%
-do_plots = False
+do_plots = True
 
 # %% [markdown]
 # ## Import dependencies
@@ -63,16 +63,16 @@ if do_plots: import matplotlib.pyplot as plt
 # %%
 from pyrte_rrtmgp import rrtmgp_cloud_optics, rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import (
-    AllSkyExampleFiles,
     CloudOpticsFiles,
     GasOpticsFiles,
     OpticsProblemTypes,
 )
 from pyrte_rrtmgp.rte_solver import rte_solve
-from pyrte_rrtmgp.utils import (
+from pyrte_rrtmgp.examples import (
     compute_clouds,
     compute_profiles,
-    load_rrtmgp_file,
+    ALLSKY_EXAMPLES,
+    load_example_file,
 )
 
 # %% [markdown]
@@ -338,3 +338,5 @@ with ProgressBar():
         ), 
         add_to_input = False,
     )
+
+# %%

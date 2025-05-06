@@ -1,12 +1,13 @@
 import numpy as np
 
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.data_types import RFMIPExampleFiles
 from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 from pyrte_rrtmgp.rte_solver import rte_solve
 from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
 from pyrte_rrtmgp.tests import ERROR_TOLERANCE
-from pyrte_rrtmgp.utils import load_rrtmgp_file
+
+from pyrte_rrtmgp.examples import RFMIP_FILES
+from pyrte_rrtmgp.examples import load_example_file
 
 
 def test_sw_solver_noscat() -> None:
@@ -14,7 +15,7 @@ def test_sw_solver_noscat() -> None:
     gas_optics_sw = load_gas_optics(gas_optics_file=GasOpticsFiles.SW_G224)
 
     # Load atmosphere data
-    atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+    atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.sel(expt=0)  # only one experiment
 
     # Compute gas optics for the atmosphere
@@ -29,8 +30,8 @@ def test_sw_solver_noscat() -> None:
     assert fluxes is not None
 
     # Load reference data
-    rsu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSU)
-    rsd = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSD)
+    rsu = load_example_file(RFMIP_FILES.REFERENCE_RSU)
+    rsd = load_example_file(RFMIP_FILES.REFERENCE_RSD)
     ref_flux_up = rsu.isel(expt=0)["rsu"]
     ref_flux_down = rsd.isel(expt=0)["rsd"]
 
@@ -46,7 +47,7 @@ def test_sw_solver_noscat_dask() -> None:
     gas_optics_sw = load_gas_optics(gas_optics_file=GasOpticsFiles.SW_G224)
 
     # Load atmosphere data
-    atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+    atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.chunk({"expt": 3})
 
     # Compute gas optics for the atmosphere
@@ -61,8 +62,8 @@ def test_sw_solver_noscat_dask() -> None:
     assert fluxes is not None
 
     # Load reference data
-    rsu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSU)
-    rsd = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSD)
+    rsu = load_example_file(RFMIP_FILES.REFERENCE_RSU)
+    rsd = load_example_file(RFMIP_FILES.REFERENCE_RSD)
     ref_flux_up = rsu["rsu"]
     ref_flux_down = rsd["rsd"]
 
