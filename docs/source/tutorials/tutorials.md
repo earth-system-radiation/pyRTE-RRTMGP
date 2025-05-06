@@ -23,33 +23,28 @@ Follow these steps to run the tutorial notebooks:
     git clone https://github.com/earth-system-radiation/pyRTE-RRTMGP.git
     ```
 
-2. **Go to the ``pyRTE-RRTMGP/examples`` directory**
+2. **Go to the ``pyRTE-RRTMGP`` directory**
 
-    After cloning the repository, enter the examples directory in the repository:
-
+    After cloning the repository, enter the root directory:
     ```bash
-    cd pyRTE-RRTMGP/examples
+    cd pyRTE-RRTMGP
     ```
 
-3. **Install the pyRTE-RRTMGP package** in your current conda environment (if you haven't already):
+3. **Create a virtual environment** with the pyRTE-RRTMGP package and notebook dependencies:
 
     ```bash
-    conda install -c conda-forge pyrte_rrtmgp
+    conda env create -f example-notebooks-interactive.yml
+    conda activate pyrte_notebooks
     ```
 
     ```{note}
-    This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
+    This will create an environment named `pyrte_notebooks` that you need to activate.
     ```
 
     See {ref}`installation` for more information on how to install the package.
 
-4. **Install the Jupyter notebook package**:
 
-    ```bash
-    conda install jupyter
-    ```
-
-5. **Start the Jupyter notebook server**:
+4. **Start the Jupyter notebook server**:
 
     ```bash
     jupyter notebook
@@ -57,9 +52,6 @@ Follow these steps to run the tutorial notebooks:
 
     This will open a new tab in your web browser with the Jupyter notebook interface. You can navigate to the `examples` folder and open the tutorial notebooks from there.
 
-```{note}
-Some of the notebooks might require you to install additional dependencies into your environment. For example, the Dask notebook requires `dask` to be installed on your system.
-```
 
 ## Using the Tutorials
 

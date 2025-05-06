@@ -1,0 +1,66 @@
+name: Pytests and example notebooks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**/*'
+  push:
+    paths-ignore:
+      - 'docs/**/*'
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, macos-13, macos-latest]
+        python-version: ["3.11", "3.12"]
+        # when updating the tested Python versions, please also update README.md,
+        # the conda.recipe/meta.yaml file, pyproject.toml, and (if necessary) the
+        # .readthedocs.yaml file
+
+    runs-on: ${{ matrix.platform }}
+
+    env:  # We need to add the path to the rrtmgp-data directory
+      RRTMGP_DATA: /home/runner/work/pyRTE-RRTMGP/pyRTE-RRTMGP/rrtmgp-data
+
+    # The setup-miniconda action needs this to activate miniconda
+    defaults:
+      run:
+        shell: "bash -l {0}"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install conda and dependencies
+        uses: conda-incubator/setup-miniconda@v3.1.1
+        with:
+          miniconda-version: "latest"
+          python-version: ${{ matrix.python-version }}
+          use-mamba: true
+          conda-remove-defaults: true
+          channels: conda-forge
+          environment-file: example-notebooks-scripts.yml
+          auto-activate-base: false
+          activate-environment: pyrte_notebook_tests
+
+      #
+      # Check out repository under $GITHUB_WORKSPACE
+      #
+      - name: Check out pyRTE
+        uses: actions/checkout@v4
+
+      - name: Install pyRTE
+        run: |
+          echo `pwd`
+          python -m pip install --upgrade pip
+          pip install -e .
+
+      - name: Run pytest tests via CLI
+        run: pyrte_rrtmgp run_tests
+
+      - name: Run notebooks
+        run: for t in examples/*.py; do python $t; done

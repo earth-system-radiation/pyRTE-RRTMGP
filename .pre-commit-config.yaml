@@ -38,6 +38,11 @@ repos:
         'types-requests',
       ]
 
+-   repo: https://github.com/rhysd/actionlint
+    rev: v1.7.7
+    hooks:
+      - id: actionlint
+
 -   repo: https://github.com/nbQA-dev/nbQA
     rev: 1.9.1
     hooks:
@@ -55,3 +60,5 @@ repos:
     hooks:
     -   id: nbstripout
         files: \.ipynb$
+
+exclude: examples/
