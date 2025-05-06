@@ -58,10 +58,9 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import (
     GasOpticsFiles,
     OpticsProblemTypes,
-    RFMIPExampleFiles,
 )
 from pyrte_rrtmgp.rte_solver import rte_solve
-from pyrte_rrtmgp.utils import load_rrtmgp_file
+from pyrte_rrtmgp.examples import RFMIP_FILES, load_example_file
 
 # %% [markdown]
 # ## Loading Gas Optics Data
@@ -76,7 +75,7 @@ from pyrte_rrtmgp.utils import load_rrtmgp_file
 gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
     gas_optics_file=GasOpticsFiles.SW_G224
 )
-atmosphere = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
 
 # %% [markdown]
 # # Computing Gas Optics
@@ -133,8 +132,8 @@ fluxes
 #
 
 # %%
-rsu = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSU)
-rsd = load_rrtmgp_file(RFMIPExampleFiles.REFERENCE_RSD)
+rsu = load_example_file(RFMIP_FILES.REFERENCE_RSU)
+rsd = load_example_file(RFMIP_FILES.REFERENCE_RSD)
 
 assert np.isclose(
     fluxes["sw_flux_up"].transpose("expt", "site", "level"),

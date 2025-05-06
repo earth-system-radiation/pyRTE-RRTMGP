@@ -5,9 +5,10 @@ import xarray as xr
 
 from pyrte_rrtmgp.data_types import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.data_types import RFMIPExampleFiles
 
-from pyrte_rrtmgp.utils import load_rrtmgp_file
+from pyrte_rrtmgp.examples import RFMIP_FILES
+from pyrte_rrtmgp.examples import load_example_file
+
 from pyrte_rrtmgp import rrtmgp_gas_optics
 
 from pyrte_rrtmgp.data_validation import validate_problem_dataset
@@ -20,7 +21,7 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
         gas_optics_file=GasOpticsFiles.LW_G256
     )
 
-    atmosphere: xr.Dataset = load_rrtmgp_file(RFMIPExampleFiles.RFMIP)
+    atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
 
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})

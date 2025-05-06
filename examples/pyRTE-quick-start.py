@@ -63,16 +63,16 @@ if do_plots: import matplotlib.pyplot as plt
 # %%
 from pyrte_rrtmgp import rrtmgp_cloud_optics, rrtmgp_gas_optics
 from pyrte_rrtmgp.data_types import (
-    AllSkyExampleFiles,
     CloudOpticsFiles,
     GasOpticsFiles,
     OpticsProblemTypes,
 )
 from pyrte_rrtmgp.rte_solver import rte_solve
-from pyrte_rrtmgp.utils import (
-    compute_clouds,
-    compute_profiles,
-    load_rrtmgp_file,
+from pyrte_rrtmgp.examples import (
+    compute_RCE_clouds,
+    compute_RCE_profiles,
+    ALLSKY_EXAMPLES,
+    load_example_file,
 )
 
 # %% [markdown]
@@ -105,12 +105,12 @@ cloud_optics_lw, gas_optics_lw
 #
 # ## Temperature, humidity, composition
 #
-# The routine `compute_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed.
+# The routine `compute_RCE_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed.
 
 # %%
 def make_profiles(ncol=24, nlay=72):
     # Create atmospheric profiles and gas concentrations
-    atmosphere = compute_profiles(300, ncol, nlay)
+    atmosphere = compute_RCE_profiles(300, ncol, nlay)
 
     # Add other gas values
     gas_values = {
@@ -143,14 +143,14 @@ atmosphere
 # %% [markdown]
 # ## Clouds 
 #
-# `compute_clouds()` adds clouds (liquid and ice water path, liquid radius and ice diameter) to 2/3 of the columns 
+# `compute_RCE_clouds()` adds clouds (liquid and ice water path, liquid radius and ice diameter) to 2/3 of the columns 
 
 # %%
 #
-# Temporary workaround - compute_clouds() needs to know the particle size;
+# Temporary workaround - compute_RCE_clouds() needs to know the particle size;
 #   that's set as the mid-point of the valid range from cloud_optics
 #
-cloud_props = compute_clouds(
+cloud_props = compute_RCE_clouds(
     cloud_optics_lw, atmosphere["pres_layer"], atmosphere["temp_layer"]
 )
 
@@ -315,7 +315,7 @@ fluxes = rte_solve(
 
 # %%
 atmosphere = make_profiles(ncol=24*16)
-cloud_props = compute_clouds(
+cloud_props = compute_RCE_clouds(
     cloud_optics_lw, atmosphere["pres_layer"], atmosphere["temp_layer"]
 )
 
@@ -338,3 +338,5 @@ with ProgressBar():
         ), 
         add_to_input = False,
     )
+
+# %%

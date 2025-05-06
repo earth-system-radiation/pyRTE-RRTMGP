@@ -63,49 +63,6 @@ class AerosolOpticsFiles(StrEnum):
     SW_MERRA = "rrtmgp-aerosols-merra-sw.nc"
 
 
-class RFMIPExampleFiles(StrEnum):
-    """Enumeration of default RFMIP example files.
-
-    This enum defines the available pre-configured example files that can be used with
-    RRTMGP. The files contain example data for radiative transfer calculations.
-    """
-
-    RFMIP = (
-        "examples/rfmip-clear-sky/inputs/"
-        "multiple_input4MIPs_radiation_RFMIP_UColorado-RFMIP-1-2_none.nc"
-    )
-    REFERENCE_RLD = (
-        "examples/rfmip-clear-sky/reference/"
-        "rld_Efx_RTE-RRTMGP-181204_rad-irf_r1i1p1f1_gn.nc"
-    )
-    REFERENCE_RLU = (
-        "examples/rfmip-clear-sky/reference/"
-        "rlu_Efx_RTE-RRTMGP-181204_rad-irf_r1i1p1f1_gn.nc"
-    )
-    REFERENCE_RSD = (
-        "examples/rfmip-clear-sky/reference/"
-        "rsd_Efx_RTE-RRTMGP-181204_rad-irf_r1i1p1f1_gn.nc"
-    )
-    REFERENCE_RSU = (
-        "examples/rfmip-clear-sky/reference/"
-        "rsu_Efx_RTE-RRTMGP-181204_rad-irf_r1i1p1f1_gn.nc"
-    )
-
-
-class AllSkyExampleFiles(StrEnum):
-    """Enumeration of default all-sky example files.
-
-    This enum defines the available pre-configured all-sky example files that can be
-    used with RRTMGP. The files contain example data for radiative transfer
-    calculations.
-    """
-
-    LW_NO_AEROSOL = "examples/all-sky/reference/rrtmgp-allsky-lw-no-aerosols.nc"
-    LW = "examples/all-sky/reference/rrtmgp-allsky-lw.nc"
-    SW_NO_AEROSOL = "examples/all-sky/reference/rrtmgp-allsky-sw-no-aerosols.nc"
-    SW = "examples/all-sky/reference/rrtmgp-allsky-sw.nc"
-
-
 class ProblemTypes(StrEnum):
     """Enumeration of available radiation calculation types.
 

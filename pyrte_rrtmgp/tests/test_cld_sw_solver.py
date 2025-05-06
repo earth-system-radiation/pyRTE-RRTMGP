@@ -3,14 +3,14 @@ import netCDF4  # noqa (avoids warning https://github.com/pydata/xarray/issues/7
 from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp import rrtmgp_gas_optics
 
-from pyrte_rrtmgp.data_types import AllSkyExampleFiles
 from pyrte_rrtmgp.data_types import CloudOpticsFiles
 from pyrte_rrtmgp.data_types import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 
-from pyrte_rrtmgp.utils import compute_profiles
-from pyrte_rrtmgp.utils import compute_clouds
-from pyrte_rrtmgp.utils import load_rrtmgp_file
+from pyrte_rrtmgp.examples import ALLSKY_EXAMPLES
+from pyrte_rrtmgp.examples import compute_RCE_profiles
+from pyrte_rrtmgp.examples import compute_RCE_clouds
+from pyrte_rrtmgp.examples import load_example_file
 
 from pyrte_rrtmgp.rte_solver import rte_solve
 
@@ -32,7 +32,7 @@ def test_sw_solver_with_clouds() -> None:
     nlay = 72
 
     # Create atmospheric profiles and gas concentrations
-    atmosphere = compute_profiles(300, ncol, nlay)
+    atmosphere = compute_RCE_profiles(300, ncol, nlay)
 
     # Add other gas values
     gas_values = {
@@ -57,7 +57,7 @@ def test_sw_solver_with_clouds() -> None:
     )
 
     # Calculate cloud properties and merge into the atmosphere dataset
-    cloud_properties = compute_clouds(
+    cloud_properties = compute_RCE_clouds(
         cloud_optics_sw, atmosphere["pres_layer"], atmosphere["temp_layer"]
     )
     atmosphere = atmosphere.merge(cloud_properties)
@@ -87,7 +87,7 @@ def test_sw_solver_with_clouds() -> None:
     assert fluxes is not None
 
     # Load reference data and verify results
-    ref_data = load_rrtmgp_file(AllSkyExampleFiles.SW_NO_AEROSOL)
+    ref_data = load_example_file(ALLSKY_EXAMPLES.REF_SW_NO_AEROSOL)
     assert np.isclose(fluxes["sw_flux_up"],
                       ref_data["sw_flux_up"].T, atol=1e-7).all()
     assert np.isclose(fluxes["sw_flux_down"],
@@ -100,7 +100,7 @@ def test_sw_solver_with_clouds_dask() -> None:
     nlay = 72
 
     # Create atmospheric profiles and gas concentrations
-    atmosphere = compute_profiles(300, ncol, nlay)
+    atmosphere = compute_RCE_profiles(300, ncol, nlay)
 
     # Add other gas values
     gas_values = {
@@ -125,7 +125,7 @@ def test_sw_solver_with_clouds_dask() -> None:
     )
 
     # Calculate cloud properties and merge into the atmosphere dataset
-    cloud_properties = compute_clouds(
+    cloud_properties = compute_RCE_clouds(
         cloud_optics_sw, atmosphere["pres_layer"], atmosphere["temp_layer"]
     )
     atmosphere = atmosphere.merge(cloud_properties)
@@ -156,7 +156,7 @@ def test_sw_solver_with_clouds_dask() -> None:
     assert fluxes is not None
 
     # Load reference data and verify results
-    ref_data = load_rrtmgp_file(AllSkyExampleFiles.SW_NO_AEROSOL)
+    ref_data = load_example_file(ALLSKY_EXAMPLES.REF_SW_NO_AEROSOL)
     assert np.isclose(fluxes["sw_flux_up"],
                       ref_data["sw_flux_up"].T, atol=1e-7).all()
     assert np.isclose(fluxes["sw_flux_down"],

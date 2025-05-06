@@ -121,7 +121,7 @@ For instance, consider a dataset with these dimensions:
 
 In this case, the radiative transfer calculations will be executed independently for each unique combination of latitude, longitude, and time, across all atmospheric levels.
 
-To get started quickly, you can load a preconfigured sample atmosphere dataset using the {func}`~pyrte_rrtmgp.utils.load_rrtmgp_file` function.
+To get started quickly, you can load a preconfigured sample atmosphere dataset using the {func}`~pyrte_rrtmgp.examples.load_example_file` function.
 
 ### 4. Computing gas optics using the {class}`compute_gas_optics<pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor>` accessor
 
