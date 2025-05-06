@@ -39,14 +39,21 @@
 # # Initialization
 
 # %% [markdown]
+# ## Plotting - off by default 
+
+# %%
+do_plots = False
+
+# %% [markdown]
 # ## Import dependencies
 
 # %%
 # %matplotlib inline
 
-import xarray as xr
-import matplotlib.pyplot as plt
 from dask.diagnostics import ProgressBar
+import xarray as xr
+
+if do_plots: import matplotlib.pyplot as plt
 
 # %% [markdown]
 # ## Import pyRTE entitites 
@@ -193,9 +200,10 @@ clr_fluxes
 # What do the fluxes look like? They're the same in every column so plot just the first.
 
 # %%
-plt.plot(clr_fluxes.lw_flux_up.isel(site=0),   clr_fluxes.level, label="Flux up")
-plt.plot(clr_fluxes.lw_flux_down.isel(site=0), clr_fluxes.level, label="Flux down")
-plt.legend(frameon=False)
+if do_plots:
+    plt.plot(clr_fluxes.lw_flux_up.isel(site=0),   clr_fluxes.level, label="Flux up")
+    plt.plot(clr_fluxes.lw_flux_down.isel(site=0), clr_fluxes.level, label="Flux down")
+    plt.legend(frameon=False)
 
 # %% [markdown]
 # ## Cloudy-sky fluxes
@@ -221,11 +229,12 @@ optical_props
 fluxes = rte_solve(optical_props, add_to_input=False)
 
 # %%
-plt.plot(fluxes.lw_flux_up.isel  (site=0), fluxes.level, label="LW all-sky flux up")
-plt.plot(fluxes.lw_flux_down.isel(site=0), fluxes.level, label="LW all-sky down")
-plt.plot(fluxes.lw_flux_up.isel  (site=2), fluxes.level, label="LW clear flux up")
-plt.plot(fluxes.lw_flux_down.isel(site=2), fluxes.level, label="LW clear flux down")
-plt.legend(frameon=False)
+if do_plots:
+    plt.plot(fluxes.lw_flux_up.isel  (site=0), fluxes.level, label="LW all-sky flux up")
+    plt.plot(fluxes.lw_flux_down.isel(site=0), fluxes.level, label="LW all-sky down")
+    plt.plot(fluxes.lw_flux_up.isel  (site=2), fluxes.level, label="LW clear flux up")
+    plt.plot(fluxes.lw_flux_down.isel(site=2), fluxes.level, label="LW clear flux down")
+    plt.legend(frameon=False)
 
 # %% [markdown]
 # # Shortwave fluxes
@@ -271,11 +280,12 @@ fluxes = rte_solve(optical_props, add_to_input=False)
 # The returned fluxes include the total downwelling (`sw_flux_down`) and the direct beam component of that flux (`sw_flux_dir`) 
 
 # %%
-plt.plot(fluxes.sw_flux_up.isel  (site=0), fluxes.level, label="SW all-sky flux up")
-plt.plot(fluxes.sw_flux_down.isel(site=0), fluxes.level, label="SW all-sky down")
-plt.plot(fluxes.sw_flux_up.isel  (site=2), fluxes.level, label="SW clear flux up")
-plt.plot(fluxes.sw_flux_down.isel(site=2), fluxes.level, label="SW clear flux down")
-plt.legend(frameon=False)
+if do_plots:
+    plt.plot(fluxes.sw_flux_up.isel  (site=0), fluxes.level, label="SW all-sky flux up")
+    plt.plot(fluxes.sw_flux_down.isel(site=0), fluxes.level, label="SW all-sky down")
+    plt.plot(fluxes.sw_flux_up.isel  (site=2), fluxes.level, label="SW clear flux up")
+    plt.plot(fluxes.sw_flux_down.isel(site=2), fluxes.level, label="SW clear flux down")
+    plt.legend(frameon=False)
 
 # %% [markdown]
 # ## Variants 

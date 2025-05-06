@@ -43,7 +43,7 @@ jobs:
           use-mamba: true
           conda-remove-defaults: true
           channels: conda-forge
-          environment-file: example-notebooks-interactive.yml
+          environment-file: example-notebooks-scripts.yml
           auto-activate-base: false
           activate-environment: pyrte_notebook_tests
 
