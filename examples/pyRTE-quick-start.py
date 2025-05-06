@@ -42,7 +42,7 @@
 # ## Plotting - off by default 
 
 # %%
-do_plots = True
+do_plots = False
 
 # %% [markdown]
 # ## Import dependencies
