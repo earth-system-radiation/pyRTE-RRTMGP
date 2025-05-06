@@ -36,30 +36,6 @@ def expand_variable_dims(
     return dataset
 
 
-def create_gas_dataset(
-    gas_values: dict[str, float], dims: dict[str, int]
-) -> xr.Dataset:
-    """Create a dataset with gas values and dimensions.
-
-    Args:
-        gas_values: Dictionary of gas values
-        dims: Dictionary of dimensions
-
-    Returns:
-        xr.Dataset: Dataset with gas values and dimensions
-    """
-    ds = xr.Dataset()
-
-    dim_names = list(dims.keys())
-    coords = {k: np.arange(v) for k, v in dims.items()}
-
-    # Convert each gas value to 2D array and add as variable
-    for gas_name, value in gas_values.items():
-        ds[gas_name] = xr.DataArray(value, dims=dim_names, coords=coords)
-
-    return ds
-
-
 def safer_divide(a: Any, b: Any) -> Any:
     """Safer np.divide util func."""
     return np.divide(a, b, out=np.zeros_like(a), where=b > np.finfo(float).eps)
