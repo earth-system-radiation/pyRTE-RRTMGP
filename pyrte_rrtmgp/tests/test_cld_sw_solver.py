@@ -8,8 +8,8 @@ from pyrte_rrtmgp.data_types import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 
 from pyrte_rrtmgp.examples import ALLSKY_EXAMPLES
-from pyrte_rrtmgp.examples import compute_profiles
-from pyrte_rrtmgp.examples import compute_clouds
+from pyrte_rrtmgp.examples import compute_RCE_profiles
+from pyrte_rrtmgp.examples import compute_RCE_clouds
 from pyrte_rrtmgp.examples import load_example_file
 
 from pyrte_rrtmgp.rte_solver import rte_solve
@@ -32,7 +32,7 @@ def test_sw_solver_with_clouds() -> None:
     nlay = 72
 
     # Create atmospheric profiles and gas concentrations
-    atmosphere = compute_profiles(300, ncol, nlay)
+    atmosphere = compute_RCE_profiles(300, ncol, nlay)
 
     # Add other gas values
     gas_values = {
@@ -57,7 +57,7 @@ def test_sw_solver_with_clouds() -> None:
     )
 
     # Calculate cloud properties and merge into the atmosphere dataset
-    cloud_properties = compute_clouds(
+    cloud_properties = compute_RCE_clouds(
         cloud_optics_sw, atmosphere["pres_layer"], atmosphere["temp_layer"]
     )
     atmosphere = atmosphere.merge(cloud_properties)
@@ -100,7 +100,7 @@ def test_sw_solver_with_clouds_dask() -> None:
     nlay = 72
 
     # Create atmospheric profiles and gas concentrations
-    atmosphere = compute_profiles(300, ncol, nlay)
+    atmosphere = compute_RCE_profiles(300, ncol, nlay)
 
     # Add other gas values
     gas_values = {
@@ -125,7 +125,7 @@ def test_sw_solver_with_clouds_dask() -> None:
     )
 
     # Calculate cloud properties and merge into the atmosphere dataset
-    cloud_properties = compute_clouds(
+    cloud_properties = compute_RCE_clouds(
         cloud_optics_sw, atmosphere["pres_layer"], atmosphere["temp_layer"]
     )
     atmosphere = atmosphere.merge(cloud_properties)

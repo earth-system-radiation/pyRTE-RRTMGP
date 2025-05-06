@@ -73,7 +73,7 @@ def load_example_file(file: ALLSKY_EXAMPLES | RFMIP_FILES) -> xr.Dataset:
     return xr.load_dataset(ref_path, decode_cf=False)
 
 
-def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
+def compute_RCE_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
     """Construct atmospheric profiles following the RCEMIP protocol.
 
     Computes vertical profiles of pressure, temperature, humidity, and ozone
@@ -235,7 +235,7 @@ def compute_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
     )
 
 
-def compute_clouds(
+def compute_RCE_clouds(
     cloud_optics: xr.Dataset, p_lay: xr.DataArray, t_lay: xr.DataArray
 ) -> xr.Dataset:
     """

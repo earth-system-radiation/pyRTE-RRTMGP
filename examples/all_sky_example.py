@@ -58,8 +58,8 @@ from pyrte_rrtmgp.data_types import (
 )
 from pyrte_rrtmgp.rte_solver import rte_solve
 from pyrte_rrtmgp.examples import (
-    compute_clouds,
-    compute_profiles,
+    compute_RCE_clouds,
+    compute_RCE_profiles,
     load_example_file,
     ALLSKY_EXAMPLES,
 )
@@ -68,12 +68,12 @@ from pyrte_rrtmgp.examples import (
 # %% [markdown]
 # ### Setting up the problem
 #
-# The routine `compute_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed. Clouds are distributed in 2/3 of the columns 
+# The routine `compute_RCE_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed. Clouds are distributed in 2/3 of the columns 
 
 # %%
 def make_profiles(ncol=24, nlay=72):
     # Create atmospheric profiles and gas concentrations
-    atmosphere = compute_profiles(300, ncol, nlay)
+    atmosphere = compute_RCE_profiles(300, ncol, nlay)
 
     # Add other gas values
     gas_values = {
@@ -118,10 +118,10 @@ cloud_optics_lw, gas_optics_lw
 # %%
 atmosphere = make_profiles()
 #
-# Temporary workaround - compute_clouds() needs to know the particle size;
+# Temporary workaround - compute_RCE_clouds() needs to know the particle size;
 #   that's set as the mid-point of the valid range from cloud_optics
 #
-cloud_props = compute_clouds(
+cloud_props = compute_RCE_clouds(
     cloud_optics_lw, atmosphere["pres_layer"], atmosphere["temp_layer"]
 )
 
@@ -209,11 +209,11 @@ cloud_optics_sw, gas_optics_sw
 # %%
 atmosphere = make_profiles()
 #
-# Temporary workaround - compute_clouds() needs to know the particle size;
+# Temporary workaround - compute_RCE_clouds() needs to know the particle size;
 #    that's set as the mid-point of the valid range from cloud_optics
 #
 atmosphere = atmosphere.merge(
-    compute_clouds(
+    compute_RCE_clouds(
         cloud_optics_sw, atmosphere["pres_layer"], atmosphere["temp_layer"]
     )
 )
