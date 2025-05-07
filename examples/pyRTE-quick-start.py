@@ -201,8 +201,8 @@ clr_fluxes
 
 # %%
 if do_plots:
-    plt.plot(clr_fluxes.lw_flux_up.isel(site=0),   clr_fluxes.level, label="Flux up")
-    plt.plot(clr_fluxes.lw_flux_down.isel(site=0), clr_fluxes.level, label="Flux down")
+    plt.plot(clr_fluxes.lw_flux_up.isel(column=0),   clr_fluxes.level, label="Flux up")
+    plt.plot(clr_fluxes.lw_flux_down.isel(column=0), clr_fluxes.level, label="Flux down")
     plt.legend(frameon=False)
 
 # %% [markdown]
@@ -230,10 +230,10 @@ fluxes = rte_solve(optical_props, add_to_input=False)
 
 # %%
 if do_plots:
-    plt.plot(fluxes.lw_flux_up.isel  (site=0), fluxes.level, label="LW all-sky flux up")
-    plt.plot(fluxes.lw_flux_down.isel(site=0), fluxes.level, label="LW all-sky down")
-    plt.plot(fluxes.lw_flux_up.isel  (site=2), fluxes.level, label="LW clear flux up")
-    plt.plot(fluxes.lw_flux_down.isel(site=2), fluxes.level, label="LW clear flux down")
+    plt.plot(fluxes.lw_flux_up.isel  (column=0), fluxes.level, label="LW all-sky flux up")
+    plt.plot(fluxes.lw_flux_down.isel(column=0), fluxes.level, label="LW all-sky down")
+    plt.plot(fluxes.lw_flux_up.isel  (column=2), fluxes.level, label="LW clear flux up")
+    plt.plot(fluxes.lw_flux_down.isel(column=2), fluxes.level, label="LW clear flux down")
     plt.legend(frameon=False)
 
 # %% [markdown]
@@ -281,10 +281,10 @@ fluxes = rte_solve(optical_props, add_to_input=False)
 
 # %%
 if do_plots:
-    plt.plot(fluxes.sw_flux_up.isel  (site=0), fluxes.level, label="SW all-sky flux up")
-    plt.plot(fluxes.sw_flux_down.isel(site=0), fluxes.level, label="SW all-sky down")
-    plt.plot(fluxes.sw_flux_up.isel  (site=2), fluxes.level, label="SW clear flux up")
-    plt.plot(fluxes.sw_flux_down.isel(site=2), fluxes.level, label="SW clear flux down")
+    plt.plot(fluxes.sw_flux_up.isel  (column=0), fluxes.level, label="SW all-sky flux up")
+    plt.plot(fluxes.sw_flux_down.isel(column=0), fluxes.level, label="SW all-sky down")
+    plt.plot(fluxes.sw_flux_up.isel  (column=2), fluxes.level, label="SW clear flux up")
+    plt.plot(fluxes.sw_flux_down.isel(column=2), fluxes.level, label="SW clear flux down")
     plt.legend(frameon=False)
 
 # %% [markdown]
@@ -319,7 +319,7 @@ cloud_props = compute_RCE_clouds(
     cloud_optics_lw, atmosphere["pres_layer"], atmosphere["temp_layer"]
 )
 
-atmosphere = atmosphere.merge(cloud_props).chunk({"site":16})
+atmosphere = atmosphere.merge(cloud_props).chunk({"column":16})
 atmosphere
 
 # %%

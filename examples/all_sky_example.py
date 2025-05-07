@@ -90,10 +90,6 @@ def make_profiles(ncol=24, nlay=72):
 
     return atmosphere
 
-
-atmosphere = make_profiles()
-atmosphere
-
 # %% [markdown]
 # ## Longwave calculations
 #

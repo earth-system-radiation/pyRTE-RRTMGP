@@ -38,11 +38,7 @@ def test_lw_solver_with_clouds() -> None:
     }
 
     for gas_name, value in gas_values.items():
-        atmosphere[gas_name] = xr.DataArray(
-            value,
-            dims=["site", "layer"],
-            coords={"site": range(ncol), "layer": range(nlay)},
-        )
+        atmosphere[gas_name] = value
 
     # Load cloud optics data
     cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
@@ -106,10 +102,7 @@ def test_lw_solver_with_clouds_dask() -> None:
     }
 
     for gas_name, value in gas_values.items():
-        atmosphere[gas_name] = xr.DataArray(
-            value,
-            dims=["site", "layer"],
-            coords={"site": range(ncol), "layer": range(nlay)})
+        atmosphere[gas_name] = value
 
     # Load cloud optics data
     cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(

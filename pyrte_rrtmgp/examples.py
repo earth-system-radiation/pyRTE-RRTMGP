@@ -218,13 +218,13 @@ def compute_RCE_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
 
     return xr.Dataset(
         data_vars={
-            "pres_layer": (["site", "layer"], p_lay),
-            "temp_layer": (["site", "layer"], t_lay),
-            "pres_level": (["site", "level"], p_lev),
-            "temp_level": (["site", "level"], t_lev),
-            "surface_temperature": (["site"], t_sfc),
-            "h2o": (["site", "layer"], q_lay),
-            "o3": (["site", "layer"], o3),
+            "pres_layer": (["column", "layer"], p_lay),
+            "temp_layer": (["column", "layer"], t_lay),
+            "pres_level": (["column", "level"], p_lev),
+            "temp_level": (["column", "level"], t_lev),
+            "surface_temperature": (["column"], t_sfc),
+            "h2o": (["column", "layer"], q_lay),
+            "o3": (["column", "layer"], o3),
         },
         attrs={
             "description": "Atmospheric profiles following RCEMIP protocol",
@@ -260,8 +260,7 @@ def compute_RCE_clouds(
             - 'diamice_lwr': Lower bound for ice effective radius.
             - 'diamice_upr': Upper bound for ice effective radius.
         p_lay : xr.DataArray
-            Pressure levels of the atmospheric layers,
-            where the dimension 'site' corresponds to spatial columns.
+            Pressure levels of the atmospheric layers
         t_lay : xr.DataArray
             Temperature values associated with the pressure layers.
 
@@ -279,7 +278,7 @@ def compute_RCE_clouds(
               of 'diamice_lwr' and 'diamice_upr' in cloud regions.
     """
     # Get dimensions from atmosphere
-    ncol = p_lay.sizes["site"]
+    ncol = p_lay.sizes["column"]
 
     # Get reference radii values
     rel_val = 0.5 * (cloud_optics["radliq_lwr"] + cloud_optics["radliq_upr"])
