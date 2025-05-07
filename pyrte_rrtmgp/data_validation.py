@@ -132,7 +132,7 @@ class AtmosphericMapping(DatasetMapping):
         Raises:
             ValueError: If required dimensions or variables are missing
         """
-        required_dims = {"site", "layer", "level"}
+        required_dims = {"layer", "level"}
         missing_dims = required_dims - set(self.dim_mapping.keys())
         if missing_dims:
             raise ValueError(f"Missing required dimensions in mapping: {missing_dims}")
