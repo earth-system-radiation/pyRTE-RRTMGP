@@ -245,6 +245,9 @@ fluxes
 
 # %% [markdown]
 # ### Compare to reference results
+# The fluxes computed here have a "column" dimension while the reference 
+# fluxes have a "site" dimension. But `np.close()` is happy to compare
+# the arrays since they are the same size. 
 
 # %%
 ref_data = load_example_file(ALLSKY_EXAMPLES.REF_SW_NO_AEROSOL)
