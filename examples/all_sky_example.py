@@ -245,8 +245,8 @@ fluxes
 
 # %% [markdown]
 # ### Compare to reference results
-# The fluxes computed here have a "column" dimension while the reference 
-# fluxes have a "site" dimension. But `np.close()` is happy to compare
+# The fluxes computed here have a `column` dimension while the reference 
+# fluxes have a `site` dimension. But `np.close()` is happy to compare
 # the arrays since they are the same size. 
 
 # %%

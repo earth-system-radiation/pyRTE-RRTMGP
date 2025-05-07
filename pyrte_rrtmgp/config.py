@@ -37,7 +37,6 @@ a list of alternative names used in the RRTMGP model for the same gas.
 
 # Mapping of standard dimension names to dataset-specific names
 DEFAULT_DIM_MAPPING: Final[Dict[str, str]] = {
-    "site": "site",
     "layer": "layer",
     "level": "level",
 }
