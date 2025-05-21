@@ -18,7 +18,7 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.rte_solver import rte_solve
 
 
-def test_lw_solver_noscat() -> None:
+def test_rfmip_clr_sky_lw() -> None:
     # Load gas optics
     gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
         gas_optics_file=GasOpticsFiles.LW_G256
@@ -51,7 +51,7 @@ def test_lw_solver_noscat() -> None:
                       ref_flux_down, atol=ERROR_TOLERANCE).all()
 
 
-def test_lw_solver_noscat_dask() -> None:
+def test_rfmip_clr_sky_lw_dask() -> None:
     # Load gas optics
     gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
         gas_optics_file=GasOpticsFiles.LW_G256
