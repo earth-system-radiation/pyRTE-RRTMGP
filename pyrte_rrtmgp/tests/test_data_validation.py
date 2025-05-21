@@ -9,7 +9,11 @@ from pyrte_rrtmgp.data_types import OpticsProblemTypes
 from pyrte_rrtmgp.examples import RFMIP_FILES
 from pyrte_rrtmgp.examples import load_example_file
 
+from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
+
 from pyrte_rrtmgp import rrtmgp_gas_optics
+
+from pyrte_rrtmgp.rte_solver import rte_solve
 
 from pyrte_rrtmgp.data_validation import validate_problem_dataset
 
@@ -56,6 +60,35 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
     )
 
     return atmosphere
+
+def test_raises_value_error_if_carbon_monoxide_missing() -> None:
+
+    '''
+    Load in LW_G256
+    Set up input xarray with/without CO
+    Compute gas optics
+    compute radiative transfer
+    '''
+
+    # Load gas optics
+    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
+
+    # Load atmosphere data
+    atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
+
+    gas_mapping = DEFAULT_GAS_MAPPING.copy()
+    del gas_mapping["co"]
+
+    # Compute gas optics for the atmosphere
+    with pytest.raises(ValueError):
+        gas_optics_lw.compute_gas_optics(
+            atmosphere,
+            problem_type=OpticsProblemTypes.ABSORPTION,
+            gas_name_map=gas_mapping
+        )
+        _ = rte_solve(atmosphere, add_to_input=False)
 
 
 def test_validate_problem_dataset_success() -> None:

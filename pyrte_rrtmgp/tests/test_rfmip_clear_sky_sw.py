@@ -10,7 +10,7 @@ from pyrte_rrtmgp.examples import RFMIP_FILES
 from pyrte_rrtmgp.examples import load_example_file
 
 
-def test_sw_solver_noscat() -> None:
+def test_rfmip_clr_sky_sw() -> None:
     # Load gas optics
     gas_optics_sw = load_gas_optics(gas_optics_file=GasOpticsFiles.SW_G224)
 
@@ -42,7 +42,7 @@ def test_sw_solver_noscat() -> None:
                       ref_flux_down, atol=ERROR_TOLERANCE).all()
 
 
-def test_sw_solver_noscat_dask() -> None:
+def test_rfmip_clr_sky_sw_dask() -> None:
     # Load gas optics
     gas_optics_sw = load_gas_optics(gas_optics_file=GasOpticsFiles.SW_G224)
 
