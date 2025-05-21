@@ -13,6 +13,8 @@ from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
 
 from pyrte_rrtmgp import rrtmgp_gas_optics
 
+from pyrte_rrtmgp.rte_solver import rte_solve
+
 from pyrte_rrtmgp.data_validation import validate_problem_dataset
 
 
