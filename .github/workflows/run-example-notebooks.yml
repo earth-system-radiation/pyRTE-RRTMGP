@@ -63,4 +63,4 @@ jobs:
         run: pyrte_rrtmgp run_tests
 
       - name: Run notebooks
-        run: for t in examples/*.py; do python $t; done
+        run: pyrte_rrtmgp run_examples
