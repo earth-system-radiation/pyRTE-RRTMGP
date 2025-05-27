@@ -9,7 +9,9 @@ dependencies:
   - python >=3.11,<3.13
   - pyrte_rrtmgp
   - dask
-  - pytest-cov
+  - zarr
+  - requests
+  - aiohttp
   - matplotlib
   - jupyter
   - jupytext
