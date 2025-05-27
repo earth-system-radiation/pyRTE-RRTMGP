@@ -9,6 +9,3 @@ dependencies:
   - python >=3.11,<3.13
   - rte_rrtmgp
   - dask
-  - zarr
-  - requests
-  - aiohttp

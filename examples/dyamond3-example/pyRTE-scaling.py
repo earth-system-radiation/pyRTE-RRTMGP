@@ -7,14 +7,15 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: easy
+#     display_name: dyamond3-example
 #     language: python
-#     name: easy
+#     name: dyamond3-example
 # ---
 
 # %%
 import numpy as np
 import xarray as xr
+import intake
 
 # %%
 from pyrte_rrtmgp import rrtmgp_cloud_optics, rrtmgp_gas_optics
@@ -25,27 +26,40 @@ from pyrte_rrtmgp.data_types import (
 )
 from pyrte_rrtmgp.rte_solver import rte_solve
 
+# %%
+import warnings
+
+# Suppress specific FutureWarnings matching the message pattern when using cat[...].to_dask()
+warnings.filterwarnings(
+    "ignore",
+    message=".*The return type of `Dataset.dims` will be changed.*",
+    category=FutureWarning,
+)
+
 # %% [markdown]
 # # Read data
 #
 # Zoom level 5 is 12288 points (roughly 5 degrees); each zoom level (max 11, min 0) is 4x more, fewer points or 2x higher in grid density
+#
+# Perhaps chunks should be introduced at this stage? 
+
+# %%
+cat = intake.open_catalog('https://digital-earths-global-hackathon.github.io/catalog/catalog.yaml')['online']
 
 # %%
 zoom = 5
-data = xr.open_dataset(f"https://s3.eu-dkrz-1.dkrz.cloud/wrcp-hackathon/data/ICON/d3hp003feb.zarr/PT15M_inst_z{zoom}_atm", 
-                       engine="zarr")
+data = cat["icon_d3hp003feb"].to_dask()
 
-data = xr.open_dataset("/Users/robert/Codes/hk25/data/PT15M_inst_z5_atm", consolidated=True, engine='zarr')
+# %%
+# Local copy
+# data = xr.open_dataset("/Users/robert/Codes/hk25/data/PT15M_inst_z5_atm", consolidated=True, engine='zarr')
+
+
+# %%
 data
 
 # %% [markdown]
-# # Transform the data 
-#
-# - convert `qall` to `lwp`, `iwp`, `rel`, `rei`
-#
-
-# %%
-data.pressure
+# # Transform the data to the form needed to compute fluxes 
 
 # %% [markdown]
 # ## Pressure values on levels
@@ -88,10 +102,21 @@ data["h2o"] = data.hus * (Md/Mw)
 # ## Ozone from monthly-mean ERA5 interpolated onto HEALPix grid at zoom levels 8 and below
 
 # %%
+o3 = cat["ERA5"](zoom=zoom)\
+        .to_dask()\
+        .sel(time="2020-02-01", method="nearest")\
+        .o3.interp(level=data.pressure)
+
+#
+# How to merge this with `data`? 
+xr.merge([
+    data, xr.DataArray(o3.values, name = "o3", dims = ("pressure", "cell"))
+])
+
+# %%
 if zoom <= 8:
-    data["o3"] =xr.open_dataset(
-        f"https://swift.dkrz.de/v1/dkrz_41aca03ec414c2f95f52b23b775134f/reanalysis/v1/ERA5_P1M_{zoom}.zarr",
-        engine="zarr")\
+    data["o3"] = cat["ERA5"](zoom=zoom)\
+        .to_dask()\
         .sel(time="2020-02-01", method="nearest")\
         .o3.interp(level=data.pressure)
 
@@ -119,19 +144,15 @@ for gas_name, value in gas_values.items():
 #   Convert from MMR to vertically-integrated LWP, IWP 
 
 # %%
-data["lwp"] = np.where(data.ta >= 263., qall, 0)  
-data["iwp"] = np.where(data.ta <  263., qall, 0)  
+data["lwp"] = xr.where(data.ta >= 263., data.qall, 0)  
+data["iwp"] = xr.where(data.ta <  263., data.qall, 0)  
 
 # Liquid and ice effective sizes in microns 
-data["rel"] = np.where(data.lwp > 0., 10., 0)  
-data["rei"] = np.where(data.iwp > 0,  35., 0)  
+data["rel"] = xr.where(data.lwp > 0., 10., 0)  
+data["rei"] = xr.where(data.iwp > 0,  35., 0)  
 
 # %%
 data
-
-# %%
-data.rename_dims({"pressure":"layer", 
-                  "pressure_h":"level"})
 
 # %% [markdown]
 # # RTE and RRTMPG initialization 
@@ -140,14 +161,14 @@ cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
     cloud_optics_file=CloudOpticsFiles.LW_BND
 )
 gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
-    gas_optics_file=GasOpticsFiles.LW_G256
+    gas_optics_file=GasOpticsFiles.LW_G128
 )
 
 cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
     cloud_optics_file=CloudOpticsFiles.SW_BND
 )
 gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
-    gas_optics_file=GasOpticsFiles.SW_G224
+    gas_optics_file=GasOpticsFiles.SW_G112
 )
 
 
@@ -167,7 +188,8 @@ fluxes = rte_solve(
         ), 
         xr.Dataset(data_vars = {"surface_albedo":0.06, 
                                 "mu0":0.86})],
-    ), 
+    ).rename_dims({"pressure":"layer", 
+                   "pressure_h":"level"}), 
     add_to_input = False,
 )
 
@@ -186,7 +208,17 @@ fluxes = rte_solve(
             ), 
         ), 
         xr.Dataset(data_vars = {"surface_emissivity":0.98})],
-    ), 
+    ).rename_dims({"pressure":"layer", 
+                   "pressure_h":"level"}), 
     add_to_input = False,
 )
+
+
+# %%
+o3 = cat["ERA5"](zoom=zoom)\
+        .to_dask()\
+        .sel(time="2020-02-01", method="nearest").o3.interp(level=data.pressure)
+
+# 
+# How to combine with existing data? 
 
