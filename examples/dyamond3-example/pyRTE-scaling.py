@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: dyamond3-example
+#     display_name: pyrte-hk25
 #     language: python
-#     name: dyamond3-example
+#     name: pyrte-hk25
 # ---
 
 # %%
@@ -48,7 +48,7 @@ cat = intake.open_catalog('https://digital-earths-global-hackathon.github.io/cat
 
 # %%
 zoom = 5
-data = cat["icon_d3hp003feb"].to_dask()
+data = cat["icon_d3hp003feb"](zoom=zoom).to_dask()
 
 # %%
 # Local copy
@@ -105,20 +105,24 @@ data["h2o"] = data.hus * (Md/Mw)
 o3 = cat["ERA5"](zoom=zoom)\
         .to_dask()\
         .sel(time="2020-02-01", method="nearest")\
-        .o3.interp(level=data.pressure)
+        .o3.interp(level=data.pressure)\
+        .reset_coords(("lat", "lon", "level", "time"))\
+        .drop_vars(("lat", "lon", "level", "time")).o3
 
-#
-# How to merge this with `data`? 
-xr.merge([
-    data, xr.DataArray(o3.values, name = "o3", dims = ("pressure", "cell"))
-])
+o3
+
+# %%
+o3.reset_coords(("lat", "lon", "level", "time")).drop_vars(("lat", "lon", "level", "time"))
 
 # %%
 if zoom <= 8:
     data["o3"] = cat["ERA5"](zoom=zoom)\
         .to_dask()\
         .sel(time="2020-02-01", method="nearest")\
-        .o3.interp(level=data.pressure)
+        .o3.interp(level=data.pressure)\
+        .reset_coords(("lat", "lon", "level", "time"))\
+        .drop_vars(("lat", "lon", "level", "time"))\
+        .o3
 
 # For zoom > 8 we need to interpolate in space too - probably nearest neighbor 
 
@@ -151,6 +155,23 @@ data["iwp"] = xr.where(data.ta <  263., data.qall, 0)
 data["rel"] = xr.where(data.lwp > 0., 10., 0)  
 data["rei"] = xr.where(data.iwp > 0,  35., 0)  
 
+# %% [markdown]
+# # Dimension and variable names  
+
+# %%
+var_mapping = {"pressure":"pres_layer", 
+               "pressure_h":"pres_level", 
+               "ta":"temp_layer", 
+               "ta_h":"temp_level"}
+
+gas_optics_sw.compute_gas_optics(
+                data.rename_dims({"pressure":"layer", 
+                                  "pressure_h":"level"}), 
+                gas_name_map = var_mapping, 
+                problem_type=OpticsProblemTypes.TWO_STREAM, 
+                add_to_input=False,
+            )
+
 # %%
 data
 
@@ -171,9 +192,6 @@ gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
     gas_optics_file=GasOpticsFiles.SW_G112
 )
 
-
-# %% [markdown]
-# # Compute fluxes - shortwave 
 
 # %%
 fluxes = rte_solve(
