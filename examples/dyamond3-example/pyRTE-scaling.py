@@ -102,19 +102,6 @@ data["h2o"] = data.hus * (Md/Mw)
 # ## Ozone from monthly-mean ERA5 interpolated onto HEALPix grid at zoom levels 8 and below
 
 # %%
-o3 = cat["ERA5"](zoom=zoom)\
-        .to_dask()\
-        .sel(time="2020-02-01", method="nearest")\
-        .o3.interp(level=data.pressure)\
-        .reset_coords(("lat", "lon", "level", "time"))\
-        .drop_vars(("lat", "lon", "level", "time")).o3
-
-o3
-
-# %%
-o3.reset_coords(("lat", "lon", "level", "time")).drop_vars(("lat", "lon", "level", "time"))
-
-# %%
 if zoom <= 8:
     data["o3"] = cat["ERA5"](zoom=zoom)\
         .to_dask()\
@@ -124,6 +111,9 @@ if zoom <= 8:
         .drop_vars(("lat", "lon", "level", "time"))\
         .o3
 
+# This is actually a mass fraction; need to set to vmr 
+# also need to change/delete units
+    
 # For zoom > 8 we need to interpolate in space too - probably nearest neighbor 
 
 # %% [markdown]
@@ -156,26 +146,6 @@ data["rel"] = xr.where(data.lwp > 0., 10., 0)
 data["rei"] = xr.where(data.iwp > 0,  35., 0)  
 
 # %% [markdown]
-# # Dimension and variable names  
-
-# %%
-var_mapping = {"pressure":"pres_layer", 
-               "pressure_h":"pres_level", 
-               "ta":"temp_layer", 
-               "ta_h":"temp_level"}
-
-gas_optics_sw.compute_gas_optics(
-                data.rename_dims({"pressure":"layer", 
-                                  "pressure_h":"level"}), 
-                gas_name_map = var_mapping, 
-                problem_type=OpticsProblemTypes.TWO_STREAM, 
-                add_to_input=False,
-            )
-
-# %%
-data
-
-# %% [markdown]
 # # RTE and RRTMPG initialization 
 # %%
 cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
@@ -194,22 +164,21 @@ gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
 
 
 # %%
-fluxes = rte_solve(
-    xr.merge(
-        [cloud_optics_sw.compute_cloud_optics(data).add_to(
-            gas_optics_sw.compute_gas_optics(
-                data, 
+# Will the gas optics work? 
+data["p2"] = data["pressure"].broadcast_like(data.ta)
+
+var_mapping = {"p2":"pres_layer", 
+               "pressure_h":"pres_level", 
+               "ta":"temp_layer", 
+               "ta_h":"temp_level"}
+
+gas_optics_sw.compute_gas_optics(
+                data.rename_dims({"pressure":"layer", 
+                                  "pressure_h":"level"})\
+                    .rename(var_mapping).isel(time=6),
                 problem_type=OpticsProblemTypes.TWO_STREAM, 
                 add_to_input=False,
-            ), 
-            delta_scale=True,
-        ), 
-        xr.Dataset(data_vars = {"surface_albedo":0.06, 
-                                "mu0":0.86})],
-    ).rename_dims({"pressure":"layer", 
-                   "pressure_h":"level"}), 
-    add_to_input = False,
-)
+            )
 
 # %% [markdown]
 # # Compute fluxes - shortwave 
