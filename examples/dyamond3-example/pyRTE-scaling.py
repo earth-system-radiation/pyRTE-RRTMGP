@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: pyrte-hk25
+#     display_name: pyrte-hk25-notebooks
 #     language: python
-#     name: pyrte-hk25
+#     name: pyrte-hk25-notebooks
 # ---
 
 # %%
@@ -102,6 +102,7 @@ data["h2o"] = data.hus * (Md/Mw)
 # ## Ozone from monthly-mean ERA5 interpolated onto HEALPix grid at zoom levels 8 and below
 
 # %%
+Mo3 = .047998
 if zoom <= 8:
     data["o3"] = cat["ERA5"](zoom=zoom)\
         .to_dask()\
@@ -109,8 +110,9 @@ if zoom <= 8:
         .o3.interp(level=data.pressure)\
         .reset_coords(("lat", "lon", "level", "time"))\
         .drop_vars(("lat", "lon", "level", "time"))\
-        .o3
+        .o3 * (Md/Mo3)
 
+data.o3.attrs['units'] = "1"   
 # This is actually a mass fraction; need to set to vmr 
 # also need to change/delete units
     
@@ -165,6 +167,11 @@ gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
 
 # %%
 # Will the gas optics work? 
+
+# Workaround
+#    top_at_1 determination assumes 2D pressure arrays
+#    we add this array and drop the 1D pressure variable
+#    need to revise to use isel(layer=0)[0] and (layer=-1)[0]
 data["p2"] = data["pressure"].broadcast_like(data.ta)
 
 var_mapping = {"p2":"pres_layer", 
@@ -172,17 +179,22 @@ var_mapping = {"p2":"pres_layer",
                "ta":"temp_layer", 
                "ta_h":"temp_level"}
 
+atmosphere = data.rename_dims({"pressure":"layer", 
+                               "pressure_h":"level"})\
+                 .rename(var_mapping).isel(time=6).drop_vars(("pressure", "crs"))
+
+atmosphere
+
+# %%
+# Will the gas optics work? 
 gas_optics_sw.compute_gas_optics(
-                data.rename_dims({"pressure":"layer", 
-                                  "pressure_h":"level"})\
-                    .rename(var_mapping).isel(time=6),
+                atmosphere.chunk({"cell":128, "level":-1, "layer":-1}),
                 problem_type=OpticsProblemTypes.TWO_STREAM, 
                 add_to_input=False,
             )
 
 # %% [markdown]
 # # Compute fluxes - shortwave 
-
 
 # %%
 fluxes = rte_solve(
