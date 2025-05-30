@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: pyrte-hk25-notebooks
+#     display_name: pyrte-hk25
 #     language: python
-#     name: pyrte-hk25-notebooks
+#     name: pyrte-hk25
 # ---
 
 # %%
@@ -136,8 +136,8 @@ for gas_name, value in gas_values.items():
 # %% [markdown]
 # ## Cloud properties 
 #   Data set includes only `qall` all hydrometeors 
-#   Assume all clouds > 263 are liquid, everything else is ice (could refine)
-#   Convert from MMR to vertically-integrated LWP, IWP 
+#   - Assume all clouds > 263 are liquid, everything else is ice (could refine)
+#   - Convert from MMR to vertically-integrated LWP, IWP (haven't done this yet)
 
 # %%
 data["lwp"] = xr.where(data.ta >= 263., data.qall, 0)  
@@ -147,8 +147,32 @@ data["iwp"] = xr.where(data.ta <  263., data.qall, 0)
 data["rel"] = xr.where(data.lwp > 0., 10., 0)  
 data["rei"] = xr.where(data.iwp > 0,  35., 0)  
 
+# %%
+# ## Change variable and coordinate names to those needed by pyRTE 
+
+# Workaround
+#    top_at_1 determination assumes 2D pressure arrays
+#    we add this array and drop the 1D pressure variable
+#    need to revise to use isel(layer=0)[0] and (layer=-1)[0]
+data["p2"] = data["pressure"].broadcast_like(data.ta)
+
+var_mapping = {"p2":"pres_layer", 
+               "pressure_h":"pres_level", 
+               "ta":"temp_layer", 
+               "ta_h":"temp_level"}
+
+atmosphere = data.rename_dims({"pressure":"layer", 
+                               "pressure_h":"level"})\
+                 .rename(var_mapping)\
+                 .isel(time=6)\
+                 .drop_vars(("pressure", "crs"))
+atmosphere
+
 # %% [markdown]
-# # RTE and RRTMPG initialization 
+# # pyRTE
+#
+# ## Initialization 
+
 # %%
 cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
     cloud_optics_file=CloudOpticsFiles.LW_BND
@@ -165,59 +189,113 @@ gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
 )
 
 
-# %%
-# Will the gas optics work? 
-
-# Workaround
-#    top_at_1 determination assumes 2D pressure arrays
-#    we add this array and drop the 1D pressure variable
-#    need to revise to use isel(layer=0)[0] and (layer=-1)[0]
-data["p2"] = data["pressure"].broadcast_like(data.ta)
-
-var_mapping = {"p2":"pres_layer", 
-               "pressure_h":"pres_level", 
-               "ta":"temp_layer", 
-               "ta_h":"temp_level"}
-
-atmosphere = data.rename_dims({"pressure":"layer", 
-                               "pressure_h":"level"})\
-                 .rename(var_mapping).isel(time=6).drop_vars(("pressure", "crs"))
-
-atmosphere
-
-# %%
-# Will the gas optics work? 
-gas_optics_sw.compute_gas_optics(
-                atmosphere.chunk({"cell":128, "level":-1, "layer":-1}),
-                problem_type=OpticsProblemTypes.TWO_STREAM, 
-                add_to_input=False,
-            )
 
 # %% [markdown]
-# # Compute fluxes - shortwave 
+# ## Test gas optics
 
 # %%
-fluxes = rte_solve(
-    xr.merge(
-        [cloud_optics_lw.compute_cloud_optics(data).add_to(
-            gas_optics_lw.compute_gas_optics(
-                data, 
+# 
+# SW gas optics
+#   Not clear that this is running in parallel 
+#   And there are some NaNs in the tau field... that's bad
+#
+sw_optics = gas_optics_sw.compute_gas_optics(
+                atmosphere,
+                problem_type=OpticsProblemTypes.TWO_STREAM, 
+                add_to_input=False,
+)
+
+sw_optics["tau"].values
+
+# %%
+# 
+# LW gas optics
+#   This doesn't work full stop 
+#   
+#
+lw_optics = gas_optics_lw.compute_gas_optics(
+                atmosphere,
                 problem_type=OpticsProblemTypes.ABSORPTION, 
                 add_to_input=False,
-            ), 
-        ), 
-        xr.Dataset(data_vars = {"surface_emissivity":0.98})],
-    ).rename_dims({"pressure":"layer", 
-                   "pressure_h":"level"}), 
+)
+
+lw_optics["tau"].values
+
+# %% [markdown]
+# ## Test cloud optics
+
+# %%
+# 
+# Shortwave cloud optics
+#
+sw_cld_optics = cloud_optics_lw.compute_cloud_optics(
+    atmosphere, 
+    problem_type=OpticsProblemTypes.TWO_STREAM
+)
+sw_cld_optics["tau"]
+
+# %%
+# 
+# Longwave cloud optics
+#
+lw_cld_optics = cloud_optics_lw.compute_cloud_optics(
+    atmosphere, 
+    problem_type=OpticsProblemTypes.ABSORPTION
+)
+lw_cld_optics["tau"]
+
+
+# %% [markdown]
+# ## Compute fluxes from atmosphere conditions  
+
+# %%
+#
+# Shortwave fluxes 
+# 
+sw_fluxes = rte_solve(
+    xr.merge(
+        [cloud_optics_sw.compute_cloud_optics(
+            atmosphere, 
+            problem_type=OpticsProblemTypes.TWO_STREAM, 
+         )\
+         .add_to(
+             gas_optics_sw.compute_gas_optics(
+                    atmosphere,
+                    problem_type=OpticsProblemTypes.TWO_STREAM, 
+                    add_to_input=False,
+             ),
+             delta_scale = True,
+         ), 
+         xr.Dataset(data_vars = {"surface_albedo":0.06, 
+                                "mu0":0.86}
+                   ),
+        ],
+    ),
+    add_to_input = False,
+)
+
+# %%
+#
+# Longwave fluxes 
+# 
+lw_fluxes = rte_solve(
+    xr.merge(
+        [cloud_optics_lw.compute_cloud_optics(
+            atmosphere, 
+            problem_type=OpticsProblemTypes.ABSORPTION, 
+         )\
+         .add_to(
+             gas_optics_lw.compute_gas_optics(
+                    atmosphere,
+                    problem_type=OpticsProblemTypes.ABSORPTION, 
+                    add_to_input=False,
+             ), 
+         ), 
+        xr.Dataset(data_vars = {"surface_emissivity":0.98}),
+        ],
+    ),
     add_to_input = False,
 )
 
 
 # %%
-o3 = cat["ERA5"](zoom=zoom)\
-        .to_dask()\
-        .sel(time="2020-02-01", method="nearest").o3.interp(level=data.pressure)
-
-# 
-# How to combine with existing data? 
-
