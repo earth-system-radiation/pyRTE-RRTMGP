@@ -7,9 +7,9 @@
 #       format_version: '1.3'
 #       jupytext_version: 1.17.1
 #   kernelspec:
-#     display_name: pyrte-hk25
+#     display_name: pyrte-hk25-notebooks
 #     language: python
-#     name: pyrte-hk25
+#     name: pyrte-hk25-notebooks
 # ---
 
 # %%
@@ -68,7 +68,7 @@ data
 
 # %%
 data["pressure_h"] = xr.concat([
-                        xr.DataArray([1], dims="pressure_h"),
+                        xr.DataArray([1.25], dims="pressure_h"),
                         xr.DataArray(((data.pressure.values[1:] * data.pressure.values[:-1]) ** 0.5), dims="pressure_h"),
                         xr.DataArray([100500], dims="pressure_h")
                     ], dim = "pressure_h")
@@ -135,13 +135,27 @@ for gas_name, value in gas_values.items():
 
 # %% [markdown]
 # ## Cloud properties 
-#   Data set includes only `qall` all hydrometeors 
+#   Data set includes only `qall` all hydrometeors. 
+#   RRTMGP requires liquid and ice water paths (g/m2) and particle sizes (microns)
 #   - Assume all clouds > 263 are liquid, everything else is ice (could refine)
 #   - Convert from MMR to vertically-integrated LWP, IWP (haven't done this yet)
 
 # %%
-data["lwp"] = xr.where(data.ta >= 263., data.qall, 0)  
-data["iwp"] = xr.where(data.ta <  263., data.qall, 0)  
+#
+# Pressure thickness of each layer 
+#
+dp = xr.DataArray(xr.ufuncs.abs(data.pressure_h.diff(dim="pressure_h")).values, 
+                 dims = ("pressure")) 
+#
+# Gravity  
+#
+g = 9.8 
+data["lwp"] = xr.where(data.ta >= 263., 
+                       data.qall * dp/g * 1000, 
+                       0)  
+data["iwp"] = xr.where(data.ta <  263., 
+                       data.qall * dp/g * 1000, 
+                       0)  
 
 # Liquid and ice effective sizes in microns 
 data["rel"] = xr.where(data.lwp > 0., 10., 0)  
@@ -159,7 +173,8 @@ data["p2"] = data["pressure"].broadcast_like(data.ta)
 var_mapping = {"p2":"pres_layer", 
                "pressure_h":"pres_level", 
                "ta":"temp_layer", 
-               "ta_h":"temp_level"}
+               "ta_h":"temp_level",
+               "ts":"surface_temperature"}
 
 atmosphere = data.rename_dims({"pressure":"layer", 
                                "pressure_h":"level"})\
@@ -178,14 +193,14 @@ cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
     cloud_optics_file=CloudOpticsFiles.LW_BND
 )
 gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
-    gas_optics_file=GasOpticsFiles.LW_G128
+    gas_optics_file=GasOpticsFiles.LW_G256
 )
 
 cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
     cloud_optics_file=CloudOpticsFiles.SW_BND
 )
 gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
-    gas_optics_file=GasOpticsFiles.SW_G112
+    gas_optics_file=GasOpticsFiles.SW_G224
 )
 
 
@@ -205,21 +220,32 @@ sw_optics = gas_optics_sw.compute_gas_optics(
                 add_to_input=False,
 )
 
-sw_optics["tau"].values
 
+
+# %%
+#
+# What index values have NaN values? 
+#
+sw_optics["tau"].where(xr.ufuncs.isnan(sw_optics["tau"]), drop=True)
+
+# Using 112 gpts nans are present at pressure level 0, some of gpts 0-9, 71-95, 102-111, all cells 
+
+# %%
+#
+# Using 112 gpts this slice, and another from maybe 110-112, are NaNs
+#
+sw_optics["tau"].isel(cell=100, layer=-1).where(xr.ufuncs.isnan(sw_optics["tau"].isel(cell=100, layer=-1)), drop=True)
 # %%
 # 
 # LW gas optics
-#   This doesn't work full stop 
-#   
+#   Produces non-zero values of tau for 256 gpts 
+#   Doesn't work full stop with 128 gpts
 #
 lw_optics = gas_optics_lw.compute_gas_optics(
                 atmosphere,
                 problem_type=OpticsProblemTypes.ABSORPTION, 
                 add_to_input=False,
 )
-
-lw_optics["tau"].values
 
 # %% [markdown]
 # ## Test cloud optics
@@ -297,5 +323,3 @@ lw_fluxes = rte_solve(
     add_to_input = False,
 )
 
-
-# %%
