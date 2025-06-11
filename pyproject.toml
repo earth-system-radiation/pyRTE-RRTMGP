@@ -8,7 +8,7 @@ requires-python = ">=3.11,<3.13"
 # the conda.recipe/meta.yaml file, the conda.yml file for the GitHub Actions
 # workflow, and (if necessary) the .readthedocs.yaml file
 dependencies = [
-  "numpy>=2.0.0",
+  "numpy>=1.21.1",
   "xarray>=2023.5.0",
   "netcdf4>=1.7.2",
   "requests>=2.4.0",
@@ -26,7 +26,7 @@ classifiers = [
 test = [
   "pytest>=6.0.0",
   "pytest-cov>=3.0",
-  "numpy>=2.0.0",
+  "numpy>=1.21.1",
   "xarray>=2023.5.0",
   "dask >=2023.5.0",
   "netcdf4>=1.7.2",
