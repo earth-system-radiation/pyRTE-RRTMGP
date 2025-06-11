@@ -12,6 +12,28 @@
 #     name: pyrte-hk25-notebooks
 # ---
 
+# %% [markdown]
+# # Introduction
+#
+# This notebook demonstrates how to compute fluxes from global model data. 
+#   Data comes from the ICON contribution to the 
+#   [WCRP Global KM scale hackathon](https://github.com/digital-earths-global-hackathon). 
+#   Data is read from an online Zarr store accessed through an `intake` catalog. 
+#
+# The environment needed to run the notebook is described in the local `environment.yml` file.
+#
+# The notebook might be useful as an example of how to a data set into the form needed 
+#   by pyRTE. 
+#
+# We (the developers) are also using the notebook to refine the performance of pyRTE. 
+#   Data is on the HEALPix hierarchial equal-area grid so the spatial resolution and 
+#   number of points can be changed by setting the zoom level. 
+#
+# When run with pyRTE v0.1.1 some computations don't work; we are using the notebook 
+#   to diagnose and fix the errors. 
+#
+#
+
 # %%
 import numpy as np
 import xarray as xr
@@ -39,7 +61,8 @@ warnings.filterwarnings(
 # %% [markdown]
 # # Read data
 #
-# Zoom level 5 is 12288 points (roughly 5 degrees); each zoom level (max 11, min 0) is 4x more, fewer points or 2x higher in grid density
+# Zoom level 5 is 12288 points (roughly 5 degrees); each zoom level (max 11, min 0) is 4x change in the number of points 
+#   (or 2x change in grid density)
 #
 # Perhaps chunks should be introduced at this stage? 
 
@@ -49,11 +72,6 @@ cat = intake.open_catalog('https://digital-earths-global-hackathon.github.io/cat
 # %%
 zoom = 5
 data = cat["icon_d3hp003feb"](zoom=zoom).to_dask()
-
-# %%
-# Local copy
-# data = xr.open_dataset("/Users/robert/Codes/hk25/data/PT15M_inst_z5_atm", consolidated=True, engine='zarr')
-
 
 # %%
 data
@@ -203,6 +221,15 @@ gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
     gas_optics_file=GasOpticsFiles.SW_G224
 )
 
+
+# %% [markdown]
+# ## Testing
+#
+# We should be systematic here, exercising gas optics, 
+#   cloud optics, and the complete compuation of fluxes 
+#   for all variants of the gas and cloud optics input 
+#   files. 
+# We should also experiement with dask and no dask 
 
 
 # %% [markdown]
