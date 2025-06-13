@@ -1,0 +1,26 @@
+#
+# Python modules below are needed to run example notebook scripts
+#
+name: pyrte-hk25-notebooks
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python =3.12.*
+  - pyrte_rrtmgp
+  - dask
+  - scipy
+  - requests
+  - aiohttp
+  - intake==0.7.0
+  - intake-esm
+  - intake-xarray==0.7.0
+  - zarr <3.0.0
+  - cartopy
+  - easygems
+  - matplotlib
+  - jupyter
+  - jupytext
+  - healpix
+  - healpy
+  - hvplot

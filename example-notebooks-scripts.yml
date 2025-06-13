@@ -9,4 +9,4 @@ dependencies:
   - python >=3.11,<3.13
   - rte_rrtmgp
   - dask
-  - pytest-cov
+  - typing_extensions
