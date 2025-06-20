@@ -801,12 +801,12 @@ class BaseGasOpticsAccessor:
         #   level pressure differences > 0
         #
         if (
-            atmosphere[pres_layer_var] < (self.press_min + sys.float_info.epsilon)
+            atmosphere[pres_layer_var] < self.press_min + sys.float_info.epsilon
         ).any() or (
-            atmosphere[pres_layer_var] > (self.press_max - sys.float_info.epsilon)
+            atmosphere[pres_layer_var] > self.press_max - sys.float_info.epsilon
         ).any():
-            print("I object")
             raise ValueError("Layer pressures outside valid range")
+
         temp_layer_var = atmosphere.mapping.get_var("temp_layer")
         if (
             atmosphere[temp_layer_var] < self.temp_min + sys.float_info.epsilon
@@ -814,6 +814,10 @@ class BaseGasOpticsAccessor:
             atmosphere[temp_layer_var] > self.temp_max - sys.float_info.epsilon
         ).any():
             raise ValueError("Layer temperatures outside valid range")
+
+        temp_level_var = atmosphere.mapping.get_var("temp_level")
+        if (atmosphere[temp_level_var] < 0).any():
+            raise ValueError("Level pressures less than 0")
 
         gas_interpolation_data = self.interpolate(atmosphere, gas_mapping)
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
