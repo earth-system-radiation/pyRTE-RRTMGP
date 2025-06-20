@@ -28,6 +28,12 @@ def test_rfmip_clr_sky_lw() -> None:
     atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.sel(expt=0)  # only one experiment
 
+    atmosphere["pres_level"] = xr.where(
+        atmosphere["pres_level"] < gas_optics_lw.compute_gas_optics.press_min,
+        gas_optics_lw.compute_gas_optics.press_min,
+        atmosphere["pres_level"],
+    )
+
     # Compute gas optics for the atmosphere
     gas_optics_lw.compute_gas_optics(
         atmosphere, problem_type=OpticsProblemTypes.ABSORPTION,
@@ -60,6 +66,11 @@ def test_rfmip_clr_sky_lw_dask() -> None:
     # Load atmosphere data
     atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.chunk({"expt": 3})
+    atmosphere["pres_level"] = xr.where(
+        atmosphere["pres_level"] < gas_optics_lw.compute_gas_optics.press_min,
+        gas_optics_lw.compute_gas_optics.press_min,
+        atmosphere["pres_level"],
+    )
 
     assert isinstance(atmosphere, xr.Dataset)
     assert isinstance(atmosphere["lon"].data, da.Array)
