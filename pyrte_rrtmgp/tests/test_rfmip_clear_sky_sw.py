@@ -1,4 +1,5 @@
 import numpy as np
+import xarray as xr
 
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
@@ -17,6 +18,11 @@ def test_rfmip_clr_sky_sw() -> None:
     # Load atmosphere data
     atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.sel(expt=0)  # only one experiment
+    atmosphere["pres_level"] = xr.where(
+        atmosphere["pres_level"] < gas_optics_sw.compute_gas_optics.press_min,
+        gas_optics_sw.compute_gas_optics.press_min,
+        atmosphere["pres_level"],
+    )
 
     # Compute gas optics for the atmosphere
     gas_optics_sw.compute_gas_optics(
@@ -49,6 +55,11 @@ def test_rfmip_clr_sky_sw_dask() -> None:
     # Load atmosphere data
     atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
     atmosphere = atmosphere.chunk({"expt": 3})
+    atmosphere["pres_level"] = xr.where(
+        atmosphere["pres_level"] < gas_optics_sw.compute_gas_optics.press_min,
+        gas_optics_sw.compute_gas_optics.press_min,
+        atmosphere["pres_level"],
+    )
 
     # Compute gas optics for the atmosphere
     gas_optics_sw.compute_gas_optics(

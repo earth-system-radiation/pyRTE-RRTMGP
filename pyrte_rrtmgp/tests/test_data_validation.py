@@ -26,6 +26,11 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
     )
 
     atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
+    atmosphere["pres_level"] = xr.where(
+        atmosphere["pres_level"] < gas_optics_lw.compute_gas_optics.press_min,
+        gas_optics_lw.compute_gas_optics.press_min,
+        atmosphere["pres_level"],
+    )
 
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})

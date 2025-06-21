@@ -54,6 +54,7 @@
 
 # %%
 import numpy as np
+import xarray as xr
 from dask.diagnostics import ProgressBar
 
 from pyrte_rrtmgp import rrtmgp_gas_optics
@@ -80,6 +81,21 @@ gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
     gas_optics_file=GasOpticsFiles.LW_G256
 )
 atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE).chunk({"expt": 3})
+
+
+# %% [markdown]
+# Level pressures need to be >= 0 but the Fortran reference results
+#   were produced using a minimum level pressure matching the minimum 
+#   pressure at which the gas optics tables are calculated, so we 
+#   need to match that minimum pressure to get the same answers 
+
+
+# %%
+atmosphere["pres_level"] = xr.where(
+    atmosphere["pres_level"] < gas_optics_lw.compute_gas_optics.press_min,
+    gas_optics_lw.compute_gas_optics.press_min,
+    atmosphere["pres_level"],
+)
 
 # %% [markdown]
 # ## Computing Gas Optics

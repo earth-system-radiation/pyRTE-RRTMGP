@@ -134,32 +134,27 @@ class BaseGasOpticsAccessor:
         # Set the gas names as coordinate in the dataset
         self._dataset.coords["absorber_ext"] = np.array(("dry_air",) + self._gas_names)
 
-    def _initialize_pressure_levels(
-        self, atmosphere: xr.Dataset, inplace: bool = True
-    ) -> xr.Dataset | None:
-        """Initialize pressure levels with minimum pressure adjustment.
+    # The following four properties return scalars as per
+    #   https://stackoverflow.com/questions/78697726/systematically-turn-numpy-1d-array-of-size-1-to-scalar
+    @property
+    def press_min(self) -> np.float64:
+        """Minimum layer pressure for which gas optics data is valid."""
+        return self._dataset["press_ref"].min().values.squeeze()[()]
 
-        Args:
-            atmosphere: Dataset containing atmospheric conditions
-            inplace: Whether to modify atmosphere in-place or return a copy
+    @property
+    def press_max(self) -> np.float64:
+        """Minimum layer pressure for which gas optics data is valid."""
+        return self._dataset["press_ref"].max().values.squeeze()[()]
 
-        Returns:
-            Modified atmosphere dataset if inplace=False, otherwise None
-        """
-        pres_level_var = atmosphere.mapping.get_var("pres_level")
-        min_press = self._dataset["press_ref"].min() + sys.float_info.epsilon
+    @property
+    def temp_min(self) -> np.float64:
+        """Minimum layer temperature for which gas optics data is valid."""
+        return self._dataset.temp_ref.min().values.squeeze()[()]
 
-        # Replace values smaller than min_press with min_press at min_index
-        atmosphere[pres_level_var] = xr.where(
-            atmosphere[pres_level_var] < min_press,
-            min_press,
-            atmosphere[pres_level_var],
-        )
-
-        if not inplace:
-            return atmosphere
-
-        return None
+    @property
+    def temp_max(self) -> np.float64:
+        """Minimum layer temperature for which gas optics data is valid."""
+        return self._dataset.temp_ref.max().values.squeeze()[()]
 
     @property
     def _selected_gas_names(self) -> list[str]:
@@ -801,8 +796,28 @@ class BaseGasOpticsAccessor:
             < atmosphere[pres_layer_var].values[0, -1]
         )
 
-        # Modify pressure levels to avoid division by zero, runs inplace
-        self._initialize_pressure_levels(atmosphere)
+        # Input data validation
+        #   layer temperatures and pressures within temp_ref, press_ref
+        #   level pressure differences > 0
+        #
+        if (
+            atmosphere[pres_layer_var] < self.press_min + sys.float_info.epsilon
+        ).any() or (
+            atmosphere[pres_layer_var] > self.press_max - sys.float_info.epsilon
+        ).any():
+            raise ValueError("Layer pressures outside valid range")
+
+        temp_layer_var = atmosphere.mapping.get_var("temp_layer")
+        if (
+            atmosphere[temp_layer_var] < self.temp_min + sys.float_info.epsilon
+        ).any() or (
+            atmosphere[temp_layer_var] > self.temp_max - sys.float_info.epsilon
+        ).any():
+            raise ValueError("Layer temperatures outside valid range")
+
+        temp_level_var = atmosphere.mapping.get_var("temp_level")
+        if (atmosphere[temp_level_var] < 0).any():
+            raise ValueError("Level pressures less than 0")
 
         gas_interpolation_data = self.interpolate(atmosphere, gas_mapping)
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
