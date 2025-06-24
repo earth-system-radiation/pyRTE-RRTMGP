@@ -21,7 +21,7 @@ from pyrte_rrtmgp.constants import (
     SOLAR_CONSTANTS,
 )
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
-from pyrte_rrtmgp.data_validation import (
+from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
 )

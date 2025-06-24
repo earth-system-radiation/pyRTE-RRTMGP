@@ -55,10 +55,10 @@ pyrte\_rrtmgp.data_types module
    :undoc-members:
    :show-inheritance:
 
-pyrte\_rrtmgp.data_validation module
+pyrte\_rrtmgp.input_mapping module
 -------------------------------------
 
-.. automodule:: pyrte_rrtmgp.data_validation
+.. automodule:: pyrte_rrtmgp.input_mapping
    :members:
    :undoc-members:
    :show-inheritance:

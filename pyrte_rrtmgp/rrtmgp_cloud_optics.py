@@ -6,7 +6,7 @@ import numpy as np
 import xarray as xr
 
 from pyrte_rrtmgp.data_types import CloudOpticsFiles
-from pyrte_rrtmgp.data_validation import (
+from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
 )
