@@ -779,9 +779,13 @@ class BaseGasOpticsAccessor:
         ).any():
             raise ValueError("Layer temperatures outside valid range")
 
+        pres_level_var = atmosphere.mapping.get_var("pres_level")
+        if (atmosphere[pres_level_var] < 0).any():
+            raise ValueError("Level pressures less than 0")
+
         temp_level_var = atmosphere.mapping.get_var("temp_level")
         if (atmosphere[temp_level_var] < 0).any():
-            raise ValueError("Level pressures less than 0")
+            raise ValueError("Level temperatures less than 0")
 
         return None
 
