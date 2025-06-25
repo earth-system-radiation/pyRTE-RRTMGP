@@ -13,10 +13,6 @@ from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
 
 from pyrte_rrtmgp import rrtmgp_gas_optics
 
-from pyrte_rrtmgp.rte_solver import rte_solve
-
-from pyrte_rrtmgp.data_validation import validate_problem_dataset
-
 
 def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
                           use_dask: bool = False) -> xr.Dataset:
@@ -26,10 +22,9 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
     )
 
     atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
-    atmosphere["pres_level"] = xr.where(
-        atmosphere["pres_level"] < gas_optics_lw.compute_gas_optics.press_min,
-        gas_optics_lw.compute_gas_optics.press_min,
+    atmosphere["pres_level"] = xr.ufuncs.maximum(
         atmosphere["pres_level"],
+        gas_optics_lw.compute_gas_optics.press_min,
     )
 
     if use_dask:
@@ -64,15 +59,31 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
         gas_name_map=gas_mapping
     )
 
-    return atmosphere
+    return atmosphere, gas_mapping
+
+def test_validate_problem_dataset_success() -> None:
+    """Test gas optics validate_input_data function."""
+
+    ds, gas_mapping = _load_problem_dataset(None)
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
+    _  = gas_optics_lw.compute_gas_optics.validate_input_data(ds, gas_mapping)
+
+def test_dask_validate_problem_dataset_success() -> None:
+    """Test gas optics validate_input_data function with dask array."""
+
+    ds, gas_mapping = _load_problem_dataset(None, use_dask=True)
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
+    _  = gas_optics_lw.compute_gas_optics.validate_input_data(ds, gas_mapping)
 
 def test_raises_value_error_if_carbon_monoxide_missing() -> None:
-
     '''
     Load in LW_G256
     Set up input xarray with/without CO
     Compute gas optics
-    compute radiative transfer
     '''
 
     # Load gas optics
@@ -93,34 +104,56 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
             problem_type=OpticsProblemTypes.ABSORPTION,
             gas_name_map=gas_mapping
         )
-        _ = rte_solve(atmosphere, add_to_input=False)
 
-
-def test_validate_problem_dataset_success() -> None:
-    """Test validate_problem_dataset function."""
-
-    ds: xr.Dataset = _load_problem_dataset(None)
-    assert validate_problem_dataset(ds)
-
-
-def test_raises_value_error_for_invalid_pressure() -> None:
-    ds: xr.Dataset = _load_problem_dataset(None)
-    ds["pres_layer"] = ds["pres_layer"] - 100.0
+def test_raises_value_error_for_invalid_layer_pressure() -> None:
+    ds, gas_mapping = _load_problem_dataset(None)
+    ds["pres_layer"] = -ds["pres_layer"]
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
 
     with pytest.raises(ValueError):
-        assert validate_problem_dataset(ds)
+        _  = gas_optics_lw.compute_gas_optics.validate_input_data(ds, gas_mapping)
 
 
-def test_dask_validate_problem_dataset_success() -> None:
-    """Test validate_problem_dataset function."""
-
-    ds: xr.Dataset = _load_problem_dataset(None, use_dask=True)
-    assert validate_problem_dataset(ds)
-
-
-def test_dask_raises_value_error_for_invalid_pressure() -> None:
-    ds: xr.Dataset = _load_problem_dataset(None, use_dask=True)
-    ds["pres_layer"] = ds["pres_layer"] - 100.0
+def test_dask_raises_value_error_for_invalid_layer_pressure() -> None:
+    ds, gas_mapping = _load_problem_dataset(None, use_dask=True)
+    ds["pres_layer"] = -ds["pres_layer"]
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
 
     with pytest.raises(ValueError):
-        assert validate_problem_dataset(ds)
+        _  = gas_optics_lw.compute_gas_optics.validate_input_data(ds, gas_mapping)
+
+
+def test_raises_value_error_for_invalid_level_pressure() -> None:
+    ds, gas_mapping = _load_problem_dataset(None)
+    ds["pres_level"] = -ds["pres_level"]
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
+
+    with pytest.raises(ValueError):
+        _  = gas_optics_lw.compute_gas_optics.validate_input_data(ds, gas_mapping)
+
+
+def test_raises_value_error_for_invalid_layer_temperature() -> None:
+    ds, gas_mapping = _load_problem_dataset(None)
+    ds["temp_layer"] = -ds["temp_layer"]
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
+
+    with pytest.raises(ValueError):
+        _  = gas_optics_lw.compute_gas_optics.validate_input_data(ds, gas_mapping)
+
+def test_raises_value_error_for_invalid_level_temperature() -> None:
+    ds, gas_mapping = _load_problem_dataset(None)
+    ds["temp_level"] = -ds["temp_level"]
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
+
+    with pytest.raises(ValueError):
+        _  = gas_optics_lw.compute_gas_optics.validate_input_data(ds, gas_mapping)

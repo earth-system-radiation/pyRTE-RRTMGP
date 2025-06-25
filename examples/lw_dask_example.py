@@ -91,8 +91,7 @@ atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE).chunk({"expt": 3})
 
 
 # %%
-atmosphere["pres_level"] = xr.where(
-    atmosphere["pres_level"] < gas_optics_lw.compute_gas_optics.press_min,
+atmosphere["pres_level"] = xr.ufuncs.maximum(
     gas_optics_lw.compute_gas_optics.press_min,
     atmosphere["pres_level"],
 )

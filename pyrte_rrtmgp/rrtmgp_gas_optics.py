@@ -21,7 +21,7 @@ from pyrte_rrtmgp.constants import (
     SOLAR_CONSTANTS,
 )
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
-from pyrte_rrtmgp.data_validation import (
+from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
 )
@@ -735,6 +735,60 @@ class BaseGasOpticsAccessor:
 
         return col_dry.rename("dry_air")
 
+    def validate_input_data(
+        self,
+        atmosphere: xr.Dataset,
+        gas_mapping: dict,
+    ) -> None:
+        """Validate input data: required information is present, values are valid.
+
+        Args:
+            atmosphere: Dataset containing atmospheric conditions
+
+        Raises:
+            ValueError if data is missing or has out-of-bounds values
+        """
+        # layer and level dimensions should be present, nlay = nlev -1
+
+        # Some gas concentrations are required. Are they present?
+        uniq_key_species = np.unique(self._dataset.key_species.values)
+        required_gases = self._dataset.gas_names.values[uniq_key_species]
+        required_gases = set([g.decode().strip() for g in required_gases])
+
+        gas_validation_set = set(required_gases) - set(gas_mapping.keys())
+        if len(gas_validation_set) > 0:
+            raise ValueError(
+                f"Missing required gases in gas mapping: {gas_validation_set}"
+            )
+
+        #  layer temperatures and pressures within temp_ref, press_ref
+        #  level pressure differences > 0 (not implemented)
+        pres_layer_var = atmosphere.mapping.get_var("pres_layer")
+        if (
+            atmosphere[pres_layer_var] < self.press_min + sys.float_info.epsilon
+        ).any() or (
+            atmosphere[pres_layer_var] > self.press_max - sys.float_info.epsilon
+        ).any():
+            raise ValueError("Layer pressures outside valid range")
+
+        temp_layer_var = atmosphere.mapping.get_var("temp_layer")
+        if (
+            atmosphere[temp_layer_var] < self.temp_min + sys.float_info.epsilon
+        ).any() or (
+            atmosphere[temp_layer_var] > self.temp_max - sys.float_info.epsilon
+        ).any():
+            raise ValueError("Layer temperatures outside valid range")
+
+        pres_level_var = atmosphere.mapping.get_var("pres_level")
+        if (atmosphere[pres_level_var] < 0).any():
+            raise ValueError("Level pressures less than 0")
+
+        temp_level_var = atmosphere.mapping.get_var("temp_level")
+        if (atmosphere[temp_level_var] < 0).any():
+            raise ValueError("Level temperatures less than 0")
+
+        return None
+
     def __call__(
         self,
         atmosphere: xr.Dataset,
@@ -780,15 +834,7 @@ class BaseGasOpticsAccessor:
         # Set mapping in accessor
         atmosphere.mapping.set_mapping(variable_mapping)
 
-        uniq_key_species = np.unique(self._dataset.key_species.values)
-        required_gases = self._dataset.gas_names.values[uniq_key_species]
-        required_gases = set([g.decode().strip() for g in required_gases])
-
-        gas_validation_set = set(required_gases) - set(gas_mapping.keys())
-        if len(gas_validation_set) > 0:
-            raise ValueError(
-                f"Missing required gases in gas mapping: {gas_validation_set}"
-            )
+        self.validate_input_data(atmosphere, gas_mapping)
 
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         top_at_1 = (
@@ -796,35 +842,11 @@ class BaseGasOpticsAccessor:
             < atmosphere[pres_layer_var].values[0, -1]
         )
 
-        # Input data validation
-        #   layer temperatures and pressures within temp_ref, press_ref
-        #   level pressure differences > 0
-        #
-        if (
-            atmosphere[pres_layer_var] < self.press_min + sys.float_info.epsilon
-        ).any() or (
-            atmosphere[pres_layer_var] > self.press_max - sys.float_info.epsilon
-        ).any():
-            raise ValueError("Layer pressures outside valid range")
-
-        temp_layer_var = atmosphere.mapping.get_var("temp_layer")
-        if (
-            atmosphere[temp_layer_var] < self.temp_min + sys.float_info.epsilon
-        ).any() or (
-            atmosphere[temp_layer_var] > self.temp_max - sys.float_info.epsilon
-        ).any():
-            raise ValueError("Layer temperatures outside valid range")
-
-        temp_level_var = atmosphere.mapping.get_var("temp_level")
-        if (atmosphere[temp_level_var] < 0).any():
-            raise ValueError("Level pressures less than 0")
-
         gas_interpolation_data = self.interpolate(atmosphere, gas_mapping)
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
         sources = self.compute_sources(atmosphere, gas_interpolation_data)
-        gas_data = self._dataset["bnd_limits_gpt"].to_dataset()
-
-        gas_optics = xr.merge([sources, problem, gas_data])
+        spectrum = self._dataset["bnd_limits_gpt"].to_dataset()
+        gas_optics = xr.merge([sources, problem, spectrum])
 
         # Add problem type to dataset attributes
         if problem_type == "absorption" and self.is_internal:
