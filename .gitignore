@@ -16,6 +16,9 @@ CMakeCache.txt
 
 # example data
 examples/dyamond_clouds/GEOS-DYAMOND2-data/
+examples/dyamond_clouds/clouds_data.zarr
+examples/dyamond_clouds/clouds_data.nc
+examples/dyamond_clouds/atmosphere.nc
 
 # Distribution / packaging
 .Python
