@@ -224,3 +224,9 @@ assert np.isclose(
 
 # %%
 print("RFMIP clear-sky calculations validated")
+
+# %% [markdown]
+# # Variants
+#
+# See the `pyRTE-quick-start notebook for more examples, including how to parallelize computations with `dask` and 
+#   how to add clouds to the problem, and how to combine multiple steps of the calculation at once 
