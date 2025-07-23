@@ -836,11 +836,13 @@ class BaseGasOpticsAccessor:
 
         self.validate_input_data(atmosphere, gas_mapping)
 
+        # top_at_1 describes the ordering - is the first element in
+        #   the layer dimension the top or bottom of the atmosphere?
         pres_layer_var = atmosphere.mapping.get_var("pres_layer")
         top_at_1 = (
-            atmosphere[pres_layer_var].values[0, 0]
-            < atmosphere[pres_layer_var].values[0, -1]
-        )
+            atmosphere[pres_layer_var].isel(layer=0)
+            - atmosphere[pres_layer_var].isel(layer=-1)
+        )[0] < 0
 
         gas_interpolation_data = self.interpolate(atmosphere, gas_mapping)
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
