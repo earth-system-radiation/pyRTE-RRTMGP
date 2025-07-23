@@ -1,22 +1,12 @@
 # Basic Usage
 
-This section provides a brief overview of how to use the pyRTE-RRTMGP package.
+This section provides a brief overview of how to use the pyRTE-RRTMGP package. The [example scripts and notebooks](https://github.com/earth-system-radiation/pyRTE-RRTMGP/tree/main/examples) packaged with pyRTE-RRTMGP may also be useful (and are guaranteed to work with the current code).
 
 ## RRTMGP and RTE
 
-pyRTE-RRTMGP is a Python package that provides a Python interface to the [RTE-RRTMGP software](https://github.com/earth-system-radiation/rte-rrtmgp) (Fortran).
+pyRTE-RRTMGP is a Python package that provides a Python interface to the [RTE-RRTMGP software](https://github.com/earth-system-radiation/rte-rrtmgp) (Fortran). You can use this Python package to define a radiative transfer problem, compute gas and cloud optics, and solve the radiative transfer equations, using the same underlying code. See the paper [Balancing Accuracy, Efficiency, and Flexibility in Radiation Calculations for Dynamical Models](https://doi.org/10.1029/2019MS001621) for more details about the Fortran code.
 
-You can use this Python package to define a radiative transfer problem, compute gas and cloud optics, and solve the radiative transfer equations, using [RTE-RRTMGP](https://github.com/earth-system-radiation/rte-rrtmgp).
-
-
-Specifically, this Python package contains tools for:
-
-* RRTMGP (RRTM for General circulation model applications—Parallel)
-* RTE (Radiative Transfer for Energetics)
-
-See the paper [Balancing Accuracy, Efficiency, and Flexibility in Radiation Calculations for Dynamical Models](https://doi.org/10.1029/2019MS001621) for more details about the Fortran code.
-
-Additionally, pyRTE-RRTMGP is able to use [Dask](https://docs.dask.org/en/stable/) for parallel computing, which can be useful for solving problems with large datasets on multi-core machines or clusters.
+pyRTE-RRTMGP uses [Dask](https://docs.dask.org/en/stable/) for parallel computing, which can be useful for solving problems with large datasets on multi-core machines or clusters.
 
 ## Defining and Solving Radiative Transfer Problems
 
@@ -96,7 +86,7 @@ The atmosphere file defines the gas concentrations for each layer of the atmosph
 
 You can use any of the alternative names in your dataset, and use a mapping dictionary to map them to the correct gas. See {data}`~pyrte_rrtmgp.config.DEFAULT_GAS_MAPPING` for the default mapping.
 
-If any of the gases are not present in the dataset, it will be set to zero. `h2o` is required, and if it is not present, the package will raise an error.
+If any of the gases are not present in the dataset, it will be set to zero. RRTMGP requires some gases to be specified; if are not present the package will raise an error.
 
 The atmospheric input dataset also must contain the following core variables for computing gast optics:
 
@@ -105,11 +95,18 @@ The atmospheric input dataset also must contain the following core variables for
 *   `pres_layer`: Mean pressure within each atmospheric layer (Pa)
 *   `pres_level`: Pressure at the layer boundaries (Pa)
 
+These variables must include `layer` and `level` dimensions, where the `level` dimension is one element larger than the `layer` dimension.
+Any additional dimensions in the dataset (e.g., spatial or temporal dimensions) will be automatically processed, with calculations performed for each combination of these dimensions.
+
 For longwave radiation calculations, an additional variable is required:
 
-*   `surface_temperature`: Skin temperature of the surface (K), used to compute surface emissivity
+*   `surface_temperature`: Skin temperature of the surface (K), used to compute the surface source of radiation
 
-These variables must include `layer` and `level` dimensions, where the `level` dimension is exactly one element larger than the `layer` dimension. Any additional dimensions in the dataset (e.g., spatial or temporal dimensions) will be automatically processed, with calculations performed for each combination of these dimensions.
+For shortwave radiation calculation the atmosphere may also contain an optional variable
+
+* `total_solar_irradiance`: Total solar irradiance at the top of the atmosphere (W/m2)
+
+Neither `surface_temperature` nor `total_solar_irradiance` have a vertical dependence i.e. they should have no `layer` or `level` coordinate.
 
 For instance, consider a dataset with these dimensions:
 
@@ -121,7 +118,6 @@ For instance, consider a dataset with these dimensions:
 
 In this case, the radiative transfer calculations will be executed independently for each unique combination of latitude, longitude, and time, across all atmospheric levels.
 
-To get started quickly, you can load a preconfigured sample atmosphere dataset using the {func}`~pyrte_rrtmgp.examples.load_example_file` function.
 
 ### 4. Computing gas optics using the {class}`compute_gas_optics<pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor>` accessor
 
@@ -156,7 +152,7 @@ gas_optics = rrtmgp_gas_optics.compute_gas_optics(
 
 See {class}`pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor` for more details.
 
-### 5. Define the cloud optics atmosphere
+### 5. Define the cloud optics
 
 The cloud optics atmosphere requires the following variables in the input dataset for computing cloud optical properties:
 
@@ -167,9 +163,9 @@ The cloud optics atmosphere requires the following variables in the input datase
 
 They are defined in the `layer` dimension. Similar to the gas optics atmosphere, any additional dimensions will be processed independently.
 
-### 6. Computing cloud optics using the {class}`compute_cloud_optics<pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor>` accessor
+### 6. Computing cloud optics using {class}`compute_cloud_optics<pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor>`
 
-You can compute the cloud optics using the {class}`compute_cloud_optics<pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor>` accessor.
+You can compute the cloud optics using {class}`compute_cloud_optics<pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor>`.
 
 This function can handle two different types of problems:
 * {data}`~pyrte_rrtmgp.data_types.OpticsProblemTypes.ABSORPTION` (longwave)
@@ -184,7 +180,7 @@ cloud_optics = rrtmgp_cloud_optics.compute_cloud_optics(
 
 See {class}`pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor` for more details.
 
-### 7. Combining Cloud Optics with Gas Optics using the {class}`add_to<pyrte_rrtmgp.rrtmgp_cloud_optics.CombineOpticalPropsAccessor>` Accessor
+### 7. Combining Cloud Optics with Gas Optics using {class}`add_to<pyrte_rrtmgp.rrtmgp_cloud_optics.CombineOpticalPropsAccessor>`
 
 To integrate cloud optical properties with gas optical properties, you can use the {class}`add_to<pyrte_rrtmgp.rrtmgp_cloud_optics.CombineOpticalPropsAccessor>` accessor. This allows you to either add the cloud optical properties independently or combine them with the gas optical properties.
 
