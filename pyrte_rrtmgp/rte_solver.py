@@ -104,7 +104,7 @@ def compute_sw_boundary_conditions(atmosphere: xr.Dataset) -> xr.Dataset:
 
 
 def _compute_lw_fluxes_absorption(
-    problem_ds: xr.Dataset, spectrally_resolved: bool = False
+    problem_ds: xr.Dataset,
 ) -> xr.Dataset:
     """Compute longwave fluxes for absorption-only radiative transfer.
 
@@ -121,8 +121,6 @@ def _compute_lw_fluxes_absorption(
             - incident_flux: Incident flux at top of atmosphere
             - ssa: Single scattering albedo
             - g: Asymmetry parameter
-        spectrally_resolved: If True, return spectrally resolved fluxes.
-            If False, return broadband fluxes. Defaults to False.
 
     Returns:
         Dataset containing the computed fluxes:
@@ -183,7 +181,7 @@ def _compute_lw_fluxes_absorption(
         problem_ds["surface_source"],
         problem_ds["surface_source_jacobian"],
         incident_flux,
-        kwargs={"do_broadband": not spectrally_resolved, "top_at_1": top_at_1},
+        kwargs={"do_broadband": True, "top_at_1": top_at_1},
         input_core_dims=[
             [],  # nlay
             [],  # ngpt
@@ -221,15 +219,13 @@ def _compute_lw_fluxes_absorption(
 
 
 def _compute_sw_fluxes(
-    problem_ds: xr.Dataset, spectrally_resolved: bool = False
+    problem_ds: xr.Dataset,
 ) -> xr.Dataset:
     """Compute shortwave fluxes using two-stream solver.
 
     Args:
         problem_ds: Dataset containing problem definition including optical
             properties, surface properties and boundary conditions.
-        spectrally_resolved: If True, return spectrally resolved fluxes.
-            If False, return broadband fluxes.
 
     Returns:
         Dataset containing computed shortwave fluxes:
@@ -302,7 +298,7 @@ def _compute_sw_fluxes(
         problem_ds["surface_albedo_diffuse"],
         problem_ds["toa_source"],
         problem_ds["incident_flux_dif"],
-        kwargs={"top_at_1": top_at_1, "do_broadband": not spectrally_resolved},
+        kwargs={"top_at_1": top_at_1, "do_broadband": True},
         input_core_dims=[
             [],  # nlay
             [],  # ngpt
@@ -355,7 +351,6 @@ def _compute_sw_fluxes(
 def rte_solve(
     problem_ds: xr.Dataset,
     add_to_input: bool = True,
-    spectrally_resolved: bool = False,
 ) -> Optional[xr.Dataset]:
     """Solve radiative transfer problem based on problem type.
 
@@ -363,16 +358,14 @@ def rte_solve(
         problem_ds: Dataset containing problem definition and inputs
         add_to_input: If True, add computed fluxes to input dataset. If False,
             return fluxes separately
-        spectrally_resolved: If True, return spectrally resolved fluxes. If False,
-            return broadband fluxes
 
     Returns:
         Dataset containing computed fluxes if add_to_input is False, None otherwise
     """
     if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
-        fluxes = _compute_lw_fluxes_absorption(problem_ds, spectrally_resolved)
+        fluxes = _compute_lw_fluxes_absorption(problem_ds)
     elif problem_ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
-        fluxes = _compute_sw_fluxes(problem_ds, spectrally_resolved)
+        fluxes = _compute_sw_fluxes(problem_ds)
     else:
         raise ValueError(f"Unknown problem type: {problem_ds.attrs['problem_type']}")
 
