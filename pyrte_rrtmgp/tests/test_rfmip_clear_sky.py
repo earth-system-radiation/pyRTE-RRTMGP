@@ -3,6 +3,7 @@ import numpy as np
 import xarray as xr
 
 import pytest
+from typing import Dict, Optional, Any
 
 from pyrte_rrtmgp.data_types import (
     GasOpticsFiles,
@@ -29,9 +30,11 @@ def _load_reference_data() -> xr.Dataset:
         load_example_file(RFMIP_FILES.REFERENCE_RSD),
         ])
 
-def _test_get_fluxes_from_RFMIP_atmospheres(gas_optics,
-                 problem_type,
-                 gas_name_mapping = None,
+# Ideally we would tell mypy that gas_optics is an xarray accessor...
+def _test_get_fluxes_from_RFMIP_atmospheres(
+                 gas_optics: Any,
+                 problem_type: OpticsProblemTypes,
+                 gas_name_mapping: Optional[dict[str, str]] = None,
                  use_dask: bool = False) -> xr.Dataset:
     """Runs RFMIP clear-sky examples to exercise gas optics, solvers, and gas mapping """
     # Load atmosphere data
@@ -61,7 +64,7 @@ def _test_get_fluxes_from_RFMIP_atmospheres(gas_optics,
     return fluxes
 
 def _test_verify_rfmip_clr_sky(
-        problem_type,
+        problem_type: OpticsProblemTypes,
         use_dask: bool = False) -> None:
     """Runs RFMIP clear-sky examples and compares to reference results."""
 
