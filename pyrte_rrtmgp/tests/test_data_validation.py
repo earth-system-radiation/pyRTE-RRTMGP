@@ -9,7 +9,7 @@ from pyrte_rrtmgp.data_types import OpticsProblemTypes
 from pyrte_rrtmgp.examples import RFMIP_FILES
 from pyrte_rrtmgp.examples import load_example_file
 
-from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
+from pyrte_rrtmgp.tests import RFMIP_GAS_MAPPING
 
 from pyrte_rrtmgp import rrtmgp_gas_optics
 
@@ -17,46 +17,25 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
                           use_dask: bool = False) -> xr.Dataset:
 
-    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
-        gas_optics_file=GasOpticsFiles.LW_G256
-    )
-
     atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
-    atmosphere["pres_level"] = xr.ufuncs.maximum(
-        atmosphere["pres_level"],
-        gas_optics_lw.compute_gas_optics.press_min,
-    )
-
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})
 
     if gas_mapping is None:
-        gas_mapping = {
-            "h2o": "water_vapor",
-            "co2": "carbon_dioxide_GM",
-            "o3": "ozone",
-            "n2o": "nitrous_oxide_GM",
-            "co": "carbon_monoxide_GM",
-            "ch4": "methane_GM",
-            "o2": "oxygen_GM",
-            "n2": "nitrogen_GM",
-            "ccl4": "carbon_tetrachloride_GM",
-            "cfc11": "cfc11_GM",
-            "cfc12": "cfc12_GM",
-            "cfc22": "hcfc22_GM",
-            "hfc143a": "hfc143a_GM",
-            "hfc125": "hfc125_GM",
-            "hfc23": "hfc23_GM",
-            "hfc32": "hfc32_GM",
-            "hfc134a": "hfc134a_GM",
-            "cf4": "cf4_GM",
-            "no2": "no2",
-        }
+        gas_mapping = RFMIP_GAS_MAPPING
+
+    # Robert does not understand why it's necessary to comput gas optics in advance
+    #   before checking the data validation function, but not doing so makes many tests
+    #   fail because the mapping isn't clear...
+    #
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
 
     gas_optics_lw.compute_gas_optics(
         atmosphere,
         problem_type=OpticsProblemTypes.ABSORPTION,
-        gas_name_map=gas_mapping
+        gas_name_map=gas_mapping,
     )
 
     return atmosphere, gas_mapping
@@ -94,7 +73,7 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
     # Load atmosphere data
     atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
 
-    gas_mapping = DEFAULT_GAS_MAPPING.copy()
+    gas_mapping = RFMIP_GAS_MAPPING.copy()
     del gas_mapping["co"]
 
     # Compute gas optics for the atmosphere
