@@ -12,6 +12,8 @@ from pyrte_rrtmgp.data_types import (
 
 from pyrte_rrtmgp.tests import (
     ERROR_TOLERANCE,
+    RFMIP_GAS_MAPPING,
+    RFMIP_GAS_MAPPING_SMALL,
 )
 
 from pyrte_rrtmgp.examples import (
@@ -22,38 +24,6 @@ from pyrte_rrtmgp.examples import (
 from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.rte_solver import rte_solve
 
-RFMIP_GAS_MAPPING =  {
-            "h2o": "water_vapor",
-            "co2": "carbon_dioxide_GM",
-            "o3": "ozone",
-            "n2o": "nitrous_oxide_GM",
-            "co": "carbon_monoxide_GM",
-            "ch4": "methane_GM",
-            "o2": "oxygen_GM",
-            "n2": "nitrogen_GM",
-            "ccl4": "carbon_tetrachloride_GM",
-            "cfc11": "cfc11_GM",
-            "cfc12": "cfc12_GM",
-            "cfc22": "hcfc22_GM",
-            "hfc143a": "hfc143a_GM",
-            "hfc125": "hfc125_GM",
-            "hfc23": "hfc23_GM",
-            "hfc32": "hfc32_GM",
-            "hfc134a": "hfc134a_GM",
-            "cf4": "cf4_GM",
-            "no2": "no2",
-        }
-
-RFMIP_GAS_MAPPING_SMALL =  {
-            "h2o": "water_vapor",
-            "co2": "carbon_dioxide_GM",
-            "o3": "ozone",
-            "n2o": "nitrous_oxide_GM",
-            "co": "carbon_monoxide_GM",
-            "ch4": "methane_GM",
-            "o2": "oxygen_GM",
-            "n2": "nitrogen_GM",
-        }
 
 def _load_problem_dataset(gas_mapping,
                           use_dask: bool = False) -> xr.Dataset:
@@ -81,6 +51,7 @@ def _load_reference_data() -> xr.Dataset:
         ])
 
 def _run_lw_test(gas_optics_lw,
+                 gas_name_mapping = None,
                  use_dask: bool = False) -> xr.Dataset:
     """Runs RFMIP clear-sky examples to exercise gas optics, solvers, and gas mapping """
     # Load atmosphere data
@@ -88,20 +59,25 @@ def _run_lw_test(gas_optics_lw,
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})
 
+    if gas_name_mapping is None:
+        gas_name_mapping = RFMIP_GAS_MAPPING
+
     # Compute gas optics for the atmosphere
     gas_optics_lw.compute_gas_optics(
         atmosphere,
         problem_type=OpticsProblemTypes.ABSORPTION,
-        gas_name_map=gas_mapping,
+        gas_name_map=gas_name_mapping,
     )
 
     # Solve RTE
     fluxes: xr.Dataset = rte_solve(atmosphere, add_to_input=False)
     assert fluxes is not None
+    assert ~xr.ufuncs.isnan(fluxes).any()
+
     return fluxes
 
 def _test_verify_rfmip_clr_sky_lw(use_dask: bool = False) -> None:
-    """Runs RFMIP clear-sky examples and compares to reference results"""
+    """Runs RFMIP clear-sky examples and compares to reference results."""
 
     # Load gas optics
     gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
@@ -138,8 +114,45 @@ def _test_verify_rfmip_clr_sky_lw(use_dask: bool = False) -> None:
                       ref_fluxes["rld"],
                       atol=ERROR_TOLERANCE)
 
-def test_verify_rfmip() -> None:
+#
+#### Tests start here
+#
+def test_verify_rfmip_lw() -> None:
+    """ RFMIP test cases, verify against reference results, no dask."""
     _test_verify_rfmip_clr_sky_lw(use_dask = False)
 
-def test_verify_rfmip_dask() -> None:
+def test_verify_rfmip_lw_dask() -> None:
+    """ RFMIP test cases, verify against reference results, use dask."""
     _test_verify_rfmip_clr_sky_lw(use_dask = True)
+
+def test_rfmip_lw_reduced_gases() -> None:
+    """ Run RFMIP test cases with reduced set of gases"""
+    # Load gas optics
+    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file = GasOpticsFiles.LW_G256,
+    )
+    _run_lw_test(
+        gas_optics_lw,
+        gas_name_mapping = RFMIP_GAS_MAPPING_SMALL,
+    )
+
+def test_rfmip_lw128() -> None:
+    """ Run RFMIP test cases with 128 g-point file"""
+    # Load gas optics
+    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file = GasOpticsFiles.LW_G128,
+    )
+    _run_lw_test(gas_optics_lw)
+
+if False:
+    # As of pyrte v0.1.3 this test fails to run
+    def test_rfmip_lw128_reduced_gases() -> None:
+        """ Run RFMIP test cases with 128 g-point file and reduced set of gases"""
+        # Load gas optics
+        gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+            gas_optics_file = GasOpticsFiles.LW_G128,
+        )
+        _run_lw_test(
+            gas_optics_lw,
+            gas_name_mapping = RFMIP_GAS_MAPPING_SMALL,
+        )

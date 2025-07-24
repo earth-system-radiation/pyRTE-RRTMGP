@@ -4,7 +4,7 @@ import xarray as xr
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 from pyrte_rrtmgp.rrtmgp_gas_optics import GasOpticsFiles, load_gas_optics
 from pyrte_rrtmgp.rte_solver import rte_solve
-from pyrte_rrtmgp.tests import DEFAULT_GAS_MAPPING
+from pyrte_rrtmgp.tests import RFMIP_GAS_MAPPING
 from pyrte_rrtmgp.tests import ERROR_TOLERANCE
 
 from pyrte_rrtmgp.examples import RFMIP_FILES
@@ -27,7 +27,7 @@ def test_rfmip_clr_sky_sw() -> None:
     gas_optics_sw.compute_gas_optics(
         atmosphere,
         problem_type=OpticsProblemTypes.TWO_STREAM,
-        gas_name_map=DEFAULT_GAS_MAPPING
+        gas_name_map=RFMIP_GAS_MAPPING
     )
 
     # Solve RTE
@@ -63,7 +63,7 @@ def test_rfmip_clr_sky_sw_dask() -> None:
     gas_optics_sw.compute_gas_optics(
         atmosphere,
         problem_type=OpticsProblemTypes.TWO_STREAM,
-        gas_name_map=DEFAULT_GAS_MAPPING
+        gas_name_map=RFMIP_GAS_MAPPING
     )
 
     # Solve RTE
