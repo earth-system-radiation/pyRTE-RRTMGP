@@ -17,26 +17,25 @@ from pyrte_rrtmgp import rrtmgp_gas_optics
 def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
                           use_dask: bool = False) -> xr.Dataset:
 
-    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
-        gas_optics_file=GasOpticsFiles.LW_G256
-    )
-
     atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
-    atmosphere["pres_level"] = xr.ufuncs.maximum(
-        atmosphere["pres_level"],
-        gas_optics_lw.compute_gas_optics.press_min,
-    )
-
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})
 
     if gas_mapping is None:
         gas_mapping = RFMIP_GAS_MAPPING
 
+    # Robert does not understand why it's necessary to comput gas optics in advance
+    #   before checking the data validation function, but not doing so makes many tests
+    #   fail because the mapping isn't clear...
+    #
+    gas_optics_lw: xr.Dataset = rrtmgp_gas_optics.load_gas_optics(
+        gas_optics_file=GasOpticsFiles.LW_G256
+    )
+
     gas_optics_lw.compute_gas_optics(
         atmosphere,
         problem_type=OpticsProblemTypes.ABSORPTION,
-        gas_name_map=gas_mapping
+        gas_name_map=gas_mapping,
     )
 
     return atmosphere, gas_mapping
