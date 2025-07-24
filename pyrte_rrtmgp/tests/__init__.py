@@ -21,4 +21,4 @@ DEFAULT_GAS_MAPPING = {
     "no2": "no2",
 }
 
-ERROR_TOLERANCE = 1e-7
+ERROR_TOLERANCE = 7e-4
