@@ -13,16 +13,6 @@ build:
   apt_packages:
     - build-essential
     - ninja-build
-  jobs:
-    pre_build:
-      # build and install the package with conda
-      - conda list  # Debug: List the installed packages
-      - conda config --add channels conda-forge
-      - conda info  # Debug: List the conda configuration
-      - conda build conda.recipe
-      - ls $(conda info --base)/conda-bld/linux-64  # Debug: List the contents of the build directory
-      - conda index $(conda info --base)/conda-bld  # Index the correct build directory
-      - conda install -c file://$(conda info --base)/conda-bld/linux-64 pyrte_rrtmgp
 
 conda:
   environment: docs/environment-docs.yml

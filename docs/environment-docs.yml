@@ -1,18 +1,16 @@
 name: pyrte_rrtmgp_docs
 channels:
   - conda-forge
-  - defaults
 dependencies:
   - python=3.12
   # when updating the tested Python versions, please also update README.md,
   # the conda.recipe/meta.yaml file, pyproject.toml, and the conda.yml file
   # for the GitHub Actions workflow
   - rte_rrtmgp
-  - conda-build
-  - conda-verify
+  - xarray
+  - pandas
+  - sphinx-rtd-theme==2.0.*
+  - myst-parser==2.0.*
   - pip
   - pip:
-    - sphinx-rtd-theme==2.0.*
-    - myst-parser==2.0.*
-    - xarray
-    - pandas
+    - -e .
