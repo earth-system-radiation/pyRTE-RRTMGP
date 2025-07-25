@@ -157,6 +157,18 @@ class BaseGasOpticsAccessor:
         return self._dataset.temp_ref.max().values.squeeze()[()]
 
     @property
+    def required_gases(self) -> set[str]:
+        """Gases for which the concentration must be specified."""
+        uniq_key_species = np.unique(self._dataset.key_species.values)
+        required_gases = self._dataset.gas_names.values[uniq_key_species]
+        return set([g.decode().strip() for g in required_gases])
+
+    @property
+    def available_gases(self) -> set[str]:
+        """Gases whose concentrations influence optical depth."""
+        return set(self._dataset.gas_names)
+
+    @property
     def _selected_gas_names(self) -> list[str]:
         """List of selected gas names."""
         return list(self._gas_names)
@@ -751,11 +763,7 @@ class BaseGasOpticsAccessor:
         # layer and level dimensions should be present, nlay = nlev -1
 
         # Some gas concentrations are required. Are they present?
-        uniq_key_species = np.unique(self._dataset.key_species.values)
-        required_gases = self._dataset.gas_names.values[uniq_key_species]
-        required_gases = set([g.decode().strip() for g in required_gases])
-
-        gas_validation_set = set(required_gases) - set(gas_mapping.keys())
+        gas_validation_set = self.required_gases - set(gas_mapping.keys())
         if len(gas_validation_set) > 0:
             raise ValueError(
                 f"Missing required gases in gas mapping: {gas_validation_set}"
