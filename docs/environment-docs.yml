@@ -13,4 +13,4 @@ dependencies:
   - myst-parser==2.0.*
   - pip
   - pip:
-    - -e .
+    - -e ..
