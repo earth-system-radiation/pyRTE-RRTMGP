@@ -166,7 +166,7 @@ class BaseGasOpticsAccessor:
     @property
     def available_gases(self) -> set[str]:
         """Gases whose concentrations influence optical depth."""
-        return set(self._dataset.gas_names)
+        return set([g.decode().strip() for g in self._dataset.gas_names.values])
 
     @property
     def _selected_gas_names(self) -> list[str]:
