@@ -62,27 +62,27 @@ cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
 
 ### 3. Define the gas optics atmosphere
 
-The atmosphere file defines the gas concentrations for each layer of the atmosphere in mole fractions. The supported gases are:
+The atmosphere file defines the gas concentrations for each layer of the atmosphere in mole fractions. Gases
+are specified in terms of their (lowercase) chemical formula, with `cfcX` used for chlorofluorocarbon-X and
+`hfcX` for hydrofluorocarbon-X. Supported gases, i.e. those that will influence the calculation of optical properties,
+are available using the `available_gases` property of the gas optics, i.e.
+```python
+gas_optics = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_file=GasOpticsFiles.LW_G128
+).available_gases
 
-* `h2o`: Water vapor
-* `co2`: Carbon dioxide
-* `o3`: Ozone
-* `n2o`: Nitrous oxide
-* `co`: Carbon monoxide
-* `ch4`: Methane
-* `o2`: Oxygen
-* `n2`: Nitrogen
-* `ccl4`: Carbon tetrachloride
-* `cfc11`: Chlorofluorocarbon-11
-* `cfc12`: Chlorofluorocarbon-12
-* `cfc22`: Chlorofluorocarbon-22
-* `hfc143a`: Hydrofluorocarbon-143a
-* `hfc125`: Hydrofluorocarbon-125
-* `hfc23`: Hydrofluorocarbon-23
-* `hfc32`: Hydrofluorocarbon-32
-* `hfc134a`: Hydrofluorocarbon-134a
-* `cf4`: Carbon tetrafluoride
-* `no2`: Nitrogen dioxide
+gas_optics.required_gases
+```
+
+
+Concentrations of some gases are required, those these can vary between the shortwave and longwave gas optics.
+```python
+gas_optics = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_file=GasOpticsFiles.LW_G128
+)
+
+gas_optics.required_gases
+```
 
 You can use any of the alternative names in your dataset, and use a mapping dictionary to map them to the correct gas. See {data}`~pyrte_rrtmgp.config.DEFAULT_GAS_MAPPING` for the default mapping.
 
