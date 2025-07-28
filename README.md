@@ -17,25 +17,23 @@ Documentation for pyRTE-RRTMGP is available on [Read the Docs](https://pyrte-rrt
 
 ## Project Status
 
-The project is currently under active development. We hope to have a stable first usable release by Apr 2025.
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute to this effort
+The project is currently under active development. See [CONTRIBUTING.md](CONTRIBUTING.md) for information on how to contribute.
 
 > **Note**:
-> The code in this repository is a work in progress. The Python API is not yet stable and is subject to change.
+> The Python API is not entirely stable and is subject to change.
 
 ## Installing pyRTE-RRTMGP
 
-### Installing with Conda (recommended)
+### Installing with Mamba (recommended)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/pyrte_rrtmgp.svg)](https://anaconda.org/conda-forge/pyrte_rrtmgp)
 [![Conda Platforms](https://img.shields.io/conda/pn/conda-forge/pyrte_rrtmgp.svg)](https://anaconda.org/conda-forge/pyrte_rrtmgp)
 
 <!-- start-installation-section -->
 
-pyRTE-RRTMGP is available as a [conda package for Linux (x86_64) and MacOS](https://anaconda.org/conda-forge/pyrte_rrtmgp). You can install it from the `conda-forge` channel:
+pyRTE-RRTMGP is available as a [conda package for Linux (x86_64) and MacOS](https://anaconda.org/conda-forge/pyrte_rrtmgp). You can install it from the `conda-forge` channel or, better, use `mamba`:
 
 ```bash
-conda install -c conda-forge pyrte_rrtmgp
+mamba install pyrte_rrtmgp
 ```
 
 This will install the package in your current conda environment. If you want to install the package in a different environment, activate your environment before running the `conda install` command above.
@@ -54,4 +52,4 @@ pyrte_rrtmgp run_tests
 
 <!-- end-installation-section -->
 
-For **platforms other than Linux for x64 processors and MacOS** and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/how_to/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/contributor_guide/contribute.html#how-to-set-up-a-local-development-environment).
+For platforms not supported by the `conda` package and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/how_to/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/how-to/installation-local-dev.html).

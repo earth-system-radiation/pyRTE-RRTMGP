@@ -8,21 +8,17 @@ Welcome to pyRTE-RRTMGP's documentation!
 
 pyRTE-RRTMGP provides a **Python interface** to the
 `RTE+RRTMGP <https://earth-system-radiation.github.io/rte-rrtmgp/>`_ Fortran software package.
-
-This package uses `pybind11 <https://github.com/pybind/pybind11>`_ to create a Python interface to a subset of the RTE+RRTMGP functions available in Fortran.
-
-The RTE+RRTMGP package is a set of libraries for computing radiative fluxes
+for computing radiative fluxes
 in planetary atmospheres. RTE+RRTMGP is described in a
 `paper <https://doi.org/10.1029/2019MS001621>`_ in
 `Journal of Advances in Modeling Earth Systems <http://james.agu.org/>`_.
 
 
-.. note::
-   This project is currently in an early stage of development.
+This package uses `pybind11 <https://github.com/pybind/pybind11>`_ to create a Python interface to a subset of the RTE+RRTMGP functions available in Fortran.
 
 .. toctree::
    :maxdepth: 2
-   :caption: Using pyRTE-RRTMGP:
+   :caption: Getting started:
 
    how_to/installation
    explanation/usage
@@ -30,7 +26,7 @@ in planetary atmospheres. RTE+RRTMGP is described in a
 
 .. toctree::
    :maxdepth: 2
-   :caption: pyRTE-RRTMGP Module Reference:
+   :caption:  Reference:
 
    reference/pyrte_rrtmgp_python_modules
    reference/low_level_kernel_modules
@@ -40,8 +36,8 @@ in planetary atmospheres. RTE+RRTMGP is described in a
    :caption: Contributing to pyRTE-RRTMGP:
 
    contributor_guide/contribute
+   how_to/installation-local-dev
    contributor_guide/fortran-compatibility
-   contributor_guide/roadmap
 
 
 

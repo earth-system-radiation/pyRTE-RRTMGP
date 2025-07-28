@@ -22,8 +22,8 @@ def compute_quadrature(
 
     Returns:
         tuple containing:
-            ds (xr.DataArray): Quadrature secants (directional cosines) with
-              dimensions [gpt, n_quad_angs].
+            ds (xr.DataArray): Quadrature secants (directional cosines)
+            with dimensions [gpt, n_quad_angs].
             weights (xr.DataArray): Quadrature weights with dimension [n_quad_angs].
     """
     n_quad_angs: int = nmus

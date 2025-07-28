@@ -1,0 +1,19 @@
+#
+# Python modules below are needed to run example notebook scripts
+#
+name: pyrte_dev
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python >=3.11,<3.13
+  - pytest
+  - rte_rrtmgp
+  - dask
+  - typing_extensions
+  - pre-commit
+  - cmake
+  - ninja
+  - pip
+  - pip:
+    - -e ..
