@@ -24,6 +24,8 @@ Follow these steps to run the tutorial notebooks:
     mamba activate pyrte_notebooks
     ```
 
+    Subdirectories with more complicated or longer-running examples might have their own environment file and create a bespoke environment.
+
 3. **Start the Jupyter notebook server**:
 
     ```bash

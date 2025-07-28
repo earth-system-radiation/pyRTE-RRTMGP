@@ -39,7 +39,7 @@ def get_python_requires_from_toml() -> str:
 
 project = "pyRTE-RRTMGP"
 copyright = f"{dt.datetime.now().year}, Robert Pincus"
-author = "Robert Pincus, Josué Senhem, MakePath LLC"
+author = "Robert Pincus, Josué Sehnem, MakePath LLC"
 version = get_version_from_toml()
 release = version
 python_requires = get_python_requires_from_toml()
