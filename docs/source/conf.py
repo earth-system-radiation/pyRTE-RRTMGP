@@ -38,8 +38,8 @@ def get_python_requires_from_toml() -> str:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "pyRTE-RRTMGP"
-copyright = f"{dt.datetime.now().year}, Atmospheric and Environmental Research"
-author = "Atmospheric and Environmental Research"
+copyright = f"{dt.datetime.now().year}, Robert Pincus"
+author = "Robert Pincus, Josué Sehnem, MakePath LLC"
 version = get_version_from_toml()
 release = version
 python_requires = get_python_requires_from_toml()
