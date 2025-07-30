@@ -33,7 +33,7 @@ This package uses `pybind11 <https://github.com/pybind/pybind11>`_ to create a P
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contributing to pyRTE-RRTMGP:
+   :caption: Contributing:
 
    contributor_guide/contribute
    how_to/installation-local-dev
