@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-from typing import Iterable, cast
+from typing import Dict, Final, Iterable, cast
 
 import dask.array as da
 import numpy as np
@@ -12,14 +12,6 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
-from pyrte_rrtmgp.constants import (
-    AVOGAD,
-    HELMERT1,
-    HELMERT2,
-    M_DRY,
-    M_H2O,
-    SOLAR_CONSTANTS,
-)
 from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
 from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
@@ -32,6 +24,39 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     interpolation,
 )
 from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+
+# Gravitational parameters from Helmert's equation (m/s^2)
+
+HELMERT1: Final[float] = 9.80665
+"""Standard gravity at sea level"""
+
+HELMERT2: Final[float] = 0.02586
+"""Gravity variation with latitude"""
+
+# Molecular masses (kg/mol)
+
+M_DRY: Final[float] = 0.028964
+"""Dry air (molecular mass in kg/mol)"""
+
+M_H2O: Final[float] = 0.018016
+"""Water vapor (molecular mass in kg/mol)"""
+
+# Avogadro's number (molecules/mol)
+
+AVOGAD: Final[float] = 6.02214076e23
+"""Avogadro's number (molecules/mol)"""
+
+# Solar constants for orbit calculations
+
+SOLAR_CONSTANTS: Final[Dict[str, float]] = {
+    "A_OFFSET": 0.1495954,  # Semi-major axis offset (AU)
+    "B_OFFSET": 0.00066696,  # Orbital eccentricity factor
+}
+"""Solar constants for orbit calculations. Contains the following keys:
+
+- ``A_OFFSET``: Semi-major axis offset (AU)
+- ``B_OFFSET``: Orbital eccentricity factor
+"""
 
 logger = logging.getLogger(__name__)
 
