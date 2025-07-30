@@ -63,14 +63,6 @@ pyrte\_rrtmgp.input_mapping module
    :undoc-members:
    :show-inheritance:
 
-pyrte\_rrtmgp.constants module
--------------------------------
-
-.. automodule:: pyrte_rrtmgp.constants
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyrte\_rrtmgp.config module
 ---------------------------
 
