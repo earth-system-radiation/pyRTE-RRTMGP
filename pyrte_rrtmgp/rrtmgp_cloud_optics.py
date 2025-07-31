@@ -23,7 +23,7 @@ from pyrte_rrtmgp.kernels.rte import (
     increment_2stream_by_1scalar,
     increment_2stream_by_2stream,
 )
-from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.rrtmgp_data_files import download_rrtmgp_data
 from pyrte_rrtmgp.utils import safer_divide
 
 

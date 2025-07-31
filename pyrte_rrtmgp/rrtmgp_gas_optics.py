@@ -23,7 +23,7 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_tau_rayleigh,
     interpolation,
 )
-from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.rrtmgp_data_files import download_rrtmgp_data
 
 # Gravitational parameters from Helmert's equation (m/s^2)
 
