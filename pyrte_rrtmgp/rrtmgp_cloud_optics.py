@@ -109,6 +109,10 @@ class CloudOpticsAccessor:
         cloud_properties.mapping.set_mapping(variable_mapping)
 
         layer_dim = cloud_properties.mapping.get_dim("layer")
+        lwp = cloud_properties.mapping.get_var("lwp")
+        iwp = cloud_properties.mapping.get_var("iwp")
+        rel = cloud_properties.mapping.get_var("rel")
+        rei = cloud_properties.mapping.get_var("rei")
 
         # Get dimensions
         nlay = cloud_properties.sizes[layer_dim]
@@ -125,8 +129,8 @@ class CloudOpticsAccessor:
 
         # Sequentially process each chunk
         # Create cloud masks
-        liq_mask = cloud_properties.lwp > 0
-        ice_mask = cloud_properties.iwp > 0
+        liq_mask = cloud_properties[lwp] > 0
+        ice_mask = cloud_properties[iwp] > 0
 
         # Compute optical properties using lookup tables
         # Liquid phase
@@ -139,8 +143,8 @@ class CloudOpticsAccessor:
             nlay,
             ngpt,
             liq_mask,
-            cloud_properties.lwp,
-            cloud_properties.rel,
+            cloud_properties[lwp],
+            cloud_properties[rel],
             cloud_optics.sizes["nsize_liq"],
             step_size.values,
             cloud_optics.radliq_lwr.values,
@@ -185,8 +189,8 @@ class CloudOpticsAccessor:
             nlay,
             ngpt,
             ice_mask,
-            cloud_properties.iwp,
-            cloud_properties.rei,
+            cloud_properties[iwp],
+            cloud_properties[rei],
             cloud_optics.sizes["nsize_ice"],
             step_size.values,
             cloud_optics.diamice_lwr.values,
