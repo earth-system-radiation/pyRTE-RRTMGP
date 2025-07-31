@@ -5,7 +5,6 @@ import os
 import numpy as np
 import xarray as xr
 
-from pyrte_rrtmgp.data_types import CloudOpticsFiles
 from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
@@ -23,7 +22,7 @@ from pyrte_rrtmgp.kernels.rte import (
     increment_2stream_by_1scalar,
     increment_2stream_by_2stream,
 )
-from pyrte_rrtmgp.rrtmgp_data_files import download_rrtmgp_data
+from pyrte_rrtmgp.rrtmgp_data_files import CloudOpticsFiles, download_rrtmgp_data
 from pyrte_rrtmgp.utils import safer_divide
 
 

@@ -3,14 +3,18 @@ import netCDF4  # noqa (avoids warning https://github.com/pydata/xarray/issues/7
 from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp import rrtmgp_gas_optics
 
-from pyrte_rrtmgp.data_types import CloudOpticsFiles
-from pyrte_rrtmgp.data_types import GasOpticsFiles
+from pyrte_rrtmgp.rrtmgp_data_files import (
+    CloudOpticsFiles,
+    GasOpticsFiles,
+)
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 
-from pyrte_rrtmgp.examples import ALLSKY_EXAMPLES
-from pyrte_rrtmgp.examples import compute_RCE_profiles
-from pyrte_rrtmgp.examples import compute_RCE_clouds
-from pyrte_rrtmgp.examples import load_example_file
+from pyrte_rrtmgp.examples import (
+    ALLSKY_EXAMPLES,
+    compute_RCE_profiles,
+    compute_RCE_clouds,
+    load_example_file,
+)
 
 from pyrte_rrtmgp.rte_solver import rte_solve
 

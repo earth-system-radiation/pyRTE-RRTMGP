@@ -5,10 +5,8 @@ import xarray as xr
 import pytest
 from typing import Dict, Optional, Any
 
-from pyrte_rrtmgp.data_types import (
-    GasOpticsFiles,
-    OpticsProblemTypes,
-)
+from pyrte_rrtmgp.data_types import OpticsProblemTypes
+from pyrte_rrtmgp.rrtmgp_data_files import GasOpticsFiles
 from pyrte_rrtmgp.examples import (
     load_example_file,
     RFMIP_FILES

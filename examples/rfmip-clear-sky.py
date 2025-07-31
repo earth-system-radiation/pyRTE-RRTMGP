@@ -48,10 +48,11 @@ import numpy as np
 import xarray as xr
 
 from pyrte_rrtmgp import rrtmgp_gas_optics
-from pyrte_rrtmgp.data_types import (
+from pyrte_rrtmgp.rrtmgp_data_files import (
+    CloudOpticsFiles,
     GasOpticsFiles,
-    OpticsProblemTypes,
 )
+from pyrte_rrtmgp.data_types import OpticsProblemTypes
 from pyrte_rrtmgp.rte_solver import rte_solve
 from pyrte_rrtmgp.examples import RFMIP_FILES, load_example_file
 

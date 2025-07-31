@@ -19,13 +19,13 @@ The {func}`~pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics` function retrieves e
 The package includes four default gas optics files, which can be accessed via the {data}`~pyrte_rrtmgp.data_types.GasOpticsFiles` enum:
 
 *   **Longwave:**
-    *   {data}`~pyrte_rrtmgp.data_types.GasOpticsFiles.LW_G128`: Longwave gas optics file with 128 g-points.
-    *   {data}`~pyrte_rrtmgp.data_types.GasOpticsFiles.LW_G256`: Longwave gas optics file with 256 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.LW_G128`: Longwave gas optics file with 128 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.LW_G256`: Longwave gas optics file with 256 g-points.
 *   **Shortwave:**
-    *   {data}`~pyrte_rrtmgp.data_types.GasOpticsFiles.SW_G112`: Shortwave gas optics file with 112 g-points.
-    *   {data}`~pyrte_rrtmgp.data_types.GasOpticsFiles.SW_G224`: Shortwave gas optics file with 224 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.SW_G112`: Shortwave gas optics file with 112 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.SW_G224`: Shortwave gas optics file with 224 g-points.
 
-These files can be loaded using the {func}`~pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics` function in conjunction with the {data}`~pyrte_rrtmgp.data_types.GasOpticsFiles` enum.
+These files can be loaded using the {func}`~pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics` function in conjunction with the {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles` enum.
 
 For example:
 
@@ -42,15 +42,15 @@ The {func}`~pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics` function retriev
 The package includes two default cloud optics files, which can be accessed via the {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles` enum:
 
 *   **Longwave:**
-    *   {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles.LW_BND`: Longwave cloud optics file with band points.
-    *   {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles.LW_G128`: Longwave cloud optics file with 128 g-points.
-    *   {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles.LW_G256`: Longwave cloud optics file with 256 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.LW_BND`: Longwave cloud optics file with band points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.LW_G128`: Longwave cloud optics file with 128 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.LW_G256`: Longwave cloud optics file with 256 g-points.
 *   **Shortwave:**
-    *   {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles.SW_BND`: Shortwave cloud optics file with band points.
-    *   {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles.SW_G112`: Shortwave cloud optics file with 112 g-points.
-    *   {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles.SW_G224`: Shortwave cloud optics file with 224 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_BND`: Shortwave cloud optics file with band points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_G112`: Shortwave cloud optics file with 112 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_G224`: Shortwave cloud optics file with 224 g-points.
 
-These files can be loaded using the {func}`~pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics` function in conjunction with the {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles` enum.
+These files can be loaded using the {func}`~pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics` function in conjunction with the {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles` enum.
 
 For example:
 
