@@ -130,7 +130,7 @@ from dask.distributed import Client
 
 from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp.gas_optics import HELMERT1
-from pyrte_rrtmgp.data_types import CloudOpticsFiles
+from pyrte_rrtmgp.rrtmgp_data_files import CloudOpticsFiles
 
 nlev = 181
 min_lev_liquid = 107

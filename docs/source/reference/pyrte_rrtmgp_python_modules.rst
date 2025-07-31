@@ -39,10 +39,10 @@ pyrte\_rrtmgp.rte_solver module
    :undoc-members:
    :show-inheritance:
 
-pyrte\_rrtmgp.rrtmgp_data module
+pyrte\_rrtmgp.rrtmgp_data_files module
 --------------------------------
 
-.. automodule:: pyrte_rrtmgp.rrtmgp_data
+.. automodule:: pyrte_rrtmgp.rrtmgp_data_files
    :members:
    :undoc-members:
    :show-inheritance:

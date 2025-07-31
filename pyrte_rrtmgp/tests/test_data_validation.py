@@ -3,7 +3,7 @@ import netCDF4  # noqa
 import pytest
 import xarray as xr
 
-from pyrte_rrtmgp.data_types import GasOpticsFiles
+from pyrte_rrtmgp.rrtmgp_data_files import GasOpticsFiles
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
 
 from pyrte_rrtmgp.examples import RFMIP_FILES

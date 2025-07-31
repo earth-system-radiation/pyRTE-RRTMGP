@@ -10,7 +10,7 @@ from enum import StrEnum
 import numpy as np
 import xarray as xr
 
-from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.rrtmgp_data_files import download_rrtmgp_data
 
 
 class RFMIP_FILES(StrEnum):

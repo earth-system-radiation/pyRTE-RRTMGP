@@ -12,7 +12,7 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
-from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
+from pyrte_rrtmgp.data_types import ProblemTypes
 from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
@@ -23,7 +23,7 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_tau_rayleigh,
     interpolation,
 )
-from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.rrtmgp_data_files import GasOpticsFiles, download_rrtmgp_data
 
 # Gravitational parameters from Helmert's equation (m/s^2)
 
