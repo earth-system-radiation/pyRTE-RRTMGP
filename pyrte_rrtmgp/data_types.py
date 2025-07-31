@@ -3,66 +3,6 @@
 from enum import StrEnum
 
 
-class GasOpticsFiles(StrEnum):
-    """Enumeration of default RRTMGP gas optics data files.
-
-    This enum defines the available pre-configured gas optics data files that can be
-    used with RRTMGP. The files contain absorption coefficients and other optical
-    properties needed for radiative transfer calculations.
-    """
-
-    LW_G128 = "rrtmgp-gas-lw-g128.nc"
-    """Longwave gas optics file with 128 g-points"""
-
-    LW_G256 = "rrtmgp-gas-lw-g256.nc"
-    """Longwave gas optics file with 256 g-points"""
-
-    SW_G112 = "rrtmgp-gas-sw-g112.nc"
-    """Shortwave gas optics file with 112 g-points"""
-
-    SW_G224 = "rrtmgp-gas-sw-g224.nc"
-    """Shortwave gas optics file with 224 g-points"""
-
-
-class CloudOpticsFiles(StrEnum):
-    """Enumeration of default RRTMGP cloud optics data files.
-
-    This enum defines the available pre-configured cloud optics data files that can be
-    used with RRTMGP. The files contain cloud optical properties needed for radiative
-    transfer calculations.
-    """
-
-    LW_BND = "rrtmgp-clouds-lw-bnd.nc"
-    """Longwave cloud optics file with band points"""
-
-    LW_G128 = "rrtmgp-clouds-lw-g128.nc"
-    """Longwave cloud optics file with 128 g-points"""
-
-    LW_G256 = "rrtmgp-clouds-lw-g256.nc"
-    """Longwave cloud optics file with 256 g-points"""
-
-    SW_BND = "rrtmgp-clouds-sw-bnd.nc"
-    """Shortwave cloud optics file with band points"""
-
-    SW_G112 = "rrtmgp-clouds-sw-g112.nc"
-    """Shortwave cloud optics file with 112 g-points"""
-
-    SW_G224 = "rrtmgp-clouds-sw-g224.nc"
-    """Shortwave cloud optics file with 224 g-points"""
-
-
-class AerosolOpticsFiles(StrEnum):
-    """Enumeration of default RRTMGP aerosol optics data files.
-
-    This enum defines the available pre-configured aerosol optics data files that can be
-    used with RRTMGP. The files contain aerosol optical properties needed for radiative
-    transfer calculations.
-    """
-
-    LW_MERRA = "rrtmgp-aerosols-merra-lw.nc"
-    SW_MERRA = "rrtmgp-aerosols-merra-sw.nc"
-
-
 class ProblemTypes(StrEnum):
     """Enumeration of available radiation calculation types.
 
