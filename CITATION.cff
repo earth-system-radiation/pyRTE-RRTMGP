@@ -16,8 +16,8 @@ identifiers:
 repository-code: "https://github.com/earth-system-radiation/pyRTE-RRTMGP"
 url: "https://pyrte-rrtmgp.readthedocs.io/"
 license: BSD-3-Clause
-date-released: "2025-07-22"
-version: 0.1.3
+date-released: "2025-07-31"
+version: 0.1.4
 abstract: >-
   pyRTE-RRTMGP provides a Python interface to the RTE+RRTMGP
   (https://earth-system-radiation.github.io/rte-rrtmgp/)
