@@ -61,45 +61,6 @@ SOLAR_CONSTANTS: Final[Dict[str, float]] = {
 logger = logging.getLogger(__name__)
 
 
-def load_gas_optics(
-    file_path: str | None = None,
-    gas_optics_file: GasOpticsFiles | None = None,
-    selected_gases: list[str] | None = None,
-) -> xr.Dataset:
-    """Load gas optics data from a file or predefined gas optics file.
-
-    This function loads gas optics data either from a custom netCDF file or from
-    a predefined gas optics file included in the RRTMGP data package. The data
-    contains absorption coefficients and other optical properties needed for
-    radiative transfer calculations.
-
-    Args:
-        file_path: Path to a custom gas optics netCDF file. If provided, this takes
-            precedence over gas_optics_file.
-        gas_optics_file: Enum specifying a predefined gas optics file from the RRTMGP
-            data package. Only used if file_path is None.
-        selected_gases: Optional list of gas names to include in calculations.
-            If None, all gases in the file will be used.
-
-    Returns:
-        xr.Dataset: Dataset containing the gas optics data with selected_gases
-            stored in the attributes.
-
-    Raises:
-        ValueError: If neither file_path nor gas_optics_file is provided.
-    """
-    if file_path is not None:
-        dataset = xr.load_dataset(file_path)
-    elif gas_optics_file is not None:
-        rte_rrtmgp_dir = download_rrtmgp_data()
-        dataset = xr.load_dataset(os.path.join(rte_rrtmgp_dir, gas_optics_file.value))
-    else:
-        raise ValueError("Either file_path or gas_optics_file must be provided")
-
-    dataset.attrs["selected_gases"] = selected_gases
-    return dataset
-
-
 class BaseGasOpticsAccessor:
     """Base class for gas optics calculations.
 
@@ -822,7 +783,7 @@ class BaseGasOpticsAccessor:
 
         return None
 
-    def __call__(
+    def compute(
         self,
         atmosphere: xr.Dataset,
         problem_type: str,
@@ -1251,8 +1212,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         return tau_rayleigh.rename("tau").to_dataset()
 
 
-@xr.register_dataset_accessor("compute_gas_optics")
-class GasOpticsAccessor:
+class GasOptics:
     """Factory class that returns appropriate GasOptics based on dataset contents.
 
     This class determines whether to return a longwave (LW) or shortwave (SW) gas optics
@@ -1268,22 +1228,57 @@ class GasOpticsAccessor:
     """
 
     def __new__(
-        cls, xarray_obj: xr.Dataset, selected_gases: list[str] | None = None
-    ) -> "GasOpticsAccessor":
+        cls,
+        file_path: str | None = None,
+        gas_optics_file: GasOpticsFiles | None = None,
+        selected_gases: list[str] | None = None,
+    ) -> "GasOptics":
+        """Initialze gas optics objectsfrom a file or predefined gas optics file.
+
+        Load gas optics data either from a custom netCDF file or from
+        a predefined gas optics file included in the RRTMGP data package. The data
+        contains absorption coefficients and other optical properties needed for
+        radiative transfer calculations.
+
+        Args:
+            file_path: Path to a custom gas optics netCDF file. If provided, this takes
+                precedence over gas_optics_file.
+            gas_optics_file: Enum specifying a predefined gas optics file from the
+                RRTMGP data package. Only used if file_path is None.
+            selected_gases: Optional list of gas names to include in calculations.
+                If None, all gases in the file will be used.
+
+        Returns:
+            "GasOptics": Dataset containing the gas optics data with selected_gases
+                stored in the attributes.
+
+        Raises:
+            ValueError: If neither file_path nor gas_optics_file is provided.
+        """
+        if file_path is not None:
+            dataset = xr.load_dataset(file_path)
+        elif gas_optics_file is not None:
+            rte_rrtmgp_dir = download_rrtmgp_data()
+            dataset = xr.load_dataset(
+                os.path.join(rte_rrtmgp_dir, gas_optics_file.value)
+            )
+        else:
+            raise ValueError("Either file_path or gas_optics_file must be provided")
+
+        dataset.attrs["selected_gases"] = selected_gases
         """Return either the LW or SW accessor depending on dataset contents."""
         # Check if source is internal by looking for required LW variables
         is_internal: bool = (
-            "totplnk" in xarray_obj.data_vars
-            and "plank_fraction" in xarray_obj.data_vars
+            "totplnk" in dataset.data_vars and "plank_fraction" in dataset.data_vars
         )
 
         if is_internal:
             return cast(
-                GasOpticsAccessor,
-                LWGasOpticsAccessor(xarray_obj, is_internal, selected_gases),
+                GasOptics,
+                LWGasOpticsAccessor(dataset, is_internal, selected_gases),
             )
         else:
             return cast(
-                GasOpticsAccessor,
-                SWGasOpticsAccessor(xarray_obj, is_internal, selected_gases),
+                GasOptics,
+                SWGasOpticsAccessor(dataset, is_internal, selected_gases),
             )

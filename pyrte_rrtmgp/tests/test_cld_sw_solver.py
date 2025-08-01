@@ -1,7 +1,6 @@
 import netCDF4  # noqa (avoids warning https://github.com/pydata/xarray/issues/7259)
 
 from pyrte_rrtmgp import rrtmgp_cloud_optics
-from pyrte_rrtmgp import rrtmgp_gas_optics
 
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
@@ -17,6 +16,7 @@ from pyrte_rrtmgp.examples import (
 )
 
 from pyrte_rrtmgp import rte
+from pyrte_rrtmgp.rrtmgp import GasOptics
 
 import xarray as xr
 import numpy as np
@@ -66,12 +66,12 @@ def test_sw_solver_with_clouds() -> None:
     clouds_optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere)
 
     # Load gas optics and add SW-specific properties
-    gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_sw = GasOptics(
         gas_optics_file=GasOpticsFiles.SW_G224
     )
 
     # Calculate gas optical properties
-    optical_props = gas_optics_sw.compute_gas_optics(
+    optical_props = gas_optics_sw.compute(
         atmosphere,
         problem_type=OpticsTypes.TWO_STREAM,
         add_to_input=False
@@ -131,12 +131,12 @@ def test_sw_solver_with_clouds_dask() -> None:
     clouds_optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere)
 
     # Load gas optics and add SW-specific properties
-    gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_sw = GasOptics(
         gas_optics_file=GasOpticsFiles.SW_G224
     )
 
     # Calculate gas optical properties
-    optical_props = gas_optics_sw.compute_gas_optics(
+    optical_props = gas_optics_sw.compute(
         atmosphere,
         problem_type=OpticsTypes.TWO_STREAM,
         add_to_input=False

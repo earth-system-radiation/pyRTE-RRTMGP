@@ -40,13 +40,14 @@ import xarray as xr
 import intake
 
 # %%
-from pyrte_rrtmgp import rrtmgp_cloud_optics, rrtmgp_gas_optics
+from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
 from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp import rte
+from pyrte_rrtmgp.rrtmgp import GasOptics
 
 # %%
 import warnings
@@ -210,14 +211,14 @@ atmosphere
 cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
     cloud_optics_file=CloudOpticsFiles.LW_BND
 )
-gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+gas_optics_lw = GasOptics(
     gas_optics_file=GasOpticsFiles.LW_G256
 )
 
 cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
     cloud_optics_file=CloudOpticsFiles.SW_BND
 )
-gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
+gas_optics_sw = GasOptics(
     gas_optics_file=GasOpticsFiles.SW_G224
 )
 
@@ -241,7 +242,7 @@ gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
 #   Not clear that this is running in parallel 
 #   And there are some NaNs in the tau field... that's bad
 #
-sw_optics = gas_optics_sw.compute_gas_optics(
+sw_optics = gas_optics_sw.compute(
                 atmosphere,
                 problem_type=OpticsTypes.TWO_STREAM, 
                 add_to_input=False,
@@ -268,7 +269,7 @@ sw_optics["tau"].isel(cell=100, layer=-1).where(xr.ufuncs.isnan(sw_optics["tau"]
 #   Produces non-zero values of tau for 256 gpts 
 #   Doesn't work full stop with 128 gpts
 #
-lw_optics = gas_optics_lw.compute_gas_optics(
+lw_optics = gas_optics_lw.compute(
                 atmosphere,
                 problem_type=OpticsTypes.ABSORPTION, 
                 add_to_input=False,
@@ -311,7 +312,7 @@ sw_fluxes = xr.merge(
             problem_type=OpticsTypes.TWO_STREAM, 
          )\
          .rte.add_to(
-             gas_optics_sw.compute_gas_optics(
+             gas_optics_sw.compute(
                     atmosphere,
                     problem_type=OpticsTypes.TWO_STREAM, 
                     add_to_input=False,
@@ -336,7 +337,7 @@ lw_fluxes = xr.merge(
             problem_type=OpticsTypes.ABSORPTION, 
          )\
          .rte.add_to(
-             gas_optics_lw.compute_gas_optics(
+             gas_optics_lw.compute(
                     atmosphere,
                     problem_type=OpticsTypes.ABSORPTION, 
                     add_to_input=False,

@@ -5,7 +5,6 @@ import numpy as np
 import dask.array as da
 
 from pyrte_rrtmgp import rrtmgp_cloud_optics
-from pyrte_rrtmgp import rrtmgp_gas_optics
 
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
@@ -21,6 +20,7 @@ from pyrte_rrtmgp.examples import (
 )
 
 from pyrte_rrtmgp import rte
+from pyrte_rrtmgp.rrtmgp import GasOptics
 
 
 def test_lw_solver_with_clouds() -> None:
@@ -61,10 +61,10 @@ def test_lw_solver_with_clouds() -> None:
     )
 
     # Calculate gas optical properties
-    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_lw = GasOptics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
-    optical_props = gas_optics_lw.compute_gas_optics(
+    optical_props = gas_optics_lw.compute(
         atmosphere,
         problem_type=OpticsTypes.ABSORPTION,
         add_to_input=False
@@ -134,12 +134,12 @@ def test_lw_solver_with_clouds_dask() -> None:
     assert isinstance(clouds_optical_props["tau"].data, da.Array)
 
     # Calculate gas optical properties
-    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_lw = GasOptics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
 
     # TODO: I don't think dask works with compute_gas_optics
-    optical_props = gas_optics_lw.compute_gas_optics(
+    optical_props = gas_optics_lw.compute(
         atmosphere,
         problem_type=OpticsTypes.ABSORPTION,
         add_to_input=False
