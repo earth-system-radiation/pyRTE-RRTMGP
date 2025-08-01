@@ -310,7 +310,7 @@ sw_fluxes = xr.merge(
             atmosphere, 
             problem_type=OpticsProblemTypes.TWO_STREAM, 
          )\
-         .add_to(
+         .rte.add_to(
              gas_optics_sw.compute_gas_optics(
                     atmosphere,
                     problem_type=OpticsProblemTypes.TWO_STREAM, 
@@ -335,7 +335,7 @@ lw_fluxes = xr.merge(
             atmosphere, 
             problem_type=OpticsProblemTypes.ABSORPTION, 
          )\
-         .add_to(
+         .rte.add_to(
              gas_optics_lw.compute_gas_optics(
                     atmosphere,
                     problem_type=OpticsProblemTypes.ABSORPTION, 

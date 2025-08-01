@@ -31,10 +31,10 @@ pyrte\_rrtmgp.utils module
    :undoc-members:
    :show-inheritance:
 
-pyrte\_rrtmgp.rte_solver module
+pyrte\_rrtmgp.rte module
 -------------------------------
 
-.. automodule:: pyrte_rrtmgp.rte_solver
+.. automodule:: pyrte_rrtmgp.rte
    :members:
    :undoc-members:
    :show-inheritance:
