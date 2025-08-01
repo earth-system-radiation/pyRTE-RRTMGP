@@ -151,7 +151,7 @@ clouds_optical_props
 
 # %%
 # add_to() changes the value of `optical_props`
-clouds_optical_props.add_to(optical_props)
+clouds_optical_props.rte.add_to(optical_props)
 optical_props
 
 # %% [markdown]
@@ -224,7 +224,7 @@ optical_props = gas_optics_sw.compute_gas_optics(
     atmosphere, problem_type=OpticsProblemTypes.TWO_STREAM, add_to_input=False
 )
 # add_to() changes the values in optical_props
-cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
+cloud_optics_sw.compute_cloud_optics(atmosphere).rte.add_to(
     optical_props, delta_scale=True
 )
 #

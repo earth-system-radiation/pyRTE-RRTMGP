@@ -7,7 +7,20 @@ import xarray as xr
 from numpy.typing import NDArray
 
 from pyrte_rrtmgp.data_types import ProblemTypes
-from pyrte_rrtmgp.kernels.rte import lw_solver_noscat, sw_solver_2stream
+from pyrte_rrtmgp.kernels.rte import (
+    delta_scale_2str,
+    delta_scale_2str_f,
+    inc_1scalar_by_1scalar_bybnd,
+    inc_1scalar_by_2stream_bybnd,
+    inc_2stream_by_1scalar_bybnd,
+    inc_2stream_by_2stream_bybnd,
+    increment_1scalar_by_1scalar,
+    increment_1scalar_by_2stream,
+    increment_2stream_by_1scalar,
+    increment_2stream_by_2stream,
+    lw_solver_noscat,
+    sw_solver_2stream,
+)
 from pyrte_rrtmgp.utils import expand_variable_dims
 
 
@@ -409,3 +422,324 @@ class RTEAccessor:
             self._ds.update(fluxes)
             return None
         return fluxes
+
+    def add_to(
+        self: xr.Dataset, other: xr.Dataset, delta_scale: bool = False
+    ) -> xr.Dataset:
+        """
+        Combine two sets of optical properties.
+
+        This function need not commute: it's possible to add low
+        spectral resolution optical properties to those at a higher
+        spectral resolution but not the other way around.
+
+        Args:
+            other: Second set of optical properties to add.
+
+        Returns:
+            xr.Dataset: Combined optical properties.
+        """
+        op1 = self._ds
+        op2 = other
+
+        layer_dim = op2.mapping.get_dim("layer")
+        level_dim = op2.mapping.get_dim("level")
+        gpt_dim = "gpt"
+        bnd_dim = "bnd"
+
+        non_default_dims = [
+            d
+            for d in op2.dims
+            if d not in [layer_dim, level_dim, gpt_dim, bnd_dim, "pair"]
+        ]
+        op1 = op1.stack({"stacked_cols": non_default_dims})
+        op2 = op2.stack({"stacked_cols": non_default_dims})
+
+        for var in ["tau", "ssa", "g"]:
+            if var in op1.data_vars:
+                gpt_dim = "gpt" if "gpt" in op1[var].sizes else "bnd"
+                transposed_data = op1[var].transpose("stacked_cols", "layer", gpt_dim)
+                op1[var] = (["stacked_cols", "layer", gpt_dim], transposed_data.values)
+                op1[var].values = np.asfortranarray(op1[var].values)
+            if var in op2.data_vars:
+                gpt_dim = "gpt" if "gpt" in op2[var].sizes else "bnd"
+                transposed_data = op2[var].transpose("stacked_cols", "layer", gpt_dim)
+                op2[var] = (["stacked_cols", "layer", gpt_dim], transposed_data.values)
+                op2[var].values = np.asfortranarray(op2[var].values)
+
+        if delta_scale:
+            self.delta_scale_optical_props(op1)
+
+        nlay = op2.sizes[layer_dim]
+        ngpt = op2.sizes[gpt_dim]
+
+        # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
+        is_1stream_1 = "tau" in list(op1.data_vars) and "ssa" not in list(op1.data_vars)
+        is_1stream_2 = "tau" in list(op2.data_vars) and "ssa" not in list(op2.data_vars)
+
+        if "gpt" in op1["tau"].sizes:
+            if is_1stream_1:
+                if is_1stream_2:
+                    # 1-stream by 1-stream
+                    xr.apply_ufunc(
+                        increment_1scalar_by_1scalar,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op1["tau"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # tau_in
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+                else:
+                    # 1-stream by 2-stream
+                    xr.apply_ufunc(
+                        increment_1scalar_by_2stream,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op1["tau"],
+                        op1["ssa"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # ssa_in
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+            else:  # 2-stream output
+                if is_1stream_2:
+                    # 2-stream by 1-stream
+                    xr.apply_ufunc(
+                        increment_2stream_by_1scalar,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op2["ssa"],
+                        op1["tau"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # tau_in
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+                else:
+                    # 2-stream by 2-stream
+                    xr.apply_ufunc(
+                        increment_2stream_by_2stream,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op2["ssa"],
+                        op2["g"],
+                        op1["tau"],
+                        op1["ssa"],
+                        op1["g"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # g_inout
+                            ["layer", "gpt"],  # tau_in
+                            ["layer", "gpt"],  # ssa_in
+                            ["layer", "gpt"],  # g_in
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+        else:
+            # By-band increment (when op2's ngpt equals op1's nband)
+            if op2.sizes["bnd"] != op1.sizes["bnd"]:
+                raise ValueError(
+                    "Incompatible g-point structures for by-band increment"
+                )
+
+            if is_1stream_1:
+                if is_1stream_2:
+                    # 1-stream by 1-stream by band
+                    xr.apply_ufunc(
+                        inc_1scalar_by_1scalar_bybnd,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op1["tau"],
+                        op2.sizes["bnd"],
+                        op2["bnd_limits_gpt"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "bnd"],  # tau_in
+                            [],  # nbnd
+                            ["pair", "bnd"],  # band_lims_gpoint
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+                else:
+                    # 1-stream by 2-stream by band
+                    xr.apply_ufunc(
+                        inc_1scalar_by_2stream_bybnd,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op1["tau"],
+                        op1["ssa"],
+                        op2.sizes["bnd"],
+                        op2["bnd_limits_gpt"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "bnd"],  # tau_in
+                            ["layer", "bnd"],  # ssa_in
+                            [],  # nbnd
+                            ["pair", "bnd"],  # bnd_limits_gpt
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+            else:
+                if is_1stream_2:
+                    # 2-stream by 1-stream by band
+                    xr.apply_ufunc(
+                        inc_2stream_by_1scalar_bybnd,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op2["ssa"],
+                        op1["tau"],
+                        op2.sizes["bnd"],
+                        op2["bnd_limits_gpt"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "bnd"],  # tau_in
+                            [],  # nbnd
+                            ["pair", "bnd"],  # band_lims_gpoint
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+                else:
+                    # 2-stream by 2-stream by band
+                    xr.apply_ufunc(
+                        inc_2stream_by_2stream_bybnd,
+                        nlay,
+                        ngpt,
+                        op2["tau"],
+                        op2["ssa"],
+                        op2["g"],
+                        op1["tau"],
+                        op1["ssa"],
+                        op1["g"],
+                        op2.sizes["bnd"],
+                        op2["bnd_limits_gpt"],
+                        input_core_dims=[
+                            [],  # nlay
+                            [],  # ngpt
+                            ["layer", "gpt"],  # tau_inout
+                            ["layer", "gpt"],  # ssa_inout
+                            ["layer", "gpt"],  # g_inout
+                            ["layer", "bnd"],  # tau_in
+                            ["layer", "bnd"],  # ssa_in
+                            ["layer", "bnd"],  # g_in
+                            [],  # nbnd
+                            ["pair", "bnd"],  # band_lims_gpoint
+                        ],
+                        output_dtypes=[np.float64],
+                        dask="parallelized",
+                    )
+
+        for var in ["tau", "ssa", "g"]:
+            if var in op2.data_vars:
+                other[var] = op2[var].unstack("stacked_cols")
+
+        return other
+
+    def delta_scale_optical_props(
+        self, optical_props: xr.Dataset, forward_scattering: np.ndarray | None = None
+    ) -> xr.Dataset:
+        """Apply delta scaling to 2-stream optical properties.
+
+        Args:
+            optical_props: xarray Dataset containing tau, ssa, and g variables
+            forward_scattering: Optional array of forward scattering fraction
+            (g**2 if not provided) Must have shape (ncol, nlay, ngpt) if provided
+
+        Raises:
+            ValueError: If forward_scattering array has incorrect dimensions or values
+            outside [0,1]
+        """
+        # Get dimensions
+        layer_dim = optical_props.mapping.get_dim("layer")
+        nlay = optical_props.sizes[layer_dim]
+
+        gpt_dim = "gpt" if "gpt" in optical_props.sizes else "bnd"
+        ngpt = optical_props.sizes[gpt_dim]
+
+        for var in ["tau", "ssa", "g"]:
+            if var in optical_props.data_vars:
+                transposed_data = optical_props[var].transpose(
+                    "stacked_cols", layer_dim, gpt_dim
+                )
+                optical_props[var] = (
+                    ["stacked_cols", layer_dim, gpt_dim],
+                    transposed_data.values,
+                )
+                optical_props[var].values = np.asfortranarray(optical_props[var].values)
+
+        # Call kernel with forward scattering
+        if forward_scattering is not None:
+            xr.apply_ufunc(
+                delta_scale_2str_f,
+                nlay,
+                ngpt,
+                optical_props["tau"],
+                optical_props["ssa"],
+                optical_props["g"],
+                forward_scattering,
+                input_core_dims=[
+                    [],  # nlay
+                    [],  # ngpt
+                    [layer_dim, gpt_dim],  # tau
+                    [layer_dim, gpt_dim],  # ssa
+                    [layer_dim, gpt_dim],  # g
+                    [layer_dim, gpt_dim],  # f
+                ],
+                output_dtypes=[np.float64],
+                dask="parallelized",
+            )
+        else:
+            xr.apply_ufunc(
+                delta_scale_2str,
+                nlay,
+                ngpt,
+                optical_props["tau"],
+                optical_props["ssa"],
+                optical_props["g"],
+                input_core_dims=[
+                    [],  # nlay
+                    [],  # ngpt
+                    [layer_dim, gpt_dim],  # tau
+                    [layer_dim, gpt_dim],  # ssa
+                    [layer_dim, gpt_dim],  # g
+                ],
+                output_dtypes=[np.float64],
+                dask="parallelized",
+            )

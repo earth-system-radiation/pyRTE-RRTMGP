@@ -222,7 +222,7 @@ clouds_optical_props
 
 # %%
 # add_to() changes the value of `optical_props`
-clouds_optical_props.add_to(optical_props)
+clouds_optical_props.rte.add_to(optical_props)
 optical_props
 
 # %%
@@ -246,12 +246,13 @@ if do_plots:
 
 # %%
 # add_to() also returns updated optical properties 
-optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
-    gas_optics_sw.compute_gas_optics(
-        atmosphere, 
-        problem_type=OpticsProblemTypes.TWO_STREAM, 
-        add_to_input=False,
-    ), 
+optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere).\
+    rte.add_to(
+        gas_optics_sw.compute_gas_optics(
+            atmosphere, 
+            problem_type=OpticsProblemTypes.TWO_STREAM, 
+            add_to_input=False,
+        ), 
     delta_scale=True,
 )
 
@@ -295,7 +296,8 @@ if do_plots:
 
 # %%
 fluxes = xr.merge(
-            [cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
+            [cloud_optics_sw.compute_cloud_optics(atmosphere).
+            rte.add_to(
                 gas_optics_sw.compute_gas_optics(
                     atmosphere, 
                     problem_type=OpticsProblemTypes.TWO_STREAM, 
@@ -323,7 +325,7 @@ atmosphere
 # %%
 with ProgressBar():
     fluxes = xr.merge(
-            [cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
+            [cloud_optics_sw.compute_cloud_optics(atmosphere).rte.add_to(
                 gas_optics_sw.compute_gas_optics(
                     atmosphere, 
                     problem_type=OpticsProblemTypes.TWO_STREAM, 

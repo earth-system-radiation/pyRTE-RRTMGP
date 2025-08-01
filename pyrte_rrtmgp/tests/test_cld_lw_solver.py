@@ -71,7 +71,7 @@ def test_lw_solver_with_clouds() -> None:
     )
     optical_props["surface_emissivity"] = 0.98
 
-    fluxes = clouds_optical_props.add_to(optical_props).rte.solve(
+    fluxes = clouds_optical_props.rte.add_to(optical_props).rte.solve(
                        add_to_input=False)
     assert fluxes is not None
 
@@ -149,7 +149,7 @@ def test_lw_solver_with_clouds_dask() -> None:
     # TODO: When chunking the optical_props values final isclose asserts
     # optical_props = optical_props.chunk("auto")
 
-    problem_ds = clouds_optical_props.add_to(optical_props)
+    problem_ds = clouds_optical_props.rte.add_to(optical_props)
     assert isinstance(problem_ds, xr.Dataset)
 
     # TODO: tau should probably be dask array?
