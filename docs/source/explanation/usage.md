@@ -122,8 +122,8 @@ In this case, the radiative transfer calculations will be executed independently
 ### 4. Computing gas optics using the {class}`compute_gas_optics<pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor>` accessor
 
 This function can handle two different types of problems:
-* {data}`~pyrte_rrtmgp.data_types.OpticsProblemTypes.ABSORPTION` (longwave)
-* {data}`~pyrte_rrtmgp.data_types.OpticsProblemTypes.TWO_STREAM` (shortwave)
+* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.ABSORPTION` (longwave)
+* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.TWO_STREAM` (shortwave)
 
 Use a mapping dictionary to map gas names to their corresponding indices in the atmosphere data. For example:
 
@@ -145,7 +145,7 @@ With the atmosphere data and the gas mapping dictionary, you can compute the gas
 ```python
 gas_optics = rrtmgp_gas_optics.compute_gas_optics(
     atmosphere,
-    problem_type=OpticsProblemTypes.ABSORPTION,
+    problem_type=OpticsTypes.ABSORPTION,
     gas_name_map=gas_mapping,
 )
 ```
@@ -168,13 +168,13 @@ They are defined in the `layer` dimension. Similar to the gas optics atmosphere,
 You can compute the cloud optics using {class}`compute_cloud_optics<pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor>`.
 
 This function can handle two different types of problems:
-* {data}`~pyrte_rrtmgp.data_types.OpticsProblemTypes.ABSORPTION` (longwave)
-* {data}`~pyrte_rrtmgp.data_types.OpticsProblemTypes.TWO_STREAM` (shortwave)
+* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.ABSORPTION` (longwave)
+* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.TWO_STREAM` (shortwave)
 
 ```python
 cloud_optics = rrtmgp_cloud_optics.compute_cloud_optics(
     atmosphere,
-    problem_type=problem_type=OpticsProblemTypes.ABSORPTION,
+    problem_type=problem_type=OpticsTypes.ABSORPTION,
 )
 ```
 

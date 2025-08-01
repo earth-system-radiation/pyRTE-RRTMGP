@@ -66,7 +66,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
+from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.examples import (
     compute_RCE_clouds,
@@ -167,7 +167,7 @@ atmosphere
 # %%
 optical_props = gas_optics_lw.compute_gas_optics(
     atmosphere, 
-    problem_type=OpticsProblemTypes.ABSORPTION, 
+    problem_type=OpticsTypes.ABSORPTION, 
     add_to_input=False,
 )
 
@@ -212,7 +212,7 @@ if do_plots:
 
 # %%
 clouds_optical_props = cloud_optics_lw.compute_cloud_optics(
-    atmosphere, problem_type=OpticsProblemTypes.ABSORPTION
+    atmosphere, problem_type=OpticsTypes.ABSORPTION
 )
 # The optical properties of the clouds alone
 clouds_optical_props
@@ -250,7 +250,7 @@ optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere).\
     rte.add_to(
         gas_optics_sw.compute_gas_optics(
             atmosphere, 
-            problem_type=OpticsProblemTypes.TWO_STREAM, 
+            problem_type=OpticsTypes.TWO_STREAM, 
             add_to_input=False,
         ), 
     delta_scale=True,
@@ -300,7 +300,7 @@ fluxes = xr.merge(
             rte.add_to(
                 gas_optics_sw.compute_gas_optics(
                     atmosphere, 
-                    problem_type=OpticsProblemTypes.TWO_STREAM, 
+                    problem_type=OpticsTypes.TWO_STREAM, 
                     add_to_input=False,
                 ), 
                 delta_scale=True,
@@ -328,7 +328,7 @@ with ProgressBar():
             [cloud_optics_sw.compute_cloud_optics(atmosphere).rte.add_to(
                 gas_optics_sw.compute_gas_optics(
                     atmosphere, 
-                    problem_type=OpticsProblemTypes.TWO_STREAM, 
+                    problem_type=OpticsTypes.TWO_STREAM, 
                     add_to_input=False,
                 ), 
                 delta_scale=True,

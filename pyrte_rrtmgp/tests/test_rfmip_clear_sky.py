@@ -5,7 +5,7 @@ import xarray as xr
 import pytest
 from typing import Dict, Optional, Any
 
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
+from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp.rrtmgp_data_files import GasOpticsFiles
 from pyrte_rrtmgp.examples import (
     load_example_file,
@@ -31,7 +31,7 @@ def _load_reference_data() -> xr.Dataset:
 # Ideally we would tell mypy that gas_optics is an xarray accessor...
 def _test_get_fluxes_from_RFMIP_atmospheres(
                  gas_optics: Any,
-                 problem_type: OpticsProblemTypes,
+                 problem_type: OpticsTypes,
                  gas_name_mapping: Optional[dict[str, str]] = None,
                  use_dask: bool = False) -> xr.Dataset:
     """Runs RFMIP clear-sky examples to exercise gas optics, solvers, and gas mapping """
@@ -40,7 +40,7 @@ def _test_get_fluxes_from_RFMIP_atmospheres(
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})
 
-    if problem_type not in OpticsProblemTypes:
+    if problem_type not in OpticsTypes:
         raise(ValueError)
 
     if gas_name_mapping is None:
@@ -62,15 +62,15 @@ def _test_get_fluxes_from_RFMIP_atmospheres(
     return fluxes
 
 def _test_verify_rfmip_clr_sky(
-        problem_type: OpticsProblemTypes,
+        problem_type: OpticsTypes,
         use_dask: bool = False) -> None:
     """Runs RFMIP clear-sky examples and compares to reference results."""
 
-    if problem_type not in OpticsProblemTypes:
+    if problem_type not in OpticsTypes:
         raise(ValueError)
 
     # Load gas optics
-    if problem_type is OpticsProblemTypes.ABSORPTION:
+    if problem_type is OpticsTypes.ABSORPTION:
         gas_optics = rrtmgp_gas_optics.load_gas_optics(
             gas_optics_file = GasOpticsFiles.LW_G256,
         )
@@ -101,7 +101,7 @@ def _test_verify_rfmip_clr_sky(
     ref_fluxes = _load_reference_data()
 
     # Compare results with reference data
-    if problem_type is OpticsProblemTypes.ABSORPTION:
+    if problem_type is OpticsTypes.ABSORPTION:
         assert np.allclose(fluxes["lw_flux_up"].transpose("expt", "site", "level"),
                           ref_fluxes["rlu"],
                           atol=ERROR_TOLERANCE)
@@ -123,28 +123,28 @@ def _test_verify_rfmip_clr_sky(
 def test_verify_rfmip_lw() -> None:
     """ RFMIP test cases, verify against reference results, no dask."""
     _test_verify_rfmip_clr_sky(
-        problem_type = OpticsProblemTypes.ABSORPTION,
+        problem_type = OpticsTypes.ABSORPTION,
         use_dask = False,
         )
 
 def test_verify_rfmip_lw_dask() -> None:
     """ RFMIP test cases, verify against reference results, use dask."""
     _test_verify_rfmip_clr_sky(
-        problem_type = OpticsProblemTypes.ABSORPTION,
+        problem_type = OpticsTypes.ABSORPTION,
         use_dask = True,
         )
 
 def test_verify_rfmip_sw() -> None:
     """ RFMIP test cases, verify against reference results, no dask."""
     _test_verify_rfmip_clr_sky(
-        problem_type = OpticsProblemTypes.TWO_STREAM,
+        problem_type = OpticsTypes.TWO_STREAM,
         use_dask = False,
         )
 
 def test_verify_rfmip_sw_dask() -> None:
     """ RFMIP test cases, verify against reference results, use dask."""
     _test_verify_rfmip_clr_sky(
-        problem_type = OpticsProblemTypes.TWO_STREAM,
+        problem_type = OpticsTypes.TWO_STREAM,
         use_dask = True,
         )
 
@@ -156,7 +156,7 @@ def test_rfmip_lw_reduced_gases() -> None:
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
         gas_optics_lw,
-        problem_type = OpticsProblemTypes.ABSORPTION,
+        problem_type = OpticsTypes.ABSORPTION,
         gas_name_mapping = RFMIP_GAS_MAPPING_SMALL,
     )
 
@@ -168,7 +168,7 @@ def test_rfmip_lw128() -> None:
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
         gas_optics_lw,
-        problem_type = OpticsProblemTypes.ABSORPTION,
+        problem_type = OpticsTypes.ABSORPTION,
     )
 
 def test_rfmip_sw_reduced_gases() -> None:
@@ -179,7 +179,7 @@ def test_rfmip_sw_reduced_gases() -> None:
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
         gas_optics_sw,
-        problem_type = OpticsProblemTypes.TWO_STREAM,
+        problem_type = OpticsTypes.TWO_STREAM,
         gas_name_mapping = RFMIP_GAS_MAPPING_SMALL,
     )
 
@@ -191,7 +191,7 @@ def test_rfmip_sw112() -> None:
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
         gas_optics_sw,
-        problem_type = OpticsProblemTypes.TWO_STREAM,
+        problem_type = OpticsTypes.TWO_STREAM,
     )
 
 if False:
@@ -215,6 +215,6 @@ def test_rfmip_sw112_reduced_gases() -> None:
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
         gas_optics_sw,
-        problem_type = OpticsProblemTypes.TWO_STREAM,
+        problem_type = OpticsTypes.TWO_STREAM,
         gas_name_mapping = RFMIP_GAS_MAPPING_SMALL,
     )

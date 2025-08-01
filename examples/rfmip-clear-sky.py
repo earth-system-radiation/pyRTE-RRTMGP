@@ -52,7 +52,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
+from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.examples import RFMIP_FILES, load_example_file
 
@@ -130,7 +130,7 @@ gas_mapping = {
 # %%
 optical_props = gas_optics_lw.compute_gas_optics(
     atmosphere,
-    problem_type=OpticsProblemTypes.ABSORPTION,
+    problem_type=OpticsTypes.ABSORPTION,
     gas_name_map=gas_mapping,
     add_to_input = False,
 )
@@ -144,7 +144,7 @@ optical_props
 # %%
 gas_optics_sw.compute_gas_optics(
     atmosphere,
-    problem_type=OpticsProblemTypes.TWO_STREAM,
+    problem_type=OpticsTypes.TWO_STREAM,
     gas_name_map=gas_mapping,
 )
 atmosphere

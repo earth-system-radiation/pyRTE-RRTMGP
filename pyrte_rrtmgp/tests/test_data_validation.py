@@ -4,7 +4,7 @@ import pytest
 import xarray as xr
 
 from pyrte_rrtmgp.rrtmgp_data_files import GasOpticsFiles
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
+from pyrte_rrtmgp.data_types import OpticsTypes
 
 from pyrte_rrtmgp.examples import RFMIP_FILES
 from pyrte_rrtmgp.examples import load_example_file
@@ -34,7 +34,7 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
 
     gas_optics_lw.compute_gas_optics(
         atmosphere,
-        problem_type=OpticsProblemTypes.ABSORPTION,
+        problem_type=OpticsTypes.ABSORPTION,
         gas_name_map=gas_mapping,
     )
 
@@ -80,7 +80,7 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
     with pytest.raises(ValueError):
         gas_optics_lw.compute_gas_optics(
             atmosphere,
-            problem_type=OpticsProblemTypes.ABSORPTION,
+            problem_type=OpticsTypes.ABSORPTION,
             gas_name_map=gas_mapping
         )
 

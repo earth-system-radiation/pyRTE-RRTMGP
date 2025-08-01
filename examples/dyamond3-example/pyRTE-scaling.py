@@ -45,7 +45,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
+from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp import rte
 
 # %%
@@ -243,7 +243,7 @@ gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
 #
 sw_optics = gas_optics_sw.compute_gas_optics(
                 atmosphere,
-                problem_type=OpticsProblemTypes.TWO_STREAM, 
+                problem_type=OpticsTypes.TWO_STREAM, 
                 add_to_input=False,
 )
 
@@ -270,7 +270,7 @@ sw_optics["tau"].isel(cell=100, layer=-1).where(xr.ufuncs.isnan(sw_optics["tau"]
 #
 lw_optics = gas_optics_lw.compute_gas_optics(
                 atmosphere,
-                problem_type=OpticsProblemTypes.ABSORPTION, 
+                problem_type=OpticsTypes.ABSORPTION, 
                 add_to_input=False,
 )
 
@@ -283,7 +283,7 @@ lw_optics = gas_optics_lw.compute_gas_optics(
 #
 sw_cld_optics = cloud_optics_lw.compute_cloud_optics(
     atmosphere, 
-    problem_type=OpticsProblemTypes.TWO_STREAM
+    problem_type=OpticsTypes.TWO_STREAM
 )
 sw_cld_optics["tau"]
 
@@ -293,7 +293,7 @@ sw_cld_optics["tau"]
 #
 lw_cld_optics = cloud_optics_lw.compute_cloud_optics(
     atmosphere, 
-    problem_type=OpticsProblemTypes.ABSORPTION
+    problem_type=OpticsTypes.ABSORPTION
 )
 lw_cld_optics["tau"]
 
@@ -308,12 +308,12 @@ lw_cld_optics["tau"]
 sw_fluxes = xr.merge(
         [cloud_optics_sw.compute_cloud_optics(
             atmosphere, 
-            problem_type=OpticsProblemTypes.TWO_STREAM, 
+            problem_type=OpticsTypes.TWO_STREAM, 
          )\
          .rte.add_to(
              gas_optics_sw.compute_gas_optics(
                     atmosphere,
-                    problem_type=OpticsProblemTypes.TWO_STREAM, 
+                    problem_type=OpticsTypes.TWO_STREAM, 
                     add_to_input=False,
              ),
              delta_scale = True,
@@ -333,12 +333,12 @@ sw_fluxes = xr.merge(
 lw_fluxes = xr.merge(
         [cloud_optics_lw.compute_cloud_optics(
             atmosphere, 
-            problem_type=OpticsProblemTypes.ABSORPTION, 
+            problem_type=OpticsTypes.ABSORPTION, 
          )\
          .rte.add_to(
              gas_optics_lw.compute_gas_optics(
                     atmosphere,
-                    problem_type=OpticsProblemTypes.ABSORPTION, 
+                    problem_type=OpticsTypes.ABSORPTION, 
                     add_to_input=False,
              ), 
          ), 

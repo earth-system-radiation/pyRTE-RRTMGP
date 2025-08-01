@@ -24,7 +24,7 @@ class ProblemTypes(StrEnum):
     """Shortwave two-stream approximation calculation"""
 
 
-class OpticsProblemTypes(StrEnum):
+class OpticsTypes(StrEnum):
     """Enumeration of available optics problem types.
 
     This enum defines the different types of optics problems that can be
