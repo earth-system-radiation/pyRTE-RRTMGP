@@ -53,7 +53,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     GasOpticsFiles,
 )
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.examples import RFMIP_FILES, load_example_file
 
 # %% [markdown]
@@ -168,13 +168,11 @@ optical_props["surface_emissivity"] = atmosphere.surface_emissivity
 # All the arrays for the shortwave are in the same dataset
 
 # %%
-lw_fluxes = rte_solve(
-	optical_props, 
+lw_fluxes = optical_props.rte.solve(
 	add_to_input=False, 
 )
 
-rte_solve(atmosphere)
-
+atmosphere.rte.solve() 
 
 # %% [markdown]
 # ## Check the results against the reference solutions 

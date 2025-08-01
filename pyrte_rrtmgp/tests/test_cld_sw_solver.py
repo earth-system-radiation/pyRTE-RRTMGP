@@ -16,7 +16,7 @@ from pyrte_rrtmgp.examples import (
     load_example_file,
 )
 
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
 
 import xarray as xr
 import numpy as np
@@ -82,7 +82,7 @@ def test_sw_solver_with_clouds() -> None:
     optical_props["surface_albedo_diffuse"] = 0.06
     optical_props["mu0"] = 0.86
 
-    fluxes = rte_solve(clouds_optical_props.add_to(optical_props, delta_scale=True),
+    fluxes = clouds_optical_props.add_to(optical_props, delta_scale=True).rte.solve(
                        add_to_input=False)
     assert fluxes is not None
 
@@ -147,7 +147,7 @@ def test_sw_solver_with_clouds_dask() -> None:
     optical_props["surface_albedo_diffuse"] = 0.06
     optical_props["mu0"] = 0.86
 
-    fluxes = rte_solve(clouds_optical_props.add_to(optical_props, delta_scale=True),
+    fluxes = clouds_optical_props.add_to(optical_props, delta_scale=True).rte.solve(
                        add_to_input=False)
     assert fluxes is not None
 

@@ -18,7 +18,7 @@ from pyrte_rrtmgp.tests import (
 )
 
 from pyrte_rrtmgp import rrtmgp_gas_optics
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
 
 def _load_reference_data() -> xr.Dataset:
      return xr.merge([
@@ -54,7 +54,7 @@ def _test_get_fluxes_from_RFMIP_atmospheres(
     )
 
     # Solve RTE
-    fluxes: xr.Dataset = rte_solve(atmosphere, add_to_input=False)
+    fluxes: xr.Dataset = atmosphere.rte.solve(add_to_input=False)
 
     assert fluxes is not None
     assert ~xr.ufuncs.isnan(fluxes).any()
@@ -95,7 +95,7 @@ def _test_verify_rfmip_clr_sky(
         gas_name_map=RFMIP_GAS_MAPPING,
     )
     # Solve RTE
-    fluxes: xr.Dataset = rte_solve(atmosphere, add_to_input=False)
+    fluxes: xr.Dataset = atmosphere.rte.solve(add_to_input=False)
 
     # Load reference data (why only a single experiment?)
     ref_fluxes = _load_reference_data()

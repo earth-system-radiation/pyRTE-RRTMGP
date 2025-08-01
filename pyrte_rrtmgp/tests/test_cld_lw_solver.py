@@ -20,7 +20,7 @@ from pyrte_rrtmgp.examples import (
     load_example_file,
 )
 
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
 
 
 def test_lw_solver_with_clouds() -> None:
@@ -71,7 +71,7 @@ def test_lw_solver_with_clouds() -> None:
     )
     optical_props["surface_emissivity"] = 0.98
 
-    fluxes = rte_solve(clouds_optical_props.add_to(optical_props),
+    fluxes = clouds_optical_props.add_to(optical_props).rte.solve(
                        add_to_input=False)
     assert fluxes is not None
 
@@ -155,7 +155,7 @@ def test_lw_solver_with_clouds_dask() -> None:
     # TODO: tau should probably be dask array?
     # assert isinstance(problem_ds["tau"].data, da.Array)
 
-    fluxes = rte_solve(problem_ds, add_to_input=False)
+    fluxes = problem_ds.rte.solve(add_to_input=False)
 
     assert isinstance(fluxes, xr.Dataset)
     # TODO: fluxes output is not dask array

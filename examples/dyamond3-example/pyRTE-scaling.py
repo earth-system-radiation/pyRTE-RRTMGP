@@ -46,7 +46,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     GasOpticsFiles,
 )
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
 
 # %%
 import warnings
@@ -305,8 +305,7 @@ lw_cld_optics["tau"]
 #
 # Shortwave fluxes 
 # 
-sw_fluxes = rte_solve(
-    xr.merge(
+sw_fluxes = xr.merge(
         [cloud_optics_sw.compute_cloud_optics(
             atmosphere, 
             problem_type=OpticsProblemTypes.TWO_STREAM, 
@@ -323,16 +322,15 @@ sw_fluxes = rte_solve(
                                 "mu0":0.86}
                    ),
         ],
-    ),
-    add_to_input = False,
+    ).
+    rte.solve(add_to_input = False,
 )
 
 # %%
 #
 # Longwave fluxes 
 # 
-lw_fluxes = rte_solve(
-    xr.merge(
+lw_fluxes = xr.merge(
         [cloud_optics_lw.compute_cloud_optics(
             atmosphere, 
             problem_type=OpticsProblemTypes.ABSORPTION, 
@@ -346,7 +344,7 @@ lw_fluxes = rte_solve(
          ), 
         xr.Dataset(data_vars = {"surface_emissivity":0.98}),
         ],
-    ),
-    add_to_input = False,
+    ).
+    rte.solve(add_to_input = False,
 )
 

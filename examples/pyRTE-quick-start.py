@@ -67,7 +67,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     GasOpticsFiles,
 )
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.examples import (
     compute_RCE_clouds,
     compute_RCE_profiles,
@@ -193,7 +193,7 @@ optical_props["surface_emissivity"] = 0.98
 # So we can compute fluxes (spectrally-integrated by default) 
 
 # %%
-clr_fluxes = rte_solve(optical_props, add_to_input=False)
+clr_fluxes = optical_props.rte.solve(add_to_input=False)
 clr_fluxes
 
 # %% [markdown]
@@ -226,7 +226,7 @@ clouds_optical_props.add_to(optical_props)
 optical_props
 
 # %%
-fluxes = rte_solve(optical_props, add_to_input=False)
+fluxes = optical_props.rte.solve(add_to_input=False)
 
 # %%
 if do_plots:
@@ -274,7 +274,7 @@ optical_props
 # %%
 optical_props["surface_albedo"] = 0.06
 optical_props["mu0"] = 0.86
-fluxes = rte_solve(optical_props, add_to_input=False)
+fluxes = optical_props.rte.solve(add_to_input=False)
 
 # %% [markdown]
 # The returned fluxes include the total downwelling (`sw_flux_down`) and the direct beam component of that flux (`sw_flux_dir`) 
@@ -294,20 +294,18 @@ if do_plots:
 # The computation of optical properties and fluxes can be combined:
 
 # %%
-fluxes = rte_solve(
-    xr.merge(
-        [cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
-            gas_optics_sw.compute_gas_optics(
-                atmosphere, 
-                problem_type=OpticsProblemTypes.TWO_STREAM, 
-                add_to_input=False,
+fluxes = xr.merge(
+            [cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
+                gas_optics_sw.compute_gas_optics(
+                    atmosphere, 
+                    problem_type=OpticsProblemTypes.TWO_STREAM, 
+                    add_to_input=False,
+                ), 
+                delta_scale=True,
             ), 
-            delta_scale=True,
-        ), 
-        xr.Dataset(data_vars = {"surface_albedo":0.06, "mu0":0.86})],
-    ), 
-    add_to_input = False,
-)
+            xr.Dataset(data_vars = {"surface_albedo":0.06, "mu0":0.86})],
+        ).rte.solve(add_to_input = False)
+    
 
 # ### Parallelization with dask
 # Calculations can be divided and performed in parallel using `dask` using dask arrays. The only restriction is that 
@@ -324,8 +322,7 @@ atmosphere
 
 # %%
 with ProgressBar():
-    fluxes = rte_solve(
-        xr.merge(
+    fluxes = xr.merge(
             [cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
                 gas_optics_sw.compute_gas_optics(
                     atmosphere, 
@@ -335,8 +332,8 @@ with ProgressBar():
                 delta_scale=True,
             ), 
             xr.Dataset(data_vars = {"surface_albedo":0.06, "mu0":0.86})],
-        ), 
-        add_to_input = False,
+        ).rte.solve( 
+             add_to_input = False,
     )
 
 # %%

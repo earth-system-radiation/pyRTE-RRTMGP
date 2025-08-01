@@ -10,30 +10,6 @@ from pyrte_rrtmgp.data_types import ProblemTypes
 from pyrte_rrtmgp.kernels.rte import lw_solver_noscat, sw_solver_2stream
 from pyrte_rrtmgp.utils import expand_variable_dims
 
-# Gaussian quadrature constants for radiative transfer
-
-GAUSS_DS: NDArray[np.float64] = np.reciprocal(
-    np.array(
-        [
-            [0.6096748751, np.inf, np.inf, np.inf],
-            [0.2509907356, 0.7908473988, np.inf, np.inf],
-            [0.1024922169, 0.4417960320, 0.8633751621, np.inf],
-            [0.0454586727, 0.2322334416, 0.5740198775, 0.9030775973],
-        ]
-    )
-)
-"""Gaussian quadrature points for the RRTMGP radiation scheme."""
-
-GAUSS_WTS: NDArray[np.float64] = np.array(
-    [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.2300253764, 0.7699746236, 0.0, 0.0],
-        [0.0437820218, 0.3875796738, 0.5686383044, 0.0],
-        [0.0092068785, 0.1285704278, 0.4323381850, 0.4298845087],
-    ]
-)
-"""Gaussian quadrature weights for the RRTMGP radiation scheme."""
-
 
 def compute_quadrature(
     problem_ds: xr.Dataset, nmus: int
@@ -50,6 +26,29 @@ def compute_quadrature(
             with dimensions [gpt, n_quad_angs].
             weights (xr.DataArray): Quadrature weights with dimension [n_quad_angs].
     """
+    # Gaussian quadrature constants for radiative transfer
+
+    GAUSS_DS: NDArray[np.float64] = np.reciprocal(
+        np.array(
+            [
+                [0.6096748751, np.inf, np.inf, np.inf],
+                [0.2509907356, 0.7908473988, np.inf, np.inf],
+                [0.1024922169, 0.4417960320, 0.8633751621, np.inf],
+                [0.0454586727, 0.2322334416, 0.5740198775, 0.9030775973],
+            ]
+        )
+    )
+    """Gaussian quadrature points for the RRTMGP radiation scheme."""
+
+    GAUSS_WTS: NDArray[np.float64] = np.array(
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.2300253764, 0.7699746236, 0.0, 0.0],
+            [0.0437820218, 0.3875796738, 0.5686383044, 0.0],
+            [0.0092068785, 0.1285704278, 0.4323381850, 0.4298845087],
+        ]
+    )
+
     n_quad_angs: int = nmus
     ngpt = problem_ds.sizes["gpt"]
 
@@ -372,30 +371,41 @@ def _compute_sw_fluxes(
     return fluxes * problem_ds["solar_angle_mask"].unstack("stacked_cols")
 
 
-def rte_solve(
-    problem_ds: xr.Dataset,
-    add_to_input: bool = True,
-) -> Optional[xr.Dataset]:
-    """Solve radiative transfer problem based on problem type.
+@xr.register_dataset_accessor("rte")
+class RTEAccessor:
+    """Functions for manipulating and solving radiation transfer problems."""
 
-    Args:
-        problem_ds: Dataset containing problem definition and inputs
-        add_to_input: If True, add computed fluxes to input dataset. If False,
-            return fluxes separately
+    def __init__(self, ds: xr.Dataset):
+        """Initialize the accessor."""
+        self._ds = ds
 
-    Returns:
-        Dataset containing computed fluxes if add_to_input is False, None otherwise
-    """
-    if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
-        fluxes = _compute_lw_fluxes_absorption(problem_ds)
-    elif problem_ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
-        fluxes = _compute_sw_fluxes(problem_ds)
-    else:
-        raise ValueError(f"Unknown problem type: {problem_ds.attrs['problem_type']}")
+    def solve(
+        self: xr.Dataset,
+        add_to_input: bool = True,
+    ) -> Optional[xr.Dataset]:
+        """Solve radiative transfer problem based on problem type.
 
-    fluxes = fluxes.compute()
+        Args:
+            problem_ds: Dataset containing problem definition and inputs
+            add_to_input: If True, add computed fluxes to input dataset. If False,
+                return fluxes separately
 
-    if add_to_input:
-        problem_ds.update(fluxes)
-        return None
-    return fluxes
+        Returns:
+            Dataset containing computed fluxes if add_to_input is False, None otherwise
+        """
+        problem_ds = self._ds
+        if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
+            fluxes = _compute_lw_fluxes_absorption(problem_ds)
+        elif problem_ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
+            fluxes = _compute_sw_fluxes(problem_ds)
+        else:
+            raise ValueError(
+                f"Unknown problem type: {problem_ds.attrs['problem_type']}"
+            )
+
+        fluxes = fluxes.compute()
+
+        if add_to_input:
+            self._ds.update(fluxes)
+            return None
+        return fluxes

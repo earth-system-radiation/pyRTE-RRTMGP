@@ -56,7 +56,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     GasOpticsFiles,
 )
 from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.examples import (
     compute_RCE_clouds,
     compute_RCE_profiles,
@@ -158,7 +158,7 @@ optical_props
 # ### Compute broadband fluxes
 
 # %%
-fluxes = rte_solve(optical_props, add_to_input=False)
+fluxes = optical_props.rte.solve(add_to_input=False)
 fluxes
 
 # %% [markdown]
@@ -240,7 +240,7 @@ optical_props
 # ### Compute fluxes
 
 # %%
-fluxes = rte_solve(optical_props, add_to_input=False)
+fluxes = optical_props.rte.solve(add_to_input=False)
 fluxes
 
 # %% [markdown]
