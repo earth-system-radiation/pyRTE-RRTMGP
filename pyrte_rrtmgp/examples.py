@@ -254,11 +254,6 @@ def compute_RCE_clouds(
     Args:
         cloud_optics : xr.Dataset
             Dataset containing cloud optical properties.
-            It must include the following keys:
-            - 'radliq_lwr': Lower bound for liquid water effective radius.
-            - 'radliq_upr': Upper bound for liquid water effective radius.
-            - 'diamice_lwr': Lower bound for ice effective radius.
-            - 'diamice_upr': Upper bound for ice effective radius.
         p_lay : xr.DataArray
             Pressure levels of the atmospheric layers
         t_lay : xr.DataArray
@@ -281,8 +276,8 @@ def compute_RCE_clouds(
     ncol = p_lay.sizes["column"]
 
     # Get reference radii values
-    rel_val = 0.5 * (cloud_optics["radliq_lwr"] + cloud_optics["radliq_upr"])
-    rei_val = 0.5 * (cloud_optics["diamice_lwr"] + cloud_optics["diamice_upr"])
+    rel_val = 0.5 * (cloud_optics.rel_min + cloud_optics.rel_max)
+    rei_val = 0.5 * (cloud_optics.dei_min + cloud_optics.dei_max)
 
     # Create cloud mask - clouds between 100-900 hPa and in 2/3 of columns
     cloud_mask = (

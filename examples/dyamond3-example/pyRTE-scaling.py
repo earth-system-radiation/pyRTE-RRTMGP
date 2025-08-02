@@ -40,7 +40,6 @@ import xarray as xr
 import intake
 
 # %%
-from pyrte_rrtmgp import rrtmgp_cloud_optics
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
@@ -208,14 +207,14 @@ atmosphere
 # ## Initialization 
 
 # %%
-cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
+cloud_optics_lw = CloudOptics(
     cloud_optics_file=CloudOpticsFiles.LW_BND
 )
 gas_optics_lw = GasOptics(
     gas_optics_file=GasOpticsFiles.LW_G256
 )
 
-cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
+cloud_optics_sw = CloudOptics(
     cloud_optics_file=CloudOpticsFiles.SW_BND
 )
 gas_optics_sw = GasOptics(
@@ -282,7 +281,7 @@ lw_optics = gas_optics_lw.compute(
 # 
 # Shortwave cloud optics
 #
-sw_cld_optics = cloud_optics_lw.compute_cloud_optics(
+sw_cld_optics = cloud_optics_lw.compute(
     atmosphere, 
     problem_type=OpticsTypes.TWO_STREAM
 )
@@ -292,7 +291,7 @@ sw_cld_optics["tau"]
 # 
 # Longwave cloud optics
 #
-lw_cld_optics = cloud_optics_lw.compute_cloud_optics(
+lw_cld_optics = cloud_optics_lw.compute(
     atmosphere, 
     problem_type=OpticsTypes.ABSORPTION
 )
@@ -307,7 +306,7 @@ lw_cld_optics["tau"]
 # Shortwave fluxes 
 # 
 sw_fluxes = xr.merge(
-        [cloud_optics_sw.compute_cloud_optics(
+        [cloud_optics_sw.compute(
             atmosphere, 
             problem_type=OpticsTypes.TWO_STREAM, 
          )\
@@ -332,7 +331,7 @@ sw_fluxes = xr.merge(
 # Longwave fluxes 
 # 
 lw_fluxes = xr.merge(
-        [cloud_optics_lw.compute_cloud_optics(
+        [cloud_optics_lw.compute(
             atmosphere, 
             problem_type=OpticsTypes.ABSORPTION, 
          )\
