@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-from typing import Dict, Final, Iterable, cast
+from typing import Final, Iterable, cast
 
 import dask.array as da
 import numpy as np
@@ -50,18 +50,6 @@ M_H2O: Final[float] = 0.018016
 
 AVOGAD: Final[float] = 6.02214076e23
 """Avogadro's number (molecules/mol)"""
-
-# Solar constants for orbit calculations
-
-ORBITAL_CONSTANTS: Final[Dict[str, float]] = {
-    "A_OFFSET": 0.1495954,  # Semi-major axis offset (AU)
-    "B_OFFSET": 0.00066696,  # Orbital eccentricity factor
-}
-"""Orbital constants for orbit calculations. Contains the following keys:
-
-- ``A_OFFSET``: Semi-major axis offset (AU)
-- ``B_OFFSET``: Orbital eccentricity factor
-"""
 
 logger = logging.getLogger(__name__)
 
@@ -1067,8 +1055,9 @@ class SWGasOptics(BaseGasOpticsAccessor):
         Returns:
             DataArray containing top-of-atmosphere solar source
         """
-        a_offset = ORBITAL_CONSTANTS["A_OFFSET"]
-        b_offset = ORBITAL_CONSTANTS["B_OFFSET"]
+        # Semi-major axis offset (AU), Orbital eccentricity factor
+        a_offset: Final[float] = 0.1495954
+        b_offset: Final[float] = 0.00066696
 
         solar_source_quiet = self._dataset["solar_source_quiet"]
         solar_source_facular = self._dataset["solar_source_facular"]
