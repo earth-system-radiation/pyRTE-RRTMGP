@@ -54,11 +54,11 @@ AVOGAD: Final[float] = 6.02214076e23
 
 # Solar constants for orbit calculations
 
-SOLAR_CONSTANTS: Final[Dict[str, float]] = {
+ORBITAL_CONSTANTS: Final[Dict[str, float]] = {
     "A_OFFSET": 0.1495954,  # Semi-major axis offset (AU)
     "B_OFFSET": 0.00066696,  # Orbital eccentricity factor
 }
-"""Solar constants for orbit calculations. Contains the following keys:
+"""Orbital constants for orbit calculations. Contains the following keys:
 
 - ``A_OFFSET``: Semi-major axis offset (AU)
 - ``B_OFFSET``: Orbital eccentricity factor
@@ -1087,8 +1087,8 @@ class SWGasOptics(BaseGasOpticsAccessor):
         Returns:
             DataArray containing top-of-atmosphere solar source
         """
-        a_offset = SOLAR_CONSTANTS["A_OFFSET"]
-        b_offset = SOLAR_CONSTANTS["B_OFFSET"]
+        a_offset = ORBITAL_CONSTANTS["A_OFFSET"]
+        b_offset = ORBITAL_CONSTANTS["B_OFFSET"]
 
         solar_source_quiet = self._dataset["solar_source_quiet"]
         solar_source_facular = self._dataset["solar_source_facular"]
