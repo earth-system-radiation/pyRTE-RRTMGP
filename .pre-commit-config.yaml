@@ -30,7 +30,7 @@ repos:
         exclude: ^pyrte_rrtmgp/tests/(?!test_python_frontend).*
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.0
+    rev: v1.17.1
     hooks:
     - id: mypy
       exclude: ^pyrte_rrtmgp/tests/(?!test_python_frontend).*
