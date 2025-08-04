@@ -878,7 +878,7 @@ class BaseGasOpticsAccessor:
             return output_ds
 
 
-class LWGasOpticsAccessor(BaseGasOpticsAccessor):
+class LWGasOptics(BaseGasOpticsAccessor):
     """Accessor for internal (longwave) radiation sources.
 
     This class handles gas optics calculations specific to longwave radiation, including
@@ -1038,7 +1038,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         )
 
 
-class SWGasOpticsAccessor(BaseGasOpticsAccessor):
+class SWGasOptics(BaseGasOpticsAccessor):
     """Accessor for external (shortwave) radiation sources.
 
     This class handles gas optics calculations specific to shortwave radiation,
@@ -1281,12 +1281,12 @@ class GasOptics:
         if is_internal:
             return cast(
                 GasOptics,
-                LWGasOpticsAccessor(dataset, is_internal, selected_gases),
+                LWGasOptics(dataset, is_internal, selected_gases),
             )
         else:
             return cast(
                 GasOptics,
-                SWGasOpticsAccessor(dataset, is_internal, selected_gases),
+                SWGasOptics(dataset, is_internal, selected_gases),
             )
 
 

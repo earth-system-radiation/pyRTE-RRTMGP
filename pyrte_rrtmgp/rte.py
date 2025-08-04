@@ -24,7 +24,7 @@ from pyrte_rrtmgp.kernels.rte import (
 from pyrte_rrtmgp.utils import expand_variable_dims
 
 
-def compute_quadrature(
+def _compute_quadrature(
     problem_ds: xr.Dataset, nmus: int
 ) -> tuple[xr.DataArray, xr.DataArray]:
     """Compute quadrature weights and secants for radiative transfer calculations.
@@ -84,306 +84,6 @@ def compute_quadrature(
     return ds, weights
 
 
-def compute_sw_boundary_conditions(atmosphere: xr.Dataset) -> xr.Dataset:
-    """Compute surface and solar boundary conditions.
-
-    Args:
-        atmosphere: Dataset containing atmospheric conditions
-
-    Returns:
-        Dataset containing solar zenith angles, surface albedos and solar angle mask
-    """
-    layer_dim = atmosphere.mapping.get_dim("layer")
-    solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
-    surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
-    surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_direct")
-    surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_diffuse")
-
-    if surface_albedo_dir_var not in atmosphere.data_vars:
-        surface_albedo_direct = atmosphere[surface_albedo_var]
-        surface_albedo_direct = surface_albedo_direct.rename("surface_albedo_direct")
-        surface_albedo_diffuse = atmosphere[surface_albedo_var]
-        surface_albedo_diffuse = surface_albedo_diffuse.rename("surface_albedo_diffuse")
-    else:
-        surface_albedo_direct = atmosphere[surface_albedo_dir_var]
-        surface_albedo_direct = surface_albedo_direct.rename("surface_albedo_direct")
-        surface_albedo_diffuse = atmosphere[surface_albedo_dif_var]
-        surface_albedo_diffuse = surface_albedo_diffuse.rename("surface_albedo_diffuse")
-
-    data_vars = [
-        surface_albedo_direct,
-        surface_albedo_diffuse,
-    ]
-
-    if solar_zenith_angle_var in atmosphere.data_vars:
-        usecol_values = atmosphere[solar_zenith_angle_var] < (
-            90.0 - 2.0 * np.spacing(90.0)
-        )
-        if layer_dim in usecol_values.dims:
-            usecol_values = usecol_values.rename("solar_angle_mask").isel(
-                {layer_dim: 0}
-            )
-        else:
-            usecol_values = usecol_values.rename("solar_angle_mask")
-        mu0 = xr.where(
-            usecol_values,
-            np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
-            1.0,
-        )
-        data_vars.append(mu0.rename("mu0"))
-        data_vars.append(usecol_values)
-    elif "mu0" in atmosphere.data_vars:
-        data_vars.append(atmosphere["mu0"])
-        data_vars.append(xr.DataArray(True).rename("solar_angle_mask"))
-
-    return xr.merge(data_vars)
-
-
-def _compute_lw_fluxes_absorption(
-    problem_ds: xr.Dataset,
-) -> xr.Dataset:
-    """Compute longwave fluxes for absorption-only radiative transfer.
-
-    Args:
-        problem_ds: Dataset containing the problem specification with required
-        variables:
-            - tau: Optical depth
-            - layer_source: Layer source function
-            - level_source: Level source function
-            - surface_emissivity: Surface emissivity
-            - surface_source: Surface source function
-            - surface_source_jacobian: Surface source Jacobian
-            Optional variables:
-            - incident_flux: Incident flux at top of atmosphere
-            - ssa: Single scattering albedo
-            - g: Asymmetry parameter
-
-    Returns:
-        Dataset containing the computed fluxes:
-            - lw_flux_up_broadband: Broadband upward flux
-            - lw_flux_down_broadband: Broadband downward flux
-            - lw_flux_up: Spectrally resolved upward flux
-            - lw_flux_down: Spectrally resolved downward flux
-    """
-    layer_dim = problem_ds.mapping.get_dim("layer")
-    level_dim = problem_ds.mapping.get_dim("level")
-
-    surface_emissivity_var = problem_ds.mapping.get_var("surface_emissivity")
-
-    nmus: int = 1
-    top_at_1: bool = problem_ds.attrs["top_at_1"]
-
-    if "incident_flux" not in problem_ds:
-        incident_flux: xr.DataArray = xr.zeros_like(problem_ds["surface_source"])
-    else:
-        incident_flux = problem_ds["incident_flux"]
-
-    non_default_dims = [
-        d
-        for d in problem_ds.dims
-        if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
-    ]
-
-    # Expand surface emissivity dimensions if needed
-    needed_dims = non_default_dims + ["gpt"]
-    problem_ds = expand_variable_dims(problem_ds, surface_emissivity_var, needed_dims)
-
-    problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
-    incident_flux = incident_flux.stack({"stacked_cols": non_default_dims})
-
-    ds, weights = compute_quadrature(problem_ds, nmus)
-    ssa: xr.DataArray = (
-        problem_ds["ssa"] if "ssa" in problem_ds else problem_ds["tau"].copy()
-    )
-    g: xr.DataArray = problem_ds["g"] if "g" in problem_ds else problem_ds["tau"].copy()
-
-    (
-        solver_flux_up_broadband,
-        solver_flux_down_broadband,
-        _,
-        _,
-    ) = xr.apply_ufunc(
-        lw_solver_noscat,
-        problem_ds.sizes[layer_dim],
-        problem_ds.sizes["gpt"],
-        ds,
-        weights,
-        problem_ds["tau"],
-        ssa,
-        g,
-        problem_ds["layer_source"],
-        problem_ds["level_source"],
-        problem_ds[surface_emissivity_var],
-        problem_ds["surface_source"],
-        problem_ds["surface_source_jacobian"],
-        incident_flux,
-        kwargs={"do_broadband": True, "top_at_1": top_at_1},
-        input_core_dims=[
-            [],  # nlay
-            [],  # ngpt
-            ["gpt", "n_quad_angs"],  # ds
-            ["n_quad_angs"],  # weights
-            [layer_dim, "gpt"],  # tau
-            [layer_dim, "gpt"],  # ssa
-            [layer_dim, "gpt"],  # g
-            [layer_dim, "gpt"],  # lay_source
-            [level_dim, "gpt"],  # lev_source
-            ["gpt"],  # sfc_emis
-            ["gpt"],  # sfc_src
-            ["gpt"],  # sfc_src_jac
-            ["gpt"],  # inc_flux
-        ],
-        output_core_dims=[
-            [level_dim],  # solver_flux_up_broadband
-            [level_dim],  # solver_flux_down_broadband
-            [level_dim, "gpt"],  # solver_flux_up
-            [level_dim, "gpt"],  # solver_flux_down
-        ],
-        output_dtypes=[np.float64, np.float64, np.float64, np.float64],
-        dask="parallelized",
-    )
-
-    fluxes = xr.Dataset(
-        {
-            "lw_flux_up": solver_flux_up_broadband.unstack("stacked_cols"),
-            "lw_flux_down": solver_flux_down_broadband.unstack("stacked_cols"),
-        }
-    )
-
-    transpose_order = non_default_dims + ["level"]
-    return fluxes.transpose(*transpose_order)
-
-
-def _compute_sw_fluxes(
-    problem_ds: xr.Dataset,
-) -> xr.Dataset:
-    """Compute shortwave fluxes using two-stream solver.
-
-    Args:
-        problem_ds: Dataset containing problem definition including optical
-            properties, surface properties and boundary conditions.
-
-    Returns:
-        Dataset containing computed shortwave fluxes:
-            - sw_flux_up_broadband: Upward broadband flux
-            - sw_flux_down_broadband: Downward broadband flux
-            - sw_flux_dir_broadband: Direct broadband flux
-            - sw_flux_up: Upward spectral flux
-            - sw_flux_down: Downward spectral flux
-            - sw_flux_dir: Direct spectral flux
-    """
-    layer_dim = problem_ds.mapping.get_dim("layer")
-    level_dim = problem_ds.mapping.get_dim("level")
-
-    non_default_dims = [
-        d
-        for d in problem_ds.dims
-        if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
-    ]
-
-    boundary_conditions = compute_sw_boundary_conditions(problem_ds)
-    problem_ds = xr.merge([problem_ds, boundary_conditions])
-
-    needed_dims = non_default_dims + ["gpt"]
-    if "surface_albedo_direct" in problem_ds.data_vars:
-        problem_ds = expand_variable_dims(
-            problem_ds, "surface_albedo_direct", needed_dims
-        )
-    if "surface_albedo_diffuse" in problem_ds.data_vars:
-        problem_ds = expand_variable_dims(
-            problem_ds, "surface_albedo_diffuse", needed_dims
-        )
-
-    # Expand mu0 dimensions if needed
-    needed_dims = non_default_dims + [layer_dim]
-    if "mu0" in problem_ds.data_vars:
-        problem_ds = expand_variable_dims(problem_ds, "mu0", needed_dims)
-
-    needed_dims = non_default_dims + [level_dim]
-    problem_ds = expand_variable_dims(problem_ds, "solar_angle_mask", needed_dims)
-
-    # Set diffuse incident flux
-    needed_dims = non_default_dims + ["gpt"]
-    if "incident_flux_dif" not in problem_ds:
-        problem_ds["incident_flux_dif"] = 0
-    problem_ds = expand_variable_dims(problem_ds, "incident_flux_dif", needed_dims)
-    problem_ds = expand_variable_dims(problem_ds, "toa_source", needed_dims)
-
-    # Determine vertical orientation
-    top_at_1: bool = problem_ds.attrs["top_at_1"]
-
-    problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
-
-    # Call solver
-    (
-        _,
-        _,
-        _,
-        solver_flux_up_broadband,
-        solver_flux_down_broadband,
-        solver_flux_dir_broadband,
-    ) = xr.apply_ufunc(
-        sw_solver_2stream,
-        problem_ds.sizes[layer_dim],
-        problem_ds.sizes["gpt"],
-        problem_ds["tau"],
-        problem_ds["ssa"],
-        problem_ds["g"],
-        problem_ds["mu0"],
-        problem_ds["surface_albedo_direct"],
-        problem_ds["surface_albedo_diffuse"],
-        problem_ds["toa_source"],
-        problem_ds["incident_flux_dif"],
-        kwargs={"top_at_1": top_at_1, "do_broadband": True},
-        input_core_dims=[
-            [],  # nlay
-            [],  # ngpt
-            [layer_dim, "gpt"],  # tau
-            [layer_dim, "gpt"],  # ssa
-            [layer_dim, "gpt"],  # g
-            [layer_dim],  # mu0
-            ["gpt"],  # sfc_alb_dir
-            ["gpt"],  # sfc_alb_dif
-            ["gpt"],  # inc_flux_dir
-            ["gpt"],  # inc_flux_dif
-        ],
-        output_core_dims=[
-            [level_dim, "gpt"],  # solver_flux_up
-            [level_dim, "gpt"],  # solver_flux_down
-            [level_dim, "gpt"],  # solver_flux_dir
-            [level_dim],  # solver_flux_up_broadband
-            [level_dim],  # solver_flux_down_broadband
-            [level_dim],  # solver_flux_dir_broadband
-        ],
-        output_dtypes=[
-            np.float64,
-            np.float64,
-            np.float64,
-            np.float64,
-            np.float64,
-            np.float64,
-        ],
-        dask_gufunc_kwargs={
-            "output_sizes": {level_dim: problem_ds.sizes[layer_dim] + 1}
-        },
-        dask="parallelized",
-    )
-
-    # Construct output dataset
-    fluxes = xr.Dataset(
-        {
-            "sw_flux_up": solver_flux_up_broadband.unstack("stacked_cols"),
-            "sw_flux_down": solver_flux_down_broadband.unstack("stacked_cols"),
-            "sw_flux_dir": solver_flux_dir_broadband.unstack("stacked_cols"),
-        }
-    )
-
-    transpose_order = non_default_dims + ["level"]
-    fluxes = fluxes.transpose(*transpose_order)
-
-    return fluxes * problem_ds["solar_angle_mask"].unstack("stacked_cols")
-
-
 @xr.register_dataset_accessor("rte")
 class RTEAccessor:
     """Functions for manipulating and solving radiation transfer problems."""
@@ -391,6 +91,316 @@ class RTEAccessor:
     def __init__(self, ds: xr.Dataset):
         """Initialize the accessor."""
         self._ds = ds
+
+    def _compute_lw_fluxes_absorption(
+        self,
+    ) -> xr.Dataset:
+        """Compute longwave fluxes for absorption-only radiative transfer.
+
+        Args:
+            self._ds: Dataset containing the problem specification with required
+            variables:
+                - tau: Optical depth
+                - layer_source: Layer source function
+                - level_source: Level source function
+                - surface_emissivity: Surface emissivity
+                - surface_source: Surface source function
+                - surface_source_jacobian: Surface source Jacobian
+                Optional variables:
+                - incident_flux: Incident flux at top of atmosphere
+                - ssa: Single scattering albedo
+                - g: Asymmetry parameter
+
+        Returns:
+            Dataset containing the computed fluxes:
+                - lw_flux_up_broadband: Broadband upward flux
+                - lw_flux_down_broadband: Broadband downward flux
+                - lw_flux_up: Spectrally resolved upward flux
+                - lw_flux_down: Spectrally resolved downward flux
+        """
+        problem_ds = self._ds
+        layer_dim = problem_ds.mapping.get_dim("layer")
+        level_dim = problem_ds.mapping.get_dim("level")
+
+        surface_emissivity_var = problem_ds.mapping.get_var("surface_emissivity")
+
+        nmus: int = 1
+        top_at_1: bool = problem_ds.attrs["top_at_1"]
+
+        if "incident_flux" not in problem_ds:
+            incident_flux: xr.DataArray = xr.zeros_like(problem_ds["surface_source"])
+        else:
+            incident_flux = problem_ds["incident_flux"]
+
+        non_default_dims = [
+            d
+            for d in problem_ds.dims
+            if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
+        ]
+
+        # Expand surface emissivity dimensions if needed
+        needed_dims = non_default_dims + ["gpt"]
+        problem_ds = expand_variable_dims(
+            problem_ds, surface_emissivity_var, needed_dims
+        )
+
+        problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
+        incident_flux = incident_flux.stack({"stacked_cols": non_default_dims})
+
+        ds, weights = _compute_quadrature(problem_ds, nmus)
+        ssa: xr.DataArray = (
+            problem_ds["ssa"] if "ssa" in problem_ds else problem_ds["tau"].copy()
+        )
+        g: xr.DataArray = (
+            problem_ds["g"] if "g" in problem_ds else problem_ds["tau"].copy()
+        )
+
+        (
+            solver_flux_up_broadband,
+            solver_flux_down_broadband,
+            _,
+            _,
+        ) = xr.apply_ufunc(
+            lw_solver_noscat,
+            problem_ds.sizes[layer_dim],
+            problem_ds.sizes["gpt"],
+            ds,
+            weights,
+            problem_ds["tau"],
+            ssa,
+            g,
+            problem_ds["layer_source"],
+            problem_ds["level_source"],
+            problem_ds[surface_emissivity_var],
+            problem_ds["surface_source"],
+            problem_ds["surface_source_jacobian"],
+            incident_flux,
+            kwargs={"do_broadband": True, "top_at_1": top_at_1},
+            input_core_dims=[
+                [],  # nlay
+                [],  # ngpt
+                ["gpt", "n_quad_angs"],  # ds
+                ["n_quad_angs"],  # weights
+                [layer_dim, "gpt"],  # tau
+                [layer_dim, "gpt"],  # ssa
+                [layer_dim, "gpt"],  # g
+                [layer_dim, "gpt"],  # lay_source
+                [level_dim, "gpt"],  # lev_source
+                ["gpt"],  # sfc_emis
+                ["gpt"],  # sfc_src
+                ["gpt"],  # sfc_src_jac
+                ["gpt"],  # inc_flux
+            ],
+            output_core_dims=[
+                [level_dim],  # solver_flux_up_broadband
+                [level_dim],  # solver_flux_down_broadband
+                [level_dim, "gpt"],  # solver_flux_up
+                [level_dim, "gpt"],  # solver_flux_down
+            ],
+            output_dtypes=[np.float64, np.float64, np.float64, np.float64],
+            dask="parallelized",
+        )
+
+        fluxes = xr.Dataset(
+            {
+                "lw_flux_up": solver_flux_up_broadband.unstack("stacked_cols"),
+                "lw_flux_down": solver_flux_down_broadband.unstack("stacked_cols"),
+            }
+        )
+
+        transpose_order = non_default_dims + ["level"]
+        return fluxes.transpose(*transpose_order)
+
+    def _compute_sw_boundary_conditions(self) -> xr.Dataset:
+        """Compute surface and solar boundary conditions.
+
+        Args:
+            self: Dataset in which self._ds contains a radiative transfer problem
+
+        Returns:
+            Dataset containing solar zenith angles, surface albedos and solar angle mask
+        """
+        atmosphere = self._ds
+        layer_dim = atmosphere.mapping.get_dim("layer")
+        solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
+        surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
+        surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_direct")
+        surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_diffuse")
+
+        if surface_albedo_dir_var not in atmosphere.data_vars:
+            surface_albedo_direct = atmosphere[surface_albedo_var]
+            surface_albedo_direct = surface_albedo_direct.rename(
+                "surface_albedo_direct"
+            )
+            surface_albedo_diffuse = atmosphere[surface_albedo_var]
+            surface_albedo_diffuse = surface_albedo_diffuse.rename(
+                "surface_albedo_diffuse"
+            )
+        else:
+            surface_albedo_direct = atmosphere[surface_albedo_dir_var]
+            surface_albedo_direct = surface_albedo_direct.rename(
+                "surface_albedo_direct"
+            )
+            surface_albedo_diffuse = atmosphere[surface_albedo_dif_var]
+            surface_albedo_diffuse = surface_albedo_diffuse.rename(
+                "surface_albedo_diffuse"
+            )
+
+        data_vars = [
+            surface_albedo_direct,
+            surface_albedo_diffuse,
+        ]
+
+        if solar_zenith_angle_var in atmosphere.data_vars:
+            usecol_values = atmosphere[solar_zenith_angle_var] < (
+                90.0 - 2.0 * np.spacing(90.0)
+            )
+            if layer_dim in usecol_values.dims:
+                usecol_values = usecol_values.rename("solar_angle_mask").isel(
+                    {layer_dim: 0}
+                )
+            else:
+                usecol_values = usecol_values.rename("solar_angle_mask")
+            mu0 = xr.where(
+                usecol_values,
+                np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
+                1.0,
+            )
+            data_vars.append(mu0.rename("mu0"))
+            data_vars.append(usecol_values)
+        elif "mu0" in atmosphere.data_vars:
+            data_vars.append(atmosphere["mu0"])
+            data_vars.append(xr.DataArray(True).rename("solar_angle_mask"))
+
+        return xr.merge(data_vars)
+
+    def _compute_sw_fluxes(self) -> xr.Dataset:
+        """Compute shortwave fluxes using two-stream solver.
+
+        Args:
+            problem_ds: Dataset containing problem definition including optical
+                properties, surface properties and boundary conditions.
+
+        Returns:
+            Dataset containing computed shortwave fluxes:
+                - sw_flux_up_broadband: Upward broadband flux
+                - sw_flux_down_broadband: Downward broadband flux
+                - sw_flux_dir_broadband: Direct broadband flux
+                - sw_flux_up: Upward spectral flux
+                - sw_flux_down: Downward spectral flux
+                - sw_flux_dir: Direct spectral flux
+        """
+        problem_ds = self._ds
+        layer_dim = problem_ds.mapping.get_dim("layer")
+        level_dim = problem_ds.mapping.get_dim("level")
+
+        non_default_dims = [
+            d
+            for d in problem_ds.dims
+            if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
+        ]
+
+        boundary_conditions = self._compute_sw_boundary_conditions()
+        problem_ds = xr.merge([problem_ds, boundary_conditions])
+
+        needed_dims = non_default_dims + ["gpt"]
+        if "surface_albedo_direct" in problem_ds.data_vars:
+            problem_ds = expand_variable_dims(
+                problem_ds, "surface_albedo_direct", needed_dims
+            )
+        if "surface_albedo_diffuse" in problem_ds.data_vars:
+            problem_ds = expand_variable_dims(
+                problem_ds, "surface_albedo_diffuse", needed_dims
+            )
+
+        # Expand mu0 dimensions if needed
+        needed_dims = non_default_dims + [layer_dim]
+        if "mu0" in problem_ds.data_vars:
+            problem_ds = expand_variable_dims(problem_ds, "mu0", needed_dims)
+
+        needed_dims = non_default_dims + [level_dim]
+        problem_ds = expand_variable_dims(problem_ds, "solar_angle_mask", needed_dims)
+
+        # Set diffuse incident flux
+        needed_dims = non_default_dims + ["gpt"]
+        if "incident_flux_dif" not in problem_ds:
+            problem_ds["incident_flux_dif"] = 0
+        problem_ds = expand_variable_dims(problem_ds, "incident_flux_dif", needed_dims)
+        problem_ds = expand_variable_dims(problem_ds, "toa_source", needed_dims)
+
+        # Determine vertical orientation
+        top_at_1: bool = problem_ds.attrs["top_at_1"]
+
+        problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
+
+        # Call solver
+        (
+            _,
+            _,
+            _,
+            solver_flux_up_broadband,
+            solver_flux_down_broadband,
+            solver_flux_dir_broadband,
+        ) = xr.apply_ufunc(
+            sw_solver_2stream,
+            problem_ds.sizes[layer_dim],
+            problem_ds.sizes["gpt"],
+            problem_ds["tau"],
+            problem_ds["ssa"],
+            problem_ds["g"],
+            problem_ds["mu0"],
+            problem_ds["surface_albedo_direct"],
+            problem_ds["surface_albedo_diffuse"],
+            problem_ds["toa_source"],
+            problem_ds["incident_flux_dif"],
+            kwargs={"top_at_1": top_at_1, "do_broadband": True},
+            input_core_dims=[
+                [],  # nlay
+                [],  # ngpt
+                [layer_dim, "gpt"],  # tau
+                [layer_dim, "gpt"],  # ssa
+                [layer_dim, "gpt"],  # g
+                [layer_dim],  # mu0
+                ["gpt"],  # sfc_alb_dir
+                ["gpt"],  # sfc_alb_dif
+                ["gpt"],  # inc_flux_dir
+                ["gpt"],  # inc_flux_dif
+            ],
+            output_core_dims=[
+                [level_dim, "gpt"],  # solver_flux_up
+                [level_dim, "gpt"],  # solver_flux_down
+                [level_dim, "gpt"],  # solver_flux_dir
+                [level_dim],  # solver_flux_up_broadband
+                [level_dim],  # solver_flux_down_broadband
+                [level_dim],  # solver_flux_dir_broadband
+            ],
+            output_dtypes=[
+                np.float64,
+                np.float64,
+                np.float64,
+                np.float64,
+                np.float64,
+                np.float64,
+            ],
+            dask_gufunc_kwargs={
+                "output_sizes": {level_dim: problem_ds.sizes[layer_dim] + 1}
+            },
+            dask="parallelized",
+        )
+
+        # Construct output dataset
+        fluxes = xr.Dataset(
+            {
+                "sw_flux_up": solver_flux_up_broadband.unstack("stacked_cols"),
+                "sw_flux_down": solver_flux_down_broadband.unstack("stacked_cols"),
+                "sw_flux_dir": solver_flux_dir_broadband.unstack("stacked_cols"),
+            }
+        )
+
+        transpose_order = non_default_dims + ["level"]
+        fluxes = fluxes.transpose(*transpose_order)
+
+        return fluxes * problem_ds["solar_angle_mask"].unstack("stacked_cols")
 
     def solve(
         self: xr.Dataset,
@@ -406,15 +416,12 @@ class RTEAccessor:
         Returns:
             Dataset containing computed fluxes if add_to_input is False, None otherwise
         """
-        problem_ds = self._ds
-        if problem_ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
-            fluxes = _compute_lw_fluxes_absorption(problem_ds)
-        elif problem_ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
-            fluxes = _compute_sw_fluxes(problem_ds)
+        if self._ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
+            fluxes = self._compute_lw_fluxes_absorption()
+        elif self._ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
+            fluxes = self._compute_sw_fluxes()
         else:
-            raise ValueError(
-                f"Unknown problem type: {problem_ds.attrs['problem_type']}"
-            )
+            raise ValueError(f"Unknown problem type: {self._ds.attrs['problem_type']}")
 
         fluxes = fluxes.compute()
 
