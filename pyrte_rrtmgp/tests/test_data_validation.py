@@ -4,7 +4,6 @@ import pytest
 import xarray as xr
 
 from pyrte_rrtmgp.rrtmgp_data_files import GasOpticsFiles
-from pyrte_rrtmgp.data_types import OpticsTypes
 
 from pyrte_rrtmgp.examples import RFMIP_FILES
 from pyrte_rrtmgp.examples import load_example_file
