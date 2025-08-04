@@ -75,7 +75,6 @@ class BaseGasOpticsAccessor:
 
     Args:
         xarray_obj (xr.Dataset): Dataset containing gas optics data
-        is_internal (bool): Whether this is for internal (longwave) radiation
         selected_gases (list[str] | None): List of gases to include in calculations
 
     Raises:
@@ -85,14 +84,12 @@ class BaseGasOpticsAccessor:
     def __init__(
         self,
         xarray_obj: xr.Dataset,
-        is_internal: bool,
         selected_gases: list[str] | None = None,
     ) -> None:
         """Initialize the BaseGasOpticsAccessor.
 
         Args:
             xarray_obj: Dataset containing gas optics data.
-            is_internal: Whether this is for internal (longwave) radiation.
             selected_gases: List of gases to include in calculations.
                 If None, all gases in the file will be used.
 
@@ -100,7 +97,6 @@ class BaseGasOpticsAccessor:
             ValueError: If missing required gas in gas mapping (e.g. 'co', or 'h2o').
         """
         self._dataset = xarray_obj
-        self.is_internal = is_internal
 
         # Get the gas names from the dataset
         self._gas_names: tuple[str, ...] = tuple(
@@ -1265,12 +1261,12 @@ class GasOptics:
         if is_internal:
             return cast(
                 GasOptics,
-                LWGasOptics(dataset, is_internal, selected_gases),
+                LWGasOptics(dataset, selected_gases),
             )
         else:
             return cast(
                 GasOptics,
-                SWGasOptics(dataset, is_internal, selected_gases),
+                SWGasOptics(dataset, selected_gases),
             )
 
 

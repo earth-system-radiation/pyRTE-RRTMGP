@@ -148,10 +148,12 @@ class RTEAccessor:
 
         ds, weights = _compute_quadrature(problem_ds, nmus)
         ssa: xr.DataArray = (
-            problem_ds["ssa"] if "ssa" in problem_ds else problem_ds["tau"].copy()
+            problem_ds["ssa"]
+            if "ssa" in problem_ds
+            else xr.zeros_like(problem_ds["tau"])
         )
         g: xr.DataArray = (
-            problem_ds["g"] if "g" in problem_ds else problem_ds["tau"].copy()
+            problem_ds["g"] if "g" in problem_ds else xr.zeros_like(problem_ds["tau"])
         )
 
         (
