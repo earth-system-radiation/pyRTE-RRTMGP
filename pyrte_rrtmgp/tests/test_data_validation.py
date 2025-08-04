@@ -34,7 +34,6 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]],
 
     gas_optics_lw.compute(
         atmosphere,
-        problem_type=OpticsTypes.ABSORPTION,
         gas_name_map=gas_mapping,
     )
 
@@ -80,7 +79,6 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
     with pytest.raises(ValueError):
         gas_optics_lw.compute(
             atmosphere,
-            problem_type=OpticsTypes.ABSORPTION,
             gas_name_map=gas_mapping
         )
 

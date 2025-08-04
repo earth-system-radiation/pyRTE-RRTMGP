@@ -167,7 +167,6 @@ atmosphere
 # %%
 optical_props = gas_optics_lw.compute(
     atmosphere, 
-    problem_type=OpticsTypes.ABSORPTION, 
     add_to_input=False,
 )
 
@@ -250,7 +249,6 @@ optical_props = cloud_optics_sw.compute(atmosphere).\
     rte.add_to(
         gas_optics_sw.compute(
             atmosphere, 
-            problem_type=OpticsTypes.TWO_STREAM, 
             add_to_input=False,
         ), 
     delta_scale=True,
@@ -300,7 +298,6 @@ fluxes = xr.merge(
             rte.add_to(
                 gas_optics_sw.compute(
                     atmosphere, 
-                    problem_type=OpticsTypes.TWO_STREAM, 
                     add_to_input=False,
                 ), 
                 delta_scale=True,
@@ -328,7 +325,6 @@ with ProgressBar():
             [cloud_optics_sw.compute(atmosphere).rte.add_to(
                 gas_optics_sw.compute(
                     atmosphere, 
-                    problem_type=OpticsTypes.TWO_STREAM, 
                     add_to_input=False,
                 ), 
                 delta_scale=True,

@@ -12,6 +12,7 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
+from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
@@ -775,7 +776,7 @@ class BaseGasOpticsAccessor:
     def compute(
         self,
         atmosphere: xr.Dataset,
-        problem_type: str,
+        problem_type: OpticsTypes | None = None,
         gas_name_map: dict[str, str] | None = None,
         variable_mapping: AtmosphericMapping | None = None,
         add_to_input: bool = True,
@@ -835,12 +836,10 @@ class BaseGasOpticsAccessor:
 
         if add_to_input:
             atmosphere.update(gas_optics)
-            atmosphere.attrs["problem_type"] = problem_type
             atmosphere.attrs["top_at_1"] = top_at_1
             return None
         else:
             output_ds = gas_optics
-            output_ds.attrs["problem_type"] = problem_type
             output_ds.attrs["top_at_1"] = top_at_1
             output_ds.mapping.set_mapping(variable_mapping)
             return output_ds

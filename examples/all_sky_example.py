@@ -119,7 +119,9 @@ atmosphere = make_profiles()
 #   that's set as the mid-point of the valid range from cloud_optics
 #
 cloud_props = compute_RCE_clouds(
-    cloud_optics_lw, atmosphere["pres_layer"], atmosphere["temp_layer"]
+    cloud_optics_lw, 
+    atmosphere["pres_layer"], 
+    atmosphere["temp_layer"]
 )
 
 atmosphere = atmosphere.merge(cloud_props)
@@ -130,7 +132,8 @@ atmosphere
 
 # %%
 optical_props = gas_optics_lw.compute(
-    atmosphere, problem_type=OpticsTypes.ABSORPTION, add_to_input=False
+    atmosphere, 
+    add_to_input=False,
 )
 optical_props["surface_emissivity"] = 0.98
 optical_props
@@ -142,7 +145,8 @@ optical_props
 
 # %%
 clouds_optical_props = cloud_optics_lw.compute(
-    atmosphere, problem_type=OpticsTypes.ABSORPTION
+    atmosphere,
+    problem_type = OpticsTypes.ABSORPTION,
 )
 # The optical properties of the clouds alone
 clouds_optical_props
@@ -222,11 +226,13 @@ atmosphere
 # %%
 # compute_cloud_optics() returns two-stream properties by default?
 optical_props = gas_optics_sw.compute(
-    atmosphere, problem_type=OpticsTypes.TWO_STREAM, add_to_input=False
+    atmosphere, 
+    add_to_input=False,
 )
 # add_to() changes the values in optical_props
 cloud_optics_sw.compute(atmosphere).rte.add_to(
-    optical_props, delta_scale=True
+    optical_props, 
+    delta_scale=True,
 )
 #
 # Add SW-specific surface and angle properties

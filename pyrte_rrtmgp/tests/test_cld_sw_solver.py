@@ -4,8 +4,6 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsTypes
-
 from pyrte_rrtmgp.examples import (
     ALLSKY_EXAMPLES,
     compute_RCE_profiles,
@@ -71,7 +69,6 @@ def test_sw_solver_with_clouds() -> None:
     # Calculate gas optical properties
     optical_props = gas_optics_sw.compute(
         atmosphere,
-        problem_type=OpticsTypes.TWO_STREAM,
         add_to_input=False
     )
 
@@ -136,7 +133,6 @@ def test_sw_solver_with_clouds_dask() -> None:
     # Calculate gas optical properties
     optical_props = gas_optics_sw.compute(
         atmosphere,
-        problem_type=OpticsTypes.TWO_STREAM,
         add_to_input=False
     )
 
