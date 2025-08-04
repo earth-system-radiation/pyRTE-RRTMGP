@@ -12,7 +12,6 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
-from pyrte_rrtmgp.data_types import ProblemTypes
 from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
@@ -849,21 +848,6 @@ class BaseGasOpticsAccessor:
         sources = self.compute_sources(atmosphere, gas_interpolation_data)
         spectrum = self._dataset["bnd_limits_gpt"].to_dataset()
         gas_optics = xr.merge([sources, problem, spectrum])
-
-        # Add problem type to dataset attributes
-        if problem_type == "absorption" and self.is_internal:
-            problem_type = ProblemTypes.LW_ABSORPTION.value
-        elif problem_type == "two-stream" and self.is_internal:
-            problem_type = ProblemTypes.LW_2STREAM.value
-        elif problem_type == "direct" and not self.is_internal:
-            problem_type = ProblemTypes.SW_DIRECT.value
-        elif problem_type == "two-stream" and not self.is_internal:
-            problem_type = ProblemTypes.SW_2STREAM.value
-        else:
-            raise ValueError(
-                f"Invalid problem type: {problem_type} for "
-                f"{'LW' if self.is_internal else 'SW'} radiation"
-            )
 
         if add_to_input:
             atmosphere.update(gas_optics)

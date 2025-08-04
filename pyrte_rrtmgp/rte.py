@@ -6,7 +6,6 @@ import numpy as np
 import xarray as xr
 from numpy.typing import NDArray
 
-from pyrte_rrtmgp.data_types import ProblemTypes
 from pyrte_rrtmgp.kernels.rte import (
     delta_scale_2str,
     delta_scale_2str_f,
@@ -416,12 +415,14 @@ class RTEAccessor:
         Returns:
             Dataset containing computed fluxes if add_to_input is False, None otherwise
         """
-        if self._ds.attrs["problem_type"] == ProblemTypes.LW_ABSORPTION.value:
+        do_longwave = "layer_source" in self._ds.data_vars
+        do_shortwave = "toa_source" in self._ds.data_vars
+        if do_longwave and not do_shortwave:
             fluxes = self._compute_lw_fluxes_absorption()
-        elif self._ds.attrs["problem_type"] == ProblemTypes.SW_2STREAM.value:
+        elif do_shortwave and not do_longwave:
             fluxes = self._compute_sw_fluxes()
         else:
-            raise ValueError(f"Unknown problem type: {self._ds.attrs['problem_type']}")
+            raise ValueError("Can't determine problem type from source information")
 
         fluxes = fluxes.compute()
 
