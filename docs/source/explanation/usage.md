@@ -2,6 +2,8 @@
 
 This section provides a brief overview of how to use the pyRTE-RRTMGP package. The [example scripts and notebooks](https://github.com/earth-system-radiation/pyRTE-RRTMGP/tree/main/examples) packaged with pyRTE-RRTMGP may also be useful (and are guaranteed to work with the current code).
 
+The examples will likely supersede this documention over time.
+
 ## RRTMGP and RTE
 
 pyRTE-RRTMGP is a Python package that provides a Python interface to the [RTE-RRTMGP software](https://github.com/earth-system-radiation/rte-rrtmgp) (Fortran). You can use this Python package to define a radiative transfer problem, compute gas and cloud optics, and solve the radiative transfer equations, using the same underlying code. See the paper [Balancing Accuracy, Efficiency, and Flexibility in Radiation Calculations for Dynamical Models](https://doi.org/10.1029/2019MS001621) for more details about the Fortran code.
@@ -12,11 +14,11 @@ pyRTE-RRTMGP uses [Dask](https://docs.dask.org/en/stable/) for parallel computin
 
 A typical workflow with pyRTE-RRTMGP consists of the following steps:
 
-### 1. Loading gas optics data using the {func}`~pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics` function
+### 1. Loading gas optics data by initializing the {class}`~pyrte_rrtmgp.rrtmgp.GasOptics` class
 
-The {func}`~pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics` function retrieves essential gas optics data for radiative transfer calculations. This data includes absorption coefficients and other optical properties for various atmospheric gases at different temperatures, pressures, and concentrations. See {func}`pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics` for more details.
+Initializing the {class}`~pyrte_rrtmgp.rrtmgp.GasOptics` class retrieves essential gas optics data for radiative transfer calculations. This data includes absorption coefficients and other optical properties for various atmospheric gases at different temperatures, pressures, and concentrations. See {class}`~pyrte_rrtmgp.rrtmgp.GasOptics` for more details.
 
-The package includes four default gas optics files, which can be accessed via the {data}`~pyrte_rrtmgp.data_types.GasOpticsFiles` enum:
+The package includes four default gas optics files, which can be accessed via the {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles` enum:
 
 *   **Longwave:**
     *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.LW_G128`: Longwave gas optics file with 128 g-points.
@@ -25,21 +27,20 @@ The package includes four default gas optics files, which can be accessed via th
     *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.SW_G112`: Shortwave gas optics file with 112 g-points.
     *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.SW_G224`: Shortwave gas optics file with 224 g-points.
 
-These files can be loaded using the {func}`~pyrte_rrtmgp.rrtmgp_gas_optics.load_gas_optics` function in conjunction with the {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles` enum.
-
-For example:
+The data is loaded by passing one of the values of the enum to the `GasOptics` constructor. For example:
 
 ```python
-gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
-    gas_optics_file=GasOpticsFiles.LW_G128
+gas_optics_lw = rrtmgp.GasOptics(
+    gas_optics_file=GasOpticsFiles.LW_G256
 )
 ```
 
-### 2. Loading cloud optics data using the {func}`~pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics` function
+File names can also be supplied directly.
 
-The {func}`~pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics` function retrieves essential cloud optics data for radiative transfer calculations. See {func}`pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics` for more details.
+### 2. Loading cloud optics data by initializing the {class}`~pyrte_rrtmgp.rrtmgp.CloudOptics` class
 
-The package includes two default cloud optics files, which can be accessed via the {data}`~pyrte_rrtmgp.data_types.CloudOpticsFiles` enum:
+{class}`~pyrte_rrtmgp.rrtmgp.CloudOptics` is the cloud equivalent of {class}`~pyrte_rrtmgp.rrtmgp.GasOptics`.
+pyRTE-RRTMGP includes cloud optics files which can be accessed via the {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles` enum:
 
 *   **Longwave:**
     *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.LW_BND`: Longwave cloud optics file with band points.
@@ -50,13 +51,10 @@ The package includes two default cloud optics files, which can be accessed via t
     *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_G112`: Shortwave cloud optics file with 112 g-points.
     *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_G224`: Shortwave cloud optics file with 224 g-points.
 
-These files can be loaded using the {func}`~pyrte_rrtmgp.rrtmgp_cloud_optics.load_cloud_optics` function in conjunction with the {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles` enum.
-
-For example:
-
+Loading the data is the same as for the gas optics:
 ```python
-cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
-    cloud_optics_file=CloudOpticsFiles.LW_G128
+cloud_optics_lw = rrtmgp.CloudOptics(
+    cloud_optics_file=CloudOpticsFiles.LW_G256
 )
 ```
 
@@ -67,18 +65,16 @@ are specified in terms of their (lowercase) chemical formula, with `cfcX` used f
 `hfcX` for hydrofluorocarbon-X. Supported gases, i.e. those that will influence the calculation of optical properties,
 are available using the `available_gases` property of the gas optics, i.e.
 ```python
-gas_optics = rrtmgp_gas_optics.load_gas_optics(
-    gas_optics_file=GasOpticsFiles.LW_G128
-).available_gases
-
-gas_optics.required_gases
+gas_optics = rrtmgp.GasOptics(
+    gas_optics_file=GasOpticsFiles.LW_G256
+)
+gas_optics.available_gases
 ```
-
 
 Concentrations of some gases are required, those these can vary between the shortwave and longwave gas optics.
 ```python
-gas_optics = rrtmgp_gas_optics.load_gas_optics(
-    gas_optics_file=GasOpticsFiles.LW_G128
+gas_optics = rrtmgp.GasOptics(
+    gas_optics_file=GasOpticsFiles.LW_G256
 )
 
 gas_optics.required_gases
@@ -119,11 +115,7 @@ For instance, consider a dataset with these dimensions:
 In this case, the radiative transfer calculations will be executed independently for each unique combination of latitude, longitude, and time, across all atmospheric levels.
 
 
-### 4. Computing gas optics using the {class}`compute_gas_optics<pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor>` accessor
-
-This function can handle two different types of problems:
-* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.ABSORPTION` (longwave)
-* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.TWO_STREAM` (shortwave)
+### 4. Computing gas optics using `GasOptics.compute()`
 
 Use a mapping dictionary to map gas names to their corresponding indices in the atmosphere data. For example:
 
@@ -143,14 +135,13 @@ gas_mapping = {
 With the atmosphere data and the gas mapping dictionary, you can compute the gas optics using the {class}`compute_gas_optics<pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor>` accessor.
 
 ```python
-gas_optics = rrtmgp_gas_optics.compute_gas_optics(
+gas_optics = gas_optics_lw.compute(
     atmosphere,
-    problem_type=OpticsTypes.ABSORPTION,
     gas_name_map=gas_mapping,
 )
 ```
 
-See {class}`pyrte_rrtmgp.rrtmgp_gas_optics.GasOpticsAccessor` for more details.
+The gas optical properties also include the radiation source information.
 
 ### 5. Define the cloud optics
 
@@ -163,16 +154,16 @@ The cloud optics atmosphere requires the following variables in the input datase
 
 They are defined in the `layer` dimension. Similar to the gas optics atmosphere, any additional dimensions will be processed independently.
 
-### 6. Computing cloud optics using {class}`compute_cloud_optics<pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor>`
+### 6. Computing cloud optics using `CloudOptics.compute()`
 
-You can compute the cloud optics using {class}`compute_cloud_optics<pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor>`.
+You can compute the cloud optics using function `compute()` from {class}`pyrte_rrtmgp.rrtmgp.CloudOptics`.
 
 This function can handle two different types of problems:
-* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.ABSORPTION` (longwave)
-* {data}`~pyrte_rrtmgp.data_types.OpticsTypes.TWO_STREAM` (shortwave)
+* {data}`~pyrte_rrtmgp.rte.OpticsTypes.ABSORPTION` (longwave)
+* {data}`~pyrte_rrtmgp.rte.OpticsTypes.TWO_STREAM` (shortwave)
 
 ```python
-cloud_optics = rrtmgp_cloud_optics.compute_cloud_optics(
+cloud_optics = cloud_optics_lw.compute(
     atmosphere,
     problem_type=problem_type=OpticsTypes.ABSORPTION,
 )
@@ -180,21 +171,30 @@ cloud_optics = rrtmgp_cloud_optics.compute_cloud_optics(
 
 See {class}`pyrte_rrtmgp.rrtmgp_cloud_optics.CloudOpticsAccessor` for more details.
 
-### 7. Combining Cloud Optics with Gas Optics using {class}`add_to<pyrte_rrtmgp.rrtmgp_cloud_optics.CombineOpticalPropsAccessor>`
+### 7. Combining Cloud Optics with Gas Optics using {class}`add_to()<pyrte_rrtmgp.rte>`.
 
-To integrate cloud optical properties with gas optical properties, you can use the {class}`add_to<pyrte_rrtmgp.rrtmgp_cloud_optics.CombineOpticalPropsAccessor>` accessor. This allows you to either add the cloud optical properties independently or combine them with the gas optical properties.
+To integrate cloud optical properties with gas optical properties use the {class}`add_to<pyrte_rrtmgp.rte>` accessor. This adds the cloud optical properties to the pre-computed gas optical properties, including expanding from bands to g-points if needed.
 
 For example, to combine the optical properties:
 
 ```python
-clouds_optical_props.add_to(clear_sky_optical_props, delta_scale=True)
+clouds_optical_props.rte.add_to(
+    clear_sky_optical_props,
+    delta_scale=True)
 ```
-
 The clouds will be included in place over the clear sky optical properties.
 
-### 8. Solving the radiative transfer equations using the {func}`~pyrte_rrtmgp.rte_solver.rte_solve` function
+### 8. Solving the radiative transfer equations using {class}`solve()<~pyrte_rrtmgp.rte>`
 
-This function uses the optical properties of the atmosphere to solve the radiative transfer equations and compute the radiative fluxes. See {func}`pyrte_rrtmgp.rte_solver.rte_solve` for more details.
+This function uses the optical properties of the atmosphere to solve the radiative transfer equations and compute the radiative fluxes.
+```python
+fluxes = clouds_optical_props.rte.add_to(
+    clear_sky_optical_props,
+    delta_scale=True).\
+    rte.solve(add_to_input = False)
+```
+
+See {class}`solve<~pyrte_rrtmgp.rte>` for more details.
 
 ```{seealso}
 See {ref}`tutorials` for examples of how to use the package.

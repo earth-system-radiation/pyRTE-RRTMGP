@@ -7,18 +7,11 @@ The documentation below provides details for several of the high-level functions
 
 For more information about the low-level functions available in the ``pyrte_rrtmgp.kernels`` submodule, please go to :ref:`low_level_module_ref`.
 
-pyrte\_rrtmgp.rrtmgp_cloud_optics module
-----------------------------------------
 
-.. automodule:: pyrte_rrtmgp.rrtmgp_cloud_optics
-   :members:
-   :undoc-members:
-   :show-inheritance:
+pyrte\_rrtmgp.rrtmgp module
+---------------------------
 
-pyrte\_rrtmgp.rrtmgp_gas_optics module
---------------------------------------
-
-.. automodule:: pyrte_rrtmgp.rrtmgp_gas_optics
+.. automodule:: pyrte_rrtmgp.rrtmgp
    :members:
    :undoc-members:
    :show-inheritance:
@@ -32,7 +25,7 @@ pyrte\_rrtmgp.utils module
    :show-inheritance:
 
 pyrte\_rrtmgp.rte module
--------------------------------
+------------------------
 
 .. automodule:: pyrte_rrtmgp.rte
    :members:
@@ -40,23 +33,15 @@ pyrte\_rrtmgp.rte module
    :show-inheritance:
 
 pyrte\_rrtmgp.rrtmgp_data_files module
---------------------------------
+--------------------------------------
 
 .. automodule:: pyrte_rrtmgp.rrtmgp_data_files
    :members:
    :undoc-members:
    :show-inheritance:
 
-pyrte\_rrtmgp.data_types module
--------------------------------
-
-.. automodule:: pyrte_rrtmgp.data_types
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyrte\_rrtmgp.input_mapping module
--------------------------------------
+----------------------------------
 
 .. automodule:: pyrte_rrtmgp.input_mapping
    :members:

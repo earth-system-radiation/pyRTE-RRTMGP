@@ -55,7 +55,7 @@ AVOGAD: Final[float] = 6.02214076e23
 logger = logging.getLogger(__name__)
 
 
-class BaseGasOpticsAccessor:
+class BaseGasOptics:
     """Base class for gas optics calculations.
 
     This class provides common functionality for both longwave and shortwave gas optics
@@ -75,7 +75,7 @@ class BaseGasOpticsAccessor:
         xarray_obj: xr.Dataset,
         selected_gases: list[str] | None = None,
     ) -> None:
-        """Initialize the BaseGasOpticsAccessor.
+        """Initialize the BaseGasOptics.
 
         Args:
             xarray_obj: Dataset containing gas optics data.
@@ -845,7 +845,7 @@ class BaseGasOpticsAccessor:
             return output_ds
 
 
-class LWGasOptics(BaseGasOpticsAccessor):
+class LWGasOptics(BaseGasOptics):
     """Accessor for internal (longwave) radiation sources.
 
     This class handles gas optics calculations specific to longwave radiation, including
@@ -1005,7 +1005,7 @@ class LWGasOptics(BaseGasOpticsAccessor):
         )
 
 
-class SWGasOptics(BaseGasOpticsAccessor):
+class SWGasOptics(BaseGasOptics):
     """Accessor for external (shortwave) radiation sources.
 
     This class handles gas optics calculations specific to shortwave radiation,
