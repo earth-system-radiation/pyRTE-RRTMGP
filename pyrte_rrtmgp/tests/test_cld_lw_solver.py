@@ -18,7 +18,6 @@ from pyrte_rrtmgp.examples import (
 )
 
 from pyrte_rrtmgp import rte
-from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp.rrtmgp import GasOptics, CloudOptics
 
 
@@ -59,7 +58,7 @@ def test_lw_solver_with_clouds() -> None:
     # Calculate cloud optical properties
     clouds_optical_props = cloud_optics_lw.compute(
         atmosphere,
-        problem_type = OpticsTypes.ABSORPTION,
+        problem_type = rte.OpticsTypes.ABSORPTION,
     )
 
     # Calculate gas optical properties
@@ -129,7 +128,7 @@ def test_lw_solver_with_clouds_dask() -> None:
     # Calculate cloud optical properties
     clouds_optical_props = cloud_optics_lw.compute(
         atmosphere,
-        problem_type=OpticsTypes.ABSORPTION
+        problem_type=rte.OpticsTypes.ABSORPTION,
     )
 
     assert isinstance(clouds_optical_props, xr.Dataset)
@@ -143,7 +142,7 @@ def test_lw_solver_with_clouds_dask() -> None:
     # TODO: I don't think dask works with compute_gas_optics
     optical_props = gas_optics_lw.compute(
         atmosphere,
-        problem_type=OpticsTypes.ABSORPTION,
+        problem_type=rte.OpticsTypes.ABSORPTION,
         add_to_input=False
     )
     optical_props["surface_emissivity"] = 0.98

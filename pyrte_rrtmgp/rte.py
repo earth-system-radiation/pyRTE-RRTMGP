@@ -1,5 +1,6 @@
 """RTE solver for pyRTE-RRTMGP."""
 
+from enum import StrEnum
 from typing import Optional
 
 import numpy as np
@@ -21,6 +22,23 @@ from pyrte_rrtmgp.kernels.rte import (
     sw_solver_2stream,
 )
 from pyrte_rrtmgp.utils import expand_variable_dims
+
+
+class OpticsTypes(StrEnum):
+    """Enumeration of available optics problem types.
+
+    This enum defines the different types of optics problems that can be
+    solved with RRTMGP.
+    """
+
+    ABSORPTION = "absorption"
+    """Absorption-only calculation"""
+
+    N_STREAM = "n-stream"
+    """N-stream calculation"""
+
+    TWO_STREAM = "two-stream"
+    """Two-stream approximation"""
 
 
 def _compute_quadrature(

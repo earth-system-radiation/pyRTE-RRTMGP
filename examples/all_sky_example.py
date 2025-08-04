@@ -60,7 +60,6 @@ from pyrte_rrtmgp.examples import (
     load_example_file,
     ALLSKY_EXAMPLES,
 )
-from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.rrtmgp import GasOptics, CloudOptics
 
@@ -146,7 +145,7 @@ optical_props
 # %%
 clouds_optical_props = cloud_optics_lw.compute(
     atmosphere,
-    problem_type = OpticsTypes.ABSORPTION,
+    problem_type = rte.OpticsTypes.ABSORPTION,
 )
 # The optical properties of the clouds alone
 clouds_optical_props

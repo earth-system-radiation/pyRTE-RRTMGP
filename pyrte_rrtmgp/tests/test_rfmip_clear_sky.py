@@ -5,7 +5,7 @@ import xarray as xr
 import pytest
 from typing import Dict, Optional, Any
 
-from pyrte_rrtmgp.data_types import OpticsTypes
+from pyrte_rrtmgp.rte import OpticsTypes
 from pyrte_rrtmgp.rrtmgp_data_files import GasOpticsFiles
 from pyrte_rrtmgp.examples import (
     load_example_file,

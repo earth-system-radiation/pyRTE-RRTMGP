@@ -12,7 +12,6 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
-from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
@@ -29,6 +28,7 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     GasOpticsFiles,
     download_rrtmgp_data,
 )
+from pyrte_rrtmgp.rte import OpticsTypes
 from pyrte_rrtmgp.utils import safer_divide
 
 # Gravitational parameters from Helmert's equation (m/s^2)
