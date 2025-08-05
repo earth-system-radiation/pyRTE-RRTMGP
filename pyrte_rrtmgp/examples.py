@@ -10,6 +10,7 @@ from enum import StrEnum
 import numpy as np
 import xarray as xr
 
+from pyrte_rrtmgp.rrtmgp import CloudOptics
 from pyrte_rrtmgp.rrtmgp_data_files import download_rrtmgp_data
 
 
@@ -236,7 +237,7 @@ def compute_RCE_profiles(sst: float, ncol: int, nlay: int) -> xr.Dataset:
 
 
 def compute_RCE_clouds(
-    cloud_optics: xr.Dataset, p_lay: xr.DataArray, t_lay: xr.DataArray
+    cloud_optics: CloudOptics, p_lay: xr.DataArray, t_lay: xr.DataArray
 ) -> xr.Dataset:
     """
     Compute cloud properties required for radiative transfer calculations.

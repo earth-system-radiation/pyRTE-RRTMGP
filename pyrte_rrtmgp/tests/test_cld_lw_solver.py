@@ -65,7 +65,7 @@ def test_lw_solver_with_clouds() -> None:
     gas_optics_lw = GasOptics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
-    optical_props = gas_optics_lw.compute(
+    optical_props = gas_optics_lw.compute( # type: ignore
         atmosphere,
         add_to_input=False,
     )
@@ -140,7 +140,7 @@ def test_lw_solver_with_clouds_dask() -> None:
     )
 
     # TODO: I don't think dask works with compute_gas_optics
-    optical_props = gas_optics_lw.compute(
+    optical_props = gas_optics_lw.compute( # type: ignore
         atmosphere,
         problem_type=rte.OpticsTypes.ABSORPTION,
         add_to_input=False

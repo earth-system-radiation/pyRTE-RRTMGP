@@ -3,7 +3,7 @@
 import logging
 import os
 import sys
-from typing import Final, Iterable, cast
+from typing import Dict, Final, Iterable, cast
 
 import dask.array as da
 import numpy as np
@@ -726,7 +726,7 @@ class BaseGasOptics:
     def validate_input_data(
         self,
         atmosphere: xr.Dataset,
-        gas_mapping: dict,
+        gas_mapping: Dict[str, str],
     ) -> None:
         """Validate input data: required information is present, values are valid.
 
@@ -1240,6 +1240,7 @@ class GasOptics:
             raise ValueError("Either file_path or gas_optics_file must be provided")
 
         dataset.attrs["selected_gases"] = selected_gases
+
         """Return either the LW or SW accessor depending on dataset contents."""
         # Check if source is internal by looking for required LW variables
         is_internal: bool = (

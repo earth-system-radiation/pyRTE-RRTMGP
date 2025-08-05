@@ -30,7 +30,7 @@ def _load_reference_data() -> xr.Dataset:
 
 # Ideally we would tell mypy that gas_optics is an xarray accessor...
 def _test_get_fluxes_from_RFMIP_atmospheres(
-                 gas_optics: GasOptics,
+                 gas_optics,
                  gas_name_mapping: Optional[dict[str, str]] = None,
                  use_dask: bool = False) -> xr.Dataset:
     """Runs RFMIP clear-sky examples to exercise gas optics, solvers, and gas mapping """
@@ -43,7 +43,7 @@ def _test_get_fluxes_from_RFMIP_atmospheres(
         gas_name_mapping = RFMIP_GAS_MAPPING
 
     # Compute gas optics for the atmosphere
-    gas_optics.compute(
+    gas_optics.compute( # type: ignore
         atmosphere,
         gas_name_map=gas_name_mapping,
     )
@@ -66,11 +66,11 @@ def _test_verify_rfmip_clr_sky(
 
     # Load gas optics
     if problem_type is OpticsTypes.ABSORPTION:
-        gas_optics = GasOptics(
+        gas_optics = GasOptics( # type: ignore
             gas_optics_file = GasOpticsFiles.LW_G256,
         )
     else:
-        gas_optics = GasOptics(
+        gas_optics = GasOptics( # type: ignore
             gas_optics_file = GasOpticsFiles.SW_G224,
         )
 
@@ -145,7 +145,7 @@ def test_verify_rfmip_sw_dask() -> None:
 def test_rfmip_lw_reduced_gases() -> None:
     """ Run RFMIP test cases with reduced set of gases"""
     # Load gas optics
-    gas_optics_lw = GasOptics(
+    gas_optics_lw = GasOptics( # type: ignore
         gas_optics_file = GasOpticsFiles.LW_G256,
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
@@ -156,7 +156,7 @@ def test_rfmip_lw_reduced_gases() -> None:
 def test_rfmip_lw128() -> None:
     """ Run RFMIP test cases with 128 g-point file"""
     # Load gas optics
-    gas_optics_lw = GasOptics(
+    gas_optics_lw = GasOptics( # type: ignore
         gas_optics_file = GasOpticsFiles.LW_G128,
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
@@ -166,7 +166,7 @@ def test_rfmip_lw128() -> None:
 def test_rfmip_sw_reduced_gases() -> None:
     """ Run RFMIP test cases with reduced set of gases"""
     # Load gas optics
-    gas_optics_sw = GasOptics(
+    gas_optics_sw = GasOptics( # type: ignore
         gas_optics_file = GasOpticsFiles.SW_G112,
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
@@ -177,7 +177,7 @@ def test_rfmip_sw_reduced_gases() -> None:
 def test_rfmip_sw112() -> None:
     """ Run RFMIP test cases with 128 g-point file"""
     # Load gas optics
-    gas_optics_sw = GasOptics(
+    gas_optics_sw = GasOptics( # type: ignore
         gas_optics_file = GasOpticsFiles.SW_G112,
     )
     _test_get_fluxes_from_RFMIP_atmospheres(
@@ -189,7 +189,7 @@ if False:
     def test_rfmip_lw128_reduced_gases() -> None:
         """ Run RFMIP test cases with 128 g-point file and reduced set of gases"""
         # Load gas optics
-        gas_optics_lw = GasOptics(
+        gas_optics_lw = GasOptics( # type: ignore
             gas_optics_file = GasOpticsFiles.LW_G128,
         )
         _test_get_fluxes_from_RFMIP_atmospheres(
@@ -200,7 +200,7 @@ if False:
 def test_rfmip_sw112_reduced_gases() -> None:
     """ Run RFMIP test cases with 112 g-point file and reduced set of gases"""
     # Load gas optics
-    gas_optics_sw = GasOptics(
+    gas_optics_sw = GasOptics( # type: ignore
         gas_optics_file = GasOpticsFiles.SW_G112,
     )
     _test_get_fluxes_from_RFMIP_atmospheres(

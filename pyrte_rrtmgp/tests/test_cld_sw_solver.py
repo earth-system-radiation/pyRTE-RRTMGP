@@ -67,7 +67,7 @@ def test_sw_solver_with_clouds() -> None:
     )
 
     # Calculate gas optical properties
-    optical_props = gas_optics_sw.compute(
+    optical_props = gas_optics_sw.compute( # type: ignore
         atmosphere,
         add_to_input=False
     )
@@ -131,7 +131,7 @@ def test_sw_solver_with_clouds_dask() -> None:
     )
 
     # Calculate gas optical properties
-    optical_props = gas_optics_sw.compute(
+    optical_props = gas_optics_sw.compute( # type: ignore
         atmosphere,
         add_to_input=False
     )
