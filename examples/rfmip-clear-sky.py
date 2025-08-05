@@ -47,24 +47,23 @@
 import numpy as np
 import xarray as xr
 
-from pyrte_rrtmgp import rrtmgp_gas_optics
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
+from pyrte_rrtmgp.rrtmgp import GasOptics
 from pyrte_rrtmgp.examples import RFMIP_FILES, load_example_file
 
 # %% [markdown]
 # ## Initialize pyRRTMGP gas optics calculations 
 
 # %%
-gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+gas_optics_lw = GasOptics(
     gas_optics_file=GasOpticsFiles.LW_G256
 )
 
-gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
+gas_optics_sw = GasOptics(
     gas_optics_file=GasOpticsFiles.SW_G224
 )
 
@@ -83,7 +82,7 @@ atmosphere = load_example_file(RFMIP_FILES.ATMOSPHERE)
 
 # %%
 atmosphere["pres_level"] = xr.ufuncs.maximum(
-    gas_optics_sw.compute_gas_optics.press_min,
+    gas_optics_sw.press_min,
     atmosphere["pres_level"],
 )
 
@@ -128,9 +127,8 @@ gas_mapping = {
 #   radiation source functions (on layers, on levels, and at the surface)
 
 # %%
-optical_props = gas_optics_lw.compute_gas_optics(
+optical_props = gas_optics_lw.compute(
     atmosphere,
-    problem_type=OpticsProblemTypes.ABSORPTION,
     gas_name_map=gas_mapping,
     add_to_input = False,
 )
@@ -142,9 +140,8 @@ optical_props
 #    source function defined at the top of atmosphere 
 
 # %%
-gas_optics_sw.compute_gas_optics(
+gas_optics_sw.compute(
     atmosphere,
-    problem_type=OpticsProblemTypes.TWO_STREAM,
     gas_name_map=gas_mapping,
 )
 atmosphere
@@ -168,13 +165,11 @@ optical_props["surface_emissivity"] = atmosphere.surface_emissivity
 # All the arrays for the shortwave are in the same dataset
 
 # %%
-lw_fluxes = rte_solve(
-	optical_props, 
+lw_fluxes = optical_props.rte.solve(
 	add_to_input=False, 
 )
 
-rte_solve(atmosphere)
-
+atmosphere.rte.solve() 
 
 # %% [markdown]
 # ## Check the results against the reference solutions 

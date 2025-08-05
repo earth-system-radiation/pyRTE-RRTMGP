@@ -50,19 +50,19 @@ import numpy as np
 # ### Importing pyRTE components
 
 # %%
-from pyrte_rrtmgp import rrtmgp_cloud_optics, rrtmgp_gas_optics
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
-from pyrte_rrtmgp.rte_solver import rte_solve
 from pyrte_rrtmgp.examples import (
     compute_RCE_clouds,
     compute_RCE_profiles,
     load_example_file,
     ALLSKY_EXAMPLES,
 )
+from pyrte_rrtmgp import rte
+from pyrte_rrtmgp.rrtmgp import GasOptics, CloudOptics
+
 
 
 # %% [markdown]
@@ -99,10 +99,10 @@ def make_profiles(ncol=24, nlay=72):
 # ### Initialize the cloud and gas optics data 
 
 # %%
-cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
+cloud_optics_lw = CloudOptics(
     cloud_optics_file=CloudOpticsFiles.LW_BND
 )
-gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+gas_optics_lw = GasOptics(
     gas_optics_file=GasOpticsFiles.LW_G256
 )
 
@@ -118,7 +118,9 @@ atmosphere = make_profiles()
 #   that's set as the mid-point of the valid range from cloud_optics
 #
 cloud_props = compute_RCE_clouds(
-    cloud_optics_lw, atmosphere["pres_layer"], atmosphere["temp_layer"]
+    cloud_optics_lw, 
+    atmosphere["pres_layer"], 
+    atmosphere["temp_layer"]
 )
 
 atmosphere = atmosphere.merge(cloud_props)
@@ -128,8 +130,9 @@ atmosphere
 # ### Clear-sky (gases) optical properties; surface boundary conditions 
 
 # %%
-optical_props = gas_optics_lw.compute_gas_optics(
-    atmosphere, problem_type=OpticsProblemTypes.ABSORPTION, add_to_input=False
+optical_props = gas_optics_lw.compute(
+    atmosphere, 
+    add_to_input=False,
 )
 optical_props["surface_emissivity"] = 0.98
 optical_props
@@ -140,8 +143,9 @@ optical_props
 # First compute the optical properties of the clouds
 
 # %%
-clouds_optical_props = cloud_optics_lw.compute_cloud_optics(
-    atmosphere, problem_type=OpticsProblemTypes.ABSORPTION
+clouds_optical_props = cloud_optics_lw.compute(
+    atmosphere,
+    problem_type = rte.OpticsTypes.ABSORPTION,
 )
 # The optical properties of the clouds alone
 clouds_optical_props
@@ -151,14 +155,14 @@ clouds_optical_props
 
 # %%
 # add_to() changes the value of `optical_props`
-clouds_optical_props.add_to(optical_props)
+clouds_optical_props.rte.add_to(optical_props)
 optical_props
 
 # %% [markdown]
 # ### Compute broadband fluxes
 
 # %%
-fluxes = rte_solve(optical_props, add_to_input=False)
+fluxes = optical_props.rte.solve(add_to_input=False)
 fluxes
 
 # %% [markdown]
@@ -190,10 +194,10 @@ print("All-sky longwave calculations validated successfully")
 # ## Initialize optics data 
 
 # %%
-cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
+cloud_optics_sw = CloudOptics(
     cloud_optics_file=CloudOpticsFiles.SW_BND
 )
-gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
+gas_optics_sw = GasOptics(
     gas_optics_file=GasOpticsFiles.SW_G224
 )
 
@@ -220,12 +224,14 @@ atmosphere
 
 # %%
 # compute_cloud_optics() returns two-stream properties by default?
-optical_props = gas_optics_sw.compute_gas_optics(
-    atmosphere, problem_type=OpticsProblemTypes.TWO_STREAM, add_to_input=False
+optical_props = gas_optics_sw.compute(
+    atmosphere, 
+    add_to_input=False,
 )
 # add_to() changes the values in optical_props
-cloud_optics_sw.compute_cloud_optics(atmosphere).add_to(
-    optical_props, delta_scale=True
+cloud_optics_sw.compute(atmosphere).rte.add_to(
+    optical_props, 
+    delta_scale=True,
 )
 #
 # Add SW-specific surface and angle properties
@@ -240,7 +246,7 @@ optical_props
 # ### Compute fluxes
 
 # %%
-fluxes = rte_solve(optical_props, add_to_input=False)
+fluxes = optical_props.rte.solve(add_to_input=False)
 fluxes
 
 # %% [markdown]

@@ -1,14 +1,9 @@
 import netCDF4  # noqa (avoids warning https://github.com/pydata/xarray/issues/7259)
 
-from pyrte_rrtmgp import rrtmgp_cloud_optics
-from pyrte_rrtmgp import rrtmgp_gas_optics
-
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
-
 from pyrte_rrtmgp.examples import (
     ALLSKY_EXAMPLES,
     compute_RCE_profiles,
@@ -16,7 +11,8 @@ from pyrte_rrtmgp.examples import (
     load_example_file,
 )
 
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
+from pyrte_rrtmgp.rrtmgp import GasOptics, CloudOptics
 
 import xarray as xr
 import numpy as np
@@ -24,7 +20,7 @@ import numpy as np
 
 def test_load_cloud_optics() -> None:
 
-    cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
+    cloud_optics_sw = CloudOptics(
         cloud_optics_file=CloudOpticsFiles.SW_BND
     )
     assert cloud_optics_sw is not None
@@ -52,7 +48,7 @@ def test_sw_solver_with_clouds() -> None:
         atmosphere[gas_name] = value
 
     # Load cloud optics data
-    cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
+    cloud_optics_sw = CloudOptics(
         cloud_optics_file=CloudOpticsFiles.SW_BND
     )
 
@@ -63,17 +59,16 @@ def test_sw_solver_with_clouds() -> None:
     atmosphere = atmosphere.merge(cloud_properties)
 
     # Calculate cloud optical properties
-    clouds_optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere)
+    clouds_optical_props = cloud_optics_sw.compute(atmosphere)
 
     # Load gas optics and add SW-specific properties
-    gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_sw = GasOptics(
         gas_optics_file=GasOpticsFiles.SW_G224
     )
 
     # Calculate gas optical properties
-    optical_props = gas_optics_sw.compute_gas_optics(
+    optical_props = gas_optics_sw.compute( # type: ignore
         atmosphere,
-        problem_type=OpticsProblemTypes.TWO_STREAM,
         add_to_input=False
     )
 
@@ -82,7 +77,7 @@ def test_sw_solver_with_clouds() -> None:
     optical_props["surface_albedo_diffuse"] = 0.06
     optical_props["mu0"] = 0.86
 
-    fluxes = rte_solve(clouds_optical_props.add_to(optical_props, delta_scale=True),
+    fluxes = clouds_optical_props.rte.add_to(optical_props, delta_scale=True).rte.solve(
                        add_to_input=False)
     assert fluxes is not None
 
@@ -116,7 +111,7 @@ def test_sw_solver_with_clouds_dask() -> None:
         atmosphere[gas_name] = value
 
     # Load cloud optics data
-    cloud_optics_sw = rrtmgp_cloud_optics.load_cloud_optics(
+    cloud_optics_sw = CloudOptics(
         cloud_optics_file=CloudOpticsFiles.SW_BND
     )
 
@@ -128,17 +123,16 @@ def test_sw_solver_with_clouds_dask() -> None:
     atmosphere = atmosphere.chunk({})
 
     # Calculate cloud optical properties
-    clouds_optical_props = cloud_optics_sw.compute_cloud_optics(atmosphere)
+    clouds_optical_props = cloud_optics_sw.compute(atmosphere)
 
     # Load gas optics and add SW-specific properties
-    gas_optics_sw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_sw = GasOptics(
         gas_optics_file=GasOpticsFiles.SW_G224
     )
 
     # Calculate gas optical properties
-    optical_props = gas_optics_sw.compute_gas_optics(
+    optical_props = gas_optics_sw.compute( # type: ignore
         atmosphere,
-        problem_type=OpticsProblemTypes.TWO_STREAM,
         add_to_input=False
     )
 
@@ -147,13 +141,15 @@ def test_sw_solver_with_clouds_dask() -> None:
     optical_props["surface_albedo_diffuse"] = 0.06
     optical_props["mu0"] = 0.86
 
-    fluxes = rte_solve(clouds_optical_props.add_to(optical_props, delta_scale=True),
+    fluxes = clouds_optical_props.rte.add_to(optical_props, delta_scale=True).rte.solve(
                        add_to_input=False)
     assert fluxes is not None
 
     # Load reference data and verify results
     ref_data = load_example_file(ALLSKY_EXAMPLES.REF_SW_NO_AEROSOL)
     assert np.isclose(fluxes["sw_flux_up"],
-                      ref_data["sw_flux_up"].T, atol=1e-7).all()
+                      ref_data["sw_flux_up"].T,
+                      atol=1e-7).all()
     assert np.isclose(fluxes["sw_flux_down"],
-                      ref_data["sw_flux_dn"].T, atol=1e-7).all()
+                      ref_data["sw_flux_dn"].T,
+                      atol=1e-7).all()
