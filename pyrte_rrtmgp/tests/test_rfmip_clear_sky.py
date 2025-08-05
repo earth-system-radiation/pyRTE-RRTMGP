@@ -30,7 +30,7 @@ def _load_reference_data() -> xr.Dataset:
 
 # Ideally we would tell mypy that gas_optics is an xarray accessor...
 def _test_get_fluxes_from_RFMIP_atmospheres(
-                 gas_optics,
+                 gas_optics: GasOptics,
                  gas_name_mapping: Optional[dict[str, str]] = None,
                  use_dask: bool = False) -> xr.Dataset:
     """Runs RFMIP clear-sky examples to exercise gas optics, solvers, and gas mapping """
@@ -80,11 +80,11 @@ def _test_verify_rfmip_clr_sky(
         atmosphere = atmosphere.chunk({"expt": 3})
     atmosphere["pres_level"] = xr.ufuncs.maximum(
         atmosphere["pres_level"],
-        gas_optics.press_min,
+        gas_optics.press_min, #type: ignore
     )
 
     # Gas optics
-    gas_optics.compute(
+    gas_optics.compute( #type: ignore
         atmosphere,
         gas_name_map=RFMIP_GAS_MAPPING,
     )

@@ -33,7 +33,7 @@ def _load_problem_dataset(gas_mapping: Optional[Dict[str, str]] = None,
         gas_optics_file=GasOpticsFiles.LW_G256
     )
 
-    gas_optics_lw.compute(
+    gas_optics_lw.compute( #type: ignore
         atmosphere,
         gas_name_map=mapping,
     )
@@ -47,7 +47,7 @@ def test_validate_problem_dataset_success() -> None:
     gas_optics_lw = GasOptics( # type: ignore
         gas_optics_file=GasOpticsFiles.LW_G256
     )
-    gas_optics_lw.validate_input_data(ds, gas_mapping)
+    gas_optics_lw.validate_input_data(ds, gas_mapping) #type: ignore
 
 def test_dask_validate_problem_dataset_success() -> None:
     """Test gas optics validate_input_data function with dask array."""
@@ -56,7 +56,7 @@ def test_dask_validate_problem_dataset_success() -> None:
     gas_optics_lw = GasOptics( # type: ignore
         gas_optics_file=GasOpticsFiles.LW_G256
     )
-    gas_optics_lw.validate_input_data(ds, gas_mapping)
+    gas_optics_lw.validate_input_data(ds, gas_mapping) #type: ignore
 
 def test_raises_value_error_if_carbon_monoxide_missing() -> None:
     '''
@@ -78,7 +78,7 @@ def test_raises_value_error_if_carbon_monoxide_missing() -> None:
 
     # Compute gas optics for the atmosphere
     with pytest.raises(ValueError):
-        gas_optics_lw.compute(
+        gas_optics_lw.compute( #type: ignore
             atmosphere,
             gas_name_map=gas_mapping
         )
@@ -91,7 +91,7 @@ def test_raises_value_error_for_invalid_layer_pressure() -> None:
     )
 
     with pytest.raises(ValueError):
-        gas_optics_lw.validate_input_data(ds, gas_mapping)
+        gas_optics_lw.validate_input_data(ds, gas_mapping) #type: ignore
 
 
 def test_dask_raises_value_error_for_invalid_layer_pressure() -> None:
@@ -102,7 +102,7 @@ def test_dask_raises_value_error_for_invalid_layer_pressure() -> None:
     )
 
     with pytest.raises(ValueError):
-        gas_optics_lw.validate_input_data(ds, gas_mapping)
+        gas_optics_lw.validate_input_data(ds, gas_mapping) #type: ignore
 
 
 def test_raises_value_error_for_invalid_level_pressure() -> None:
@@ -113,7 +113,7 @@ def test_raises_value_error_for_invalid_level_pressure() -> None:
     )
 
     with pytest.raises(ValueError):
-        gas_optics_lw.validate_input_data(ds, gas_mapping)
+        gas_optics_lw.validate_input_data(ds, gas_mapping) #type: ignore
 
 
 def test_raises_value_error_for_invalid_layer_temperature() -> None:
@@ -124,7 +124,7 @@ def test_raises_value_error_for_invalid_layer_temperature() -> None:
     )
 
     with pytest.raises(ValueError):
-        gas_optics_lw.validate_input_data(ds, gas_mapping)
+        gas_optics_lw.validate_input_data(ds, gas_mapping) #type: ignore
 
 def test_raises_value_error_for_invalid_level_temperature() -> None:
     ds, gas_mapping = _load_problem_dataset(None)
@@ -134,4 +134,4 @@ def test_raises_value_error_for_invalid_level_temperature() -> None:
     )
 
     with pytest.raises(ValueError):
-        gas_optics_lw.validate_input_data(ds, gas_mapping)
+        gas_optics_lw.validate_input_data(ds, gas_mapping) #type: ignore
