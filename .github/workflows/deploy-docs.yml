@@ -1,0 +1,77 @@
+# This file was created automatically with `jupyter-book init --gh-pages` 🪄 💚
+# Ensure your GitHub Pages settings for this repository are set to deploy with **GitHub Actions**.
+
+name: Jupyter Book (via myst) GitHub Pages Deploy
+on:
+  push:
+    # Runs on pushes targeting the default branch
+    branches: main
+env:
+  # `BASE_URL` determines, relative to the root of the domain, the URL that your site is served from.
+  # E.g., if your site lives at `https://mydomain.org/myproject`, set `BASE_URL=/myproject`.
+  # If, instead, your site lives at the root of the domain, at `https://mydomain.org`, set `BASE_URL=''`.
+  BASE_URL: /${{ github.event.repository.name }}
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      #
+      # Jupyterbook-related
+      #
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+      - name: Install Jupyter Book (via myst)
+        run: npm install -g "jupyter-book@>=2.0.0-a0"
+      #
+      # pyRTE-related
+      #
+      - name: Install conda and dependencies
+        uses: conda-incubator/setup-miniconda@v3.2.0
+        with:
+          miniconda-version: "latest"
+          python-version: "3.12"
+          use-mamba: true
+          conda-remove-defaults: true
+          channels: conda-forge
+          environment-file: example-notebooks-scripts.yml
+          auto-activate-base: false
+          activate-environment: pyrte_notebook_tests
+      - name: Install pyRTE
+        run: |
+          echo `pwd`
+          python -m pip install --upgrade pip
+          pip install -e .
+      #
+      # Build and deploy book
+      #
+      - name: Build ipynb and HTML Assets
+        run: |
+          cd examples
+          jupytext --to ipynb *.py
+          jupyter-book build --html
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './examples/_build/html'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
