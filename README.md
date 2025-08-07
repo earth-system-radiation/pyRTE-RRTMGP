@@ -13,7 +13,9 @@ planetary atmospheres.
 
 ## Documentation
 
-Documentation for pyRTE-RRTMGP is available on [Read the Docs](https://pyrte-rrtmgp.readthedocs.io/en/latest/).
+Technical documentation for pyRTE-RRTMGP including installation instructions is available on [Read the Docs](https://pyrte-rrtmgp.readthedocs.io/en/latest/).
+
+User documentation including explanations, tutorials, and examples is available on [Github](https://earth-system-radiation.github.io/pyRTE-RRTMGP)
 
 ## Project Status
 

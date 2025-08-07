@@ -1,55 +1,54 @@
-# ---
-# jupyter:
-#   jupytext:
-#     text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
-#       jupytext_version: 1.17.1
-#   kernelspec:
-#     display_name: Python 3 (ipykernel)
-#     language: python
-#     name: python3
-# ---
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .md
+      format_name: markdown
+      format_version: '1.3'
+      jupytext_version: 1.17.2
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
 
-# %% [markdown]
-# # All-sky Radiative Transfer Example with PyRTE-RRTMGP
-#
-# This notebook demonstrates how to use the PyRTE-RRTMGP package to solve an idealized problem including clouds and clear skies. PyRTE-RRTMGP is a Python implementation of the Radiative Transfer for Energetics (RTE).
-#
-# ## Overview
-#
-# PyRTE-RRTMGP provides a flexible and efficient framework for computing radiative fluxes in planetary atmospheres. This example shows an end-to-end problem with both clear skies and clouds. 
-#
-# 1. Loading data for cloud and gas optics 
-# 2. Computing gas and cloud optical properties and combining them to produce an all-sky problem
-# 3. Solving the radiative transfer equation to obtain upward and downward fluxes
-# 4. Validating results against reference solutions generated with the original RTE fortran code
-#
-# The package leverages `xarray` to represent data.
-#
-# ## Key Components
-#
-# - **Gas and Cloud Optics**: Handles spectral properties of atmospheric gases and clouds and combines them to make a complete problem
-# - **RTE Solver**: Computes radiative fluxes based on atmospheric properties
-#
-# This example demonstrates the workflow for both longwave and shortwave radiative transfer calculations.
-#
-# See the [documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/) for more information.
+# All-sky example (based on RCE)
 
-# %% [markdown]
-# ## Preliminaries
+This notebook demonstrates how to use the PyRTE-RRTMGP package to solve an idealized problem including clouds and clear skies. PyRTE-RRTMGP is a Python implementation of the Radiative Transfer for Energetics (RTE).
 
-# %% [markdown]
-# ### Installing dependencies
+## Overview
 
-# %%
+PyRTE-RRTMGP provides a flexible and efficient framework for computing radiative fluxes in planetary atmospheres. This example shows an end-to-end problem with both clear skies and clouds. 
+
+1. Loading data for cloud and gas optics 
+2. Computing gas and cloud optical properties and combining them to produce an all-sky problem
+3. Solving the radiative transfer equation to obtain upward and downward fluxes
+4. Validating results against reference solutions generated with the original RTE fortran code
+
+The package leverages `xarray` to represent data.
+
+## Key Components
+
+- **Gas and Cloud Optics**: Handles spectral properties of atmospheric gases and clouds and combines them to make a complete problem
+- **RTE Solver**: Computes radiative fluxes based on atmospheric properties
+
+This example demonstrates the workflow for both longwave and shortwave radiative transfer calculations.
+
+See the [documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/) for more information.
+
+
+## Preliminaries
+
+
+### Installing dependencies
+
+```python
 import numpy as np
+```
 
-# %% [markdown]
-# ### Importing pyRTE components
+### Importing pyRTE components
 
-# %%
+```python
 from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
@@ -64,13 +63,13 @@ from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.rrtmgp import GasOptics, CloudOptics
 
 
+```
 
-# %% [markdown]
-# ### Setting up the problem
-#
-# The routine `compute_RCE_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed. Clouds are distributed in 2/3 of the columns 
+### Setting up the problem
 
-# %%
+The routine `compute_RCE_profiles()` packaged with `pyRTE_RRTMGP` computes temperature, pressure, and humidity profiles following a moist adibat. The concentrations of other gases are also needed. Clouds are distributed in 2/3 of the columns 
+
+```python
 def make_profiles(ncol=24, nlay=72):
     # Create atmospheric profiles and gas concentrations
     atmosphere = compute_RCE_profiles(300, ncol, nlay)
@@ -89,16 +88,16 @@ def make_profiles(ncol=24, nlay=72):
         atmosphere[gas_name] = value
 
     return atmosphere
+```
 
-# %% [markdown]
-# ## Longwave calculations
-#
-# In this example datasets are saved to intermediate variables at each step
+## Longwave calculations
 
-# %% [markdown]
-# ### Initialize the cloud and gas optics data 
+In this example datasets are saved to intermediate variables at each step
 
-# %%
+
+### Initialize the cloud and gas optics data 
+
+```python
 cloud_optics_lw = CloudOptics(
     cloud_optics_file=CloudOpticsFiles.LW_BND
 )
@@ -107,11 +106,11 @@ gas_optics_lw = GasOptics(
 )
 
 cloud_optics_lw, gas_optics_lw
+```
 
-# %% [markdown]
-# ### Atmospheric profiles - clear sky, then clouds
+### Atmospheric profiles - clear sky, then clouds
 
-# %%
+```python
 atmosphere = make_profiles()
 #
 # Temporary workaround - compute_RCE_clouds() needs to know the particle size;
@@ -125,50 +124,50 @@ cloud_props = compute_RCE_clouds(
 
 atmosphere = atmosphere.merge(cloud_props)
 atmosphere
+```
 
-# %% [markdown]
-# ### Clear-sky (gases) optical properties; surface boundary conditions 
+### Clear-sky (gases) optical properties; surface boundary conditions 
 
-# %%
+```python
 optical_props = gas_optics_lw.compute(
     atmosphere, 
     add_to_input=False,
 )
 optical_props["surface_emissivity"] = 0.98
 optical_props
+```
 
-# %% [markdown]
-# ### Calculate cloud properties; create all-sky optical properties
-#
-# First compute the optical properties of the clouds
+### Calculate cloud properties; create all-sky optical properties
 
-# %%
+First compute the optical properties of the clouds
+
+```python
 clouds_optical_props = cloud_optics_lw.compute(
     atmosphere,
     problem_type = rte.OpticsTypes.ABSORPTION,
 )
 # The optical properties of the clouds alone
 clouds_optical_props
+```
 
-# %% [markdown]
-# Then add the optical properties of the clouds to the clear sky to get the total
+Then add the optical properties of the clouds to the clear sky to get the total
 
-# %%
+```python
 # add_to() changes the value of `optical_props`
 clouds_optical_props.rte.add_to(optical_props)
 optical_props
+```
 
-# %% [markdown]
-# ### Compute broadband fluxes
+### Compute broadband fluxes
 
-# %%
+```python
 fluxes = optical_props.rte.solve(add_to_input=False)
 fluxes
+```
 
-# %% [markdown]
-# ### Compare to reference results
+### Compare to reference results
 
-# %%
+```python
 # Load reference data and verify results
 ref_data = load_example_file(ALLSKY_EXAMPLES.REF_LW_NO_AEROSOL)
 assert np.isclose(
@@ -184,16 +183,16 @@ assert np.isclose(
 ).all()
 
 print("All-sky longwave calculations validated successfully")
+```
 
-# %% [markdown]
-# # Shortwave calculations
-#
-# In this example steps are combined where possible
+# Shortwave calculations
 
-# %% [markdown]
-# ## Initialize optics data 
+In this example steps are combined where possible
 
-# %%
+
+## Initialize optics data 
+
+```python
 cloud_optics_sw = CloudOptics(
     cloud_optics_file=CloudOpticsFiles.SW_BND
 )
@@ -202,11 +201,11 @@ gas_optics_sw = GasOptics(
 )
 
 cloud_optics_sw, gas_optics_sw
+```
 
-# %% [markdown]
-# ### Atmospheric profiles - clear sky, then clouds
+### Atmospheric profiles - clear sky, then clouds
 
-# %%
+```python
 atmosphere = make_profiles()
 #
 # Temporary workaround - compute_RCE_clouds() needs to know the particle size;
@@ -218,11 +217,11 @@ atmosphere = atmosphere.merge(
     )
 )
 atmosphere
+```
 
-# %% [markdown]
-# ### Compute gas and cloud optics and combine in one step
+### Compute gas and cloud optics and combine in one step
 
-# %%
+```python
 # compute_cloud_optics() returns two-stream properties by default?
 optical_props = gas_optics_sw.compute(
     atmosphere, 
@@ -241,21 +240,21 @@ optical_props["surface_albedo_diffuse"] = 0.06
 # Could also specific a single "surface_albedo"
 optical_props["mu0"] = 0.86
 optical_props
+```
 
-# %% [markdown]
-# ### Compute fluxes
+### Compute fluxes
 
-# %%
+```python
 fluxes = optical_props.rte.solve(add_to_input=False)
 fluxes
+```
 
-# %% [markdown]
-# ### Compare to reference results
-# The fluxes computed here have a `column` dimension while the reference 
-# fluxes have a `site` dimension. But `np.close()` is happy to compare
-# the arrays since they are the same size. 
+### Compare to reference results
+The fluxes computed here have a `column` dimension while the reference 
+fluxes have a `site` dimension. But `np.close()` is happy to compare
+the arrays since they are the same size. 
 
-# %%
+```python
 ref_data = load_example_file(ALLSKY_EXAMPLES.REF_SW_NO_AEROSOL)
 assert np.isclose(
     fluxes["sw_flux_up"],
@@ -274,3 +273,4 @@ assert np.isclose(
 ).all()
 
 print("All-sky shortwave calculations validated successfully")
+```

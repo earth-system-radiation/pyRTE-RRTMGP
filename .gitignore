@@ -82,6 +82,10 @@ instance/
 docs/_build/
 docs/build/
 
+# Jupyterbook documentation
+examples/_build/
+examples/build/
+
 # PyBuilder
 .pybuilder/
 target/
