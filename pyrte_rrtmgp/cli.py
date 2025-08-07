@@ -82,7 +82,13 @@ def run_examples() -> None:
         print(f"Error: Examples directory '{notebooks_path}' does not exist.")
         sys.exit(1)
 
-    for f in [nb for nb in os.listdir(notebooks_path) if nb.endswith("py")]:
+    nbs = [nb for nb in os.listdir(".") if nb.endswith("py")]
+    if len(nbs) == 0:
+        print(f"Error: No .py files found in '{notebooks_path}'.")
+        print(f"Run `jupytext --to py:percent *.md` in '{notebooks_path}' to generate.")
+        sys.exit(1)
+
+    for f in nbs:
         try:
             print("Running examples...")
             result = subprocess.run(
