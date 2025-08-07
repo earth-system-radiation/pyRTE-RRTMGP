@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # Using pyRTE
+# # Quick start: Using pyRTE
 
 # %% [markdown]
 # ## Overview
@@ -39,9 +39,9 @@
 # # Initialization
 
 # %% [markdown]
-# ## Plotting - off by default 
 
 # %%
+# Plotting - off by default 
 do_plots = False
 
 # %% [markdown]
@@ -287,9 +287,9 @@ if do_plots:
     plt.legend(frameon=False)
 
 # %% [markdown]
-# ## Variants 
+# # Variants 
 #
-# ### Combining steps
+# ## Combining steps
 # The computation of optical properties and fluxes can be combined:
 
 # %%
@@ -306,7 +306,8 @@ fluxes = xr.merge(
         ).rte.solve(add_to_input = False)
     
 
-# ### Parallelization with dask
+# %% [markdown]
+# ## Parallelization with dask
 # Calculations can be divided and performed in parallel using `dask` using dask arrays. The only restriction is that 
 # vertical dimensions can't be chuncked over  
 

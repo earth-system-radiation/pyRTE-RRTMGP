@@ -13,7 +13,7 @@
 # ---
 
 # %% [markdown]
-# # All-sky Radiative Transfer Example with PyRTE-RRTMGP
+# # All-sky example (based on RCE)
 #
 # This notebook demonstrates how to use the PyRTE-RRTMGP package to solve an idealized problem including clouds and clear skies. PyRTE-RRTMGP is a Python implementation of the Radiative Transfer for Energetics (RTE).
 #

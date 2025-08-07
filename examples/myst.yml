@@ -2,7 +2,7 @@
 version: 1
 project:
   id: 4ccd3501-713b-4e99-85da-23a69a4f4c24
-  title: pyRTE Examples
+  # title: pyRTE user documentation
   # description:
   # keywords: []
   # authors: [Robert Pincus]
@@ -10,8 +10,10 @@ project:
   # To autogenerate a Table of Contents, run "jupyter book init --write-toc"
   toc:
     - file: README.md
-    - file: rfmip-clear-sky.ipynb
-    - file: all_sky_example.ipynb
+    - file: Tutorials.md
+      children:
+      - file: rfmip-clear-sky.ipynb
+      - file: all_sky_example.ipynb
     - file: pyRTE-quick-start.ipynb
     
 site:

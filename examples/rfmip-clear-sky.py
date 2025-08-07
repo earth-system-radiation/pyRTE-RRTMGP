@@ -9,7 +9,7 @@
 # ---
 
 # %% [markdown]
-# # RFMIP clear sky example with pyRTE+RRTMGP 
+# # Clear sky example (RFMIP)
 #
 
 # %% [markdown]
