@@ -13,3 +13,7 @@ dependencies:
   - matplotlib
   - jupyter
   - jupytext
+  - cmake
+  - ninja
+  - pip
+    pip: -e ..
