@@ -63,4 +63,8 @@ jobs:
         run: pyrte_rrtmgp run_tests
 
       - name: Run notebooks
-        run: pyrte_rrtmgp run_examples
+        run:
+          cd examples
+          jupytext --to py:percent *.md
+          cd ..
+          pyrte_rrtmgp run_examples
