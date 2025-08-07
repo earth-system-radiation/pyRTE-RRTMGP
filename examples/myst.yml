@@ -10,10 +10,10 @@ project:
   # To autogenerate a Table of Contents, run "jupyter book init --write-toc"
   toc:
     - file: README.md
-    - file: pyRTE-quick-start.ipynb
+    - file: pyRTE-quick-start.md
     - file: Tutorials.md
       children:
-      - file: rfmip-clear-sky.ipynb
+      - file: rfmip-clear-sky.md
       - file: all_sky_example.md
     
 site:
