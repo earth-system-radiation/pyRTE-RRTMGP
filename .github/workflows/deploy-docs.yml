@@ -1,7 +1,7 @@
 # This file was created automatically with `jupyter-book init --gh-pages` 🪄 💚
 # Ensure your GitHub Pages settings for this repository are set to deploy with **GitHub Actions**.
 
-name: Jupyter Book (via myst) GitHub Pages Deploy
+name: Jupyter Book v2 deployment to Github Pages
 on:
   push:
     # Runs on pushes targeting the default branch
@@ -30,11 +30,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
       #
       # Jupyterbook-related
       #
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
       - uses: actions/setup-node@v4
         with:
           node-version: 24.x

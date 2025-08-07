@@ -16,4 +16,5 @@ dependencies:
   - cmake
   - ninja
   - pip
-    pip: -e ..
+  - pip:
+    - -e ..
