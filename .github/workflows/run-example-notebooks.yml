@@ -63,7 +63,7 @@ jobs:
         run: pyrte_rrtmgp run_tests
 
       - name: Run notebooks
-        run:
+        run: |
           cd examples
           jupytext --to py:percent *.md
           cd ..
