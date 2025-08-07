@@ -10,7 +10,6 @@ dependencies:
   - rte_rrtmgp
   - dask
   - typing_extensions
-  - matplotlib
   - jupyter
   - jupytext
   - cmake
