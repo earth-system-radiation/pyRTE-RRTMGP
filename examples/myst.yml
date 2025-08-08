@@ -1,0 +1,23 @@
+# See docs at: https://mystmd.org/guide/frontmatter
+version: 1
+project:
+  id: 4ccd3501-713b-4e99-85da-23a69a4f4c24
+  # title: pyRTE user documentation
+  # description:
+  # keywords: []
+  # authors: [Robert Pincus]
+  github: https://github.com/earth-system-radiation/pyRTE-RRTMGP
+  # To autogenerate a Table of Contents, run "jupyter book init --write-toc"
+  toc:
+    - file: README.md
+    - file: pyRTE-quick-start.md
+    - file: Tutorials.md
+      children:
+      - file: rfmip-clear-sky.md
+      - file: all_sky_example.md
+    
+site:
+  template: book-theme
+  # options:
+  #   favicon: favicon.ico
+  #   logo: site_logo.png

@@ -10,3 +10,7 @@ dependencies:
   - rte_rrtmgp
   - dask
   - typing_extensions
+  - jupyter
+  - jupytext
+  - cmake
+  - ninja

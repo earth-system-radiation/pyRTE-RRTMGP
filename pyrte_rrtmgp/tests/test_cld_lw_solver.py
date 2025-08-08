@@ -4,19 +4,21 @@ import numpy as np
 
 import dask.array as da
 
-from pyrte_rrtmgp import rrtmgp_cloud_optics
-from pyrte_rrtmgp import rrtmgp_gas_optics
+from pyrte_rrtmgp.tests import ERROR_TOLERANCE
 
-from pyrte_rrtmgp.data_types import CloudOpticsFiles
-from pyrte_rrtmgp.data_types import GasOpticsFiles
-from pyrte_rrtmgp.data_types import OpticsProblemTypes
+from pyrte_rrtmgp.rrtmgp_data_files import (
+    CloudOpticsFiles,
+    GasOpticsFiles,
+)
+from pyrte_rrtmgp.examples import (
+    ALLSKY_EXAMPLES,
+    compute_RCE_profiles,
+    compute_RCE_clouds,
+    load_example_file,
+)
 
-from pyrte_rrtmgp.examples import ALLSKY_EXAMPLES
-from pyrte_rrtmgp.examples import compute_RCE_profiles
-from pyrte_rrtmgp.examples import compute_RCE_clouds
-from pyrte_rrtmgp.examples import load_example_file
-
-from pyrte_rrtmgp.rte_solver import rte_solve
+from pyrte_rrtmgp import rte
+from pyrte_rrtmgp.rrtmgp import GasOptics, CloudOptics
 
 
 def test_lw_solver_with_clouds() -> None:
@@ -41,42 +43,46 @@ def test_lw_solver_with_clouds() -> None:
         atmosphere[gas_name] = value
 
     # Load cloud optics data
-    cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
+    cloud_optics_lw = CloudOptics(
         cloud_optics_file=CloudOpticsFiles.LW_BND
     )
 
     # Calculate cloud properties and merge into the atmosphere dataset
     cloud_properties = compute_RCE_clouds(
-        cloud_optics_lw, atmosphere["pres_layer"], atmosphere["temp_layer"]
+        cloud_optics_lw,
+        atmosphere["pres_layer"],
+        atmosphere["temp_layer"]
     )
     atmosphere = atmosphere.merge(cloud_properties)
 
     # Calculate cloud optical properties
-    clouds_optical_props = cloud_optics_lw.compute_cloud_optics(
-        atmosphere, problem_type=OpticsProblemTypes.ABSORPTION
+    clouds_optical_props = cloud_optics_lw.compute(
+        atmosphere,
+        problem_type = rte.OpticsTypes.ABSORPTION,
     )
 
     # Calculate gas optical properties
-    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_lw = GasOptics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
-    optical_props = gas_optics_lw.compute_gas_optics(
+    optical_props = gas_optics_lw.compute( # type: ignore
         atmosphere,
-        problem_type=OpticsProblemTypes.ABSORPTION,
-        add_to_input=False
+        add_to_input=False,
     )
     optical_props["surface_emissivity"] = 0.98
 
-    fluxes = rte_solve(clouds_optical_props.add_to(optical_props),
+    fluxes = clouds_optical_props.rte.add_to(optical_props).rte.solve(
                        add_to_input=False)
     assert fluxes is not None
 
     # Load reference data and verify results
     ref_data = load_example_file(ALLSKY_EXAMPLES.REF_LW_NO_AEROSOL)
-    assert np.isclose(fluxes["lw_flux_up"],
-                      ref_data["lw_flux_up"].T, atol=1e-7).all()
-    assert np.isclose(fluxes["lw_flux_down"],
-                      ref_data["lw_flux_dn"].T, atol=1e-7).all()
+    assert np.allclose(fluxes["lw_flux_up"],
+                      ref_data["lw_flux_up"].T,
+                      atol=ERROR_TOLERANCE)
+    assert np.allclose(fluxes["lw_flux_down"],
+                      ref_data["lw_flux_dn"].T,
+                      atol=ERROR_TOLERANCE)
 
 
 def test_lw_solver_with_clouds_dask() -> None:
@@ -105,12 +111,10 @@ def test_lw_solver_with_clouds_dask() -> None:
         atmosphere[gas_name] = value
 
     # Load cloud optics data
-    cloud_optics_lw = rrtmgp_cloud_optics.load_cloud_optics(
+    cloud_optics_lw = CloudOptics(
         cloud_optics_file=CloudOpticsFiles.LW_BND
     )
-    cloud_optics_lw = cloud_optics_lw.chunk("auto")
-    assert isinstance(cloud_optics_lw, xr.Dataset)
-    assert isinstance(cloud_optics_lw["asyice"].data, da.Array)
+    assert isinstance(cloud_optics_lw, CloudOptics)
 
     # Calculate cloud properties and merge into the atmosphere dataset
     cloud_properties = compute_RCE_clouds(
@@ -122,22 +126,23 @@ def test_lw_solver_with_clouds_dask() -> None:
     atmosphere = atmosphere.merge(cloud_properties)
 
     # Calculate cloud optical properties
-    clouds_optical_props = cloud_optics_lw.compute_cloud_optics(
-        atmosphere, problem_type=OpticsProblemTypes.ABSORPTION
+    clouds_optical_props = cloud_optics_lw.compute(
+        atmosphere,
+        problem_type=rte.OpticsTypes.ABSORPTION,
     )
 
     assert isinstance(clouds_optical_props, xr.Dataset)
     assert isinstance(clouds_optical_props["tau"].data, da.Array)
 
     # Calculate gas optical properties
-    gas_optics_lw = rrtmgp_gas_optics.load_gas_optics(
+    gas_optics_lw = GasOptics(
         gas_optics_file=GasOpticsFiles.LW_G256
     )
 
     # TODO: I don't think dask works with compute_gas_optics
-    optical_props = gas_optics_lw.compute_gas_optics(
+    optical_props = gas_optics_lw.compute( # type: ignore
         atmosphere,
-        problem_type=OpticsProblemTypes.ABSORPTION,
+        problem_type=rte.OpticsTypes.ABSORPTION,
         add_to_input=False
     )
     optical_props["surface_emissivity"] = 0.98
@@ -145,13 +150,13 @@ def test_lw_solver_with_clouds_dask() -> None:
     # TODO: When chunking the optical_props values final isclose asserts
     # optical_props = optical_props.chunk("auto")
 
-    problem_ds = clouds_optical_props.add_to(optical_props)
+    problem_ds = clouds_optical_props.rte.add_to(optical_props)
     assert isinstance(problem_ds, xr.Dataset)
 
     # TODO: tau should probably be dask array?
     # assert isinstance(problem_ds["tau"].data, da.Array)
 
-    fluxes = rte_solve(problem_ds, add_to_input=False)
+    fluxes = problem_ds.rte.solve(add_to_input=False)
 
     assert isinstance(fluxes, xr.Dataset)
     # TODO: fluxes output is not dask array
@@ -161,7 +166,9 @@ def test_lw_solver_with_clouds_dask() -> None:
 
     # Load reference data and verify results
     ref_data = load_example_file(ALLSKY_EXAMPLES.REF_LW_NO_AEROSOL)
-    assert np.isclose(fluxes["lw_flux_up"],
-                      ref_data["lw_flux_up"].T, atol=1e-7).all()
-    assert np.isclose(fluxes["lw_flux_down"],
-                      ref_data["lw_flux_dn"].T, atol=1e-7).all()
+    assert np.allclose(fluxes["lw_flux_up"],
+                      ref_data["lw_flux_up"].T,
+                      atol=ERROR_TOLERANCE)
+    assert np.allclose(fluxes["lw_flux_down"],
+                      ref_data["lw_flux_dn"].T,
+                      atol=ERROR_TOLERANCE)

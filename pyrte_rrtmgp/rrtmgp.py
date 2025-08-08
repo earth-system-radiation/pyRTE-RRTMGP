@@ -12,18 +12,24 @@ import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
-from pyrte_rrtmgp.data_types import GasOpticsFiles, ProblemTypes
 from pyrte_rrtmgp.input_mapping import (
     AtmosphericMapping,
     create_default_mapping,
 )
 from pyrte_rrtmgp.kernels.rrtmgp import (
+    compute_cld_from_table,
     compute_planck_source,
     compute_tau_absorption,
     compute_tau_rayleigh,
     interpolation,
 )
-from pyrte_rrtmgp.rrtmgp_data import download_rrtmgp_data
+from pyrte_rrtmgp.rrtmgp_data_files import (
+    CloudOpticsFiles,
+    GasOpticsFiles,
+    download_rrtmgp_data,
+)
+from pyrte_rrtmgp.rte import OpticsTypes
+from pyrte_rrtmgp.utils import safer_divide
 
 # Gravitational parameters from Helmert's equation (m/s^2)
 
@@ -46,61 +52,10 @@ M_H2O: Final[float] = 0.018016
 AVOGAD: Final[float] = 6.02214076e23
 """Avogadro's number (molecules/mol)"""
 
-# Solar constants for orbit calculations
-
-SOLAR_CONSTANTS: Final[Dict[str, float]] = {
-    "A_OFFSET": 0.1495954,  # Semi-major axis offset (AU)
-    "B_OFFSET": 0.00066696,  # Orbital eccentricity factor
-}
-"""Solar constants for orbit calculations. Contains the following keys:
-
-- ``A_OFFSET``: Semi-major axis offset (AU)
-- ``B_OFFSET``: Orbital eccentricity factor
-"""
-
 logger = logging.getLogger(__name__)
 
 
-def load_gas_optics(
-    file_path: str | None = None,
-    gas_optics_file: GasOpticsFiles | None = None,
-    selected_gases: list[str] | None = None,
-) -> xr.Dataset:
-    """Load gas optics data from a file or predefined gas optics file.
-
-    This function loads gas optics data either from a custom netCDF file or from
-    a predefined gas optics file included in the RRTMGP data package. The data
-    contains absorption coefficients and other optical properties needed for
-    radiative transfer calculations.
-
-    Args:
-        file_path: Path to a custom gas optics netCDF file. If provided, this takes
-            precedence over gas_optics_file.
-        gas_optics_file: Enum specifying a predefined gas optics file from the RRTMGP
-            data package. Only used if file_path is None.
-        selected_gases: Optional list of gas names to include in calculations.
-            If None, all gases in the file will be used.
-
-    Returns:
-        xr.Dataset: Dataset containing the gas optics data with selected_gases
-            stored in the attributes.
-
-    Raises:
-        ValueError: If neither file_path nor gas_optics_file is provided.
-    """
-    if file_path is not None:
-        dataset = xr.load_dataset(file_path)
-    elif gas_optics_file is not None:
-        rte_rrtmgp_dir = download_rrtmgp_data()
-        dataset = xr.load_dataset(os.path.join(rte_rrtmgp_dir, gas_optics_file.value))
-    else:
-        raise ValueError("Either file_path or gas_optics_file must be provided")
-
-    dataset.attrs["selected_gases"] = selected_gases
-    return dataset
-
-
-class BaseGasOpticsAccessor:
+class BaseGasOptics:
     """Base class for gas optics calculations.
 
     This class provides common functionality for both longwave and shortwave gas optics
@@ -109,7 +64,6 @@ class BaseGasOpticsAccessor:
 
     Args:
         xarray_obj (xr.Dataset): Dataset containing gas optics data
-        is_internal (bool): Whether this is for internal (longwave) radiation
         selected_gases (list[str] | None): List of gases to include in calculations
 
     Raises:
@@ -119,14 +73,12 @@ class BaseGasOpticsAccessor:
     def __init__(
         self,
         xarray_obj: xr.Dataset,
-        is_internal: bool,
         selected_gases: list[str] | None = None,
     ) -> None:
-        """Initialize the BaseGasOpticsAccessor.
+        """Initialize the BaseGasOptics.
 
         Args:
             xarray_obj: Dataset containing gas optics data.
-            is_internal: Whether this is for internal (longwave) radiation.
             selected_gases: List of gases to include in calculations.
                 If None, all gases in the file will be used.
 
@@ -134,7 +86,6 @@ class BaseGasOpticsAccessor:
             ValueError: If missing required gas in gas mapping (e.g. 'co', or 'h2o').
         """
         self._dataset = xarray_obj
-        self.is_internal = is_internal
 
         # Get the gas names from the dataset
         self._gas_names: tuple[str, ...] = tuple(
@@ -775,7 +726,7 @@ class BaseGasOpticsAccessor:
     def validate_input_data(
         self,
         atmosphere: xr.Dataset,
-        gas_mapping: dict,
+        gas_mapping: Dict[str, str],
     ) -> None:
         """Validate input data: required information is present, values are valid.
 
@@ -822,10 +773,10 @@ class BaseGasOpticsAccessor:
 
         return None
 
-    def __call__(
+    def compute(
         self,
         atmosphere: xr.Dataset,
-        problem_type: str,
+        problem_type: OpticsTypes | None = None,
         gas_name_map: dict[str, str] | None = None,
         variable_mapping: AtmosphericMapping | None = None,
         add_to_input: bool = True,
@@ -883,35 +834,18 @@ class BaseGasOpticsAccessor:
         spectrum = self._dataset["bnd_limits_gpt"].to_dataset()
         gas_optics = xr.merge([sources, problem, spectrum])
 
-        # Add problem type to dataset attributes
-        if problem_type == "absorption" and self.is_internal:
-            problem_type = ProblemTypes.LW_ABSORPTION.value
-        elif problem_type == "two-stream" and self.is_internal:
-            problem_type = ProblemTypes.LW_2STREAM.value
-        elif problem_type == "direct" and not self.is_internal:
-            problem_type = ProblemTypes.SW_DIRECT.value
-        elif problem_type == "two-stream" and not self.is_internal:
-            problem_type = ProblemTypes.SW_2STREAM.value
-        else:
-            raise ValueError(
-                f"Invalid problem type: {problem_type} for "
-                f"{'LW' if self.is_internal else 'SW'} radiation"
-            )
-
         if add_to_input:
             atmosphere.update(gas_optics)
-            atmosphere.attrs["problem_type"] = problem_type
             atmosphere.attrs["top_at_1"] = top_at_1
             return None
         else:
             output_ds = gas_optics
-            output_ds.attrs["problem_type"] = problem_type
             output_ds.attrs["top_at_1"] = top_at_1
             output_ds.mapping.set_mapping(variable_mapping)
             return output_ds
 
 
-class LWGasOpticsAccessor(BaseGasOpticsAccessor):
+class LWGasOptics(BaseGasOptics):
     """Accessor for internal (longwave) radiation sources.
 
     This class handles gas optics calculations specific to longwave radiation, including
@@ -1071,7 +1005,7 @@ class LWGasOpticsAccessor(BaseGasOpticsAccessor):
         )
 
 
-class SWGasOpticsAccessor(BaseGasOpticsAccessor):
+class SWGasOptics(BaseGasOptics):
     """Accessor for external (shortwave) radiation sources.
 
     This class handles gas optics calculations specific to shortwave radiation,
@@ -1120,8 +1054,9 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         Returns:
             DataArray containing top-of-atmosphere solar source
         """
-        a_offset = SOLAR_CONSTANTS["A_OFFSET"]
-        b_offset = SOLAR_CONSTANTS["B_OFFSET"]
+        # Semi-major axis offset (AU), Orbital eccentricity factor
+        a_offset: Final[float] = 0.1495954
+        b_offset: Final[float] = 0.00066696
 
         solar_source_quiet = self._dataset["solar_source_quiet"]
         solar_source_facular = self._dataset["solar_source_facular"]
@@ -1251,8 +1186,7 @@ class SWGasOpticsAccessor(BaseGasOpticsAccessor):
         return tau_rayleigh.rename("tau").to_dataset()
 
 
-@xr.register_dataset_accessor("compute_gas_optics")
-class GasOpticsAccessor:
+class GasOptics:
     """Factory class that returns appropriate GasOptics based on dataset contents.
 
     This class determines whether to return a longwave (LW) or shortwave (SW) gas optics
@@ -1268,22 +1202,319 @@ class GasOpticsAccessor:
     """
 
     def __new__(
-        cls, xarray_obj: xr.Dataset, selected_gases: list[str] | None = None
-    ) -> "GasOpticsAccessor":
+        cls,
+        file_path: str | None = None,
+        gas_optics_file: GasOpticsFiles | None = None,
+        selected_gases: list[str] | None = None,
+    ) -> "GasOptics":
+        """Initialze gas optics objectsfrom a file or predefined gas optics file.
+
+        Load gas optics data either from a custom netCDF file or from
+        a predefined gas optics file included in the RRTMGP data package. The data
+        contains absorption coefficients and other optical properties needed for
+        radiative transfer calculations.
+
+        Args:
+            file_path: Path to a custom gas optics netCDF file. If provided, this takes
+                precedence over gas_optics_file.
+            gas_optics_file: Enum specifying a predefined gas optics file from the
+                RRTMGP data package. Only used if file_path is None.
+            selected_gases: Optional list of gas names to include in calculations.
+                If None, all gases in the file will be used.
+
+        Returns:
+            "GasOptics": Dataset containing the gas optics data with selected_gases
+                stored in the attributes.
+
+        Raises:
+            ValueError: If neither file_path nor gas_optics_file is provided.
+        """
+        if file_path is not None:
+            dataset = xr.load_dataset(file_path)
+        elif gas_optics_file is not None:
+            rte_rrtmgp_dir = download_rrtmgp_data()
+            dataset = xr.load_dataset(
+                os.path.join(rte_rrtmgp_dir, gas_optics_file.value)
+            )
+        else:
+            raise ValueError("Either file_path or gas_optics_file must be provided")
+
+        dataset.attrs["selected_gases"] = selected_gases
+
         """Return either the LW or SW accessor depending on dataset contents."""
         # Check if source is internal by looking for required LW variables
         is_internal: bool = (
-            "totplnk" in xarray_obj.data_vars
-            and "plank_fraction" in xarray_obj.data_vars
+            "totplnk" in dataset.data_vars and "plank_fraction" in dataset.data_vars
         )
 
         if is_internal:
             return cast(
-                GasOpticsAccessor,
-                LWGasOpticsAccessor(xarray_obj, is_internal, selected_gases),
+                GasOptics,
+                LWGasOptics(dataset, selected_gases),
             )
         else:
             return cast(
-                GasOpticsAccessor,
-                SWGasOpticsAccessor(xarray_obj, is_internal, selected_gases),
+                GasOptics,
+                SWGasOptics(dataset, selected_gases),
             )
+
+
+class CloudOptics:
+    """Accessor for computing cloud optical properties.
+
+    This accessor allows you to compute cloud optical properties using the
+    `compute_cloud_optics` method.
+
+    Example usage:
+        `dataset.compute_cloud_optics(cloud_properties)`
+
+    Args:
+        cloud_properties (xr.Dataset): Dataset containing cloud properties.
+        problem_type (str): Type of problem to solve, either "two-stream" (default)
+            or "absorption".
+        add_to_input (bool): Whether to add the computed properties to the input
+            dataset (default: False).
+
+    Returns:
+        xr.Dataset: Dataset containing optical properties for both liquid and ice
+            phases.
+    """
+
+    def __init__(
+        self,
+        file_path: str | None = None,
+        cloud_optics_file: CloudOpticsFiles | None = None,
+    ) -> None:
+        """Load cloud optics data from a netCDF file.
+
+        Args:
+            cloud_optics_file: Enum specifying a predefined cloud optics file from the
+                RRTMGP data package. Only used if file_path is None.
+
+        Returns:
+            xr.Dataset: Dataset containing the cloud optics data.
+
+        Raises:
+            ValueError: If neither file_path nor cloud_optics_file is provided.
+        """
+        if file_path is not None:
+            dataset = xr.load_dataset(file_path)
+        elif cloud_optics_file is not None:
+            rte_rrtmgp_dir = download_rrtmgp_data()
+            dataset = xr.load_dataset(
+                os.path.join(rte_rrtmgp_dir, cloud_optics_file.value)
+            )
+        else:
+            raise ValueError("Either file_path or cloud_optics_file must be provided")
+
+        self._ds = dataset
+
+    @property
+    def rel_min(self) -> np.float64:
+        """Minimum liquid water effective radius."""
+        return self._ds["radliq_lwr"]
+
+    @property
+    def rel_max(self) -> np.float64:
+        """Maximum liquid water effective radius."""
+        return self._ds["radliq_upr"]
+
+    @property
+    def dei_min(self) -> np.float64:
+        """Minimum ice water effective diameter."""
+        return self._ds["diamice_lwr"]
+
+    @property
+    def dei_max(self) -> np.float64:
+        """Maximum ice water effective diameter."""
+        return self._ds["diamice_upr"]
+
+    def compute(
+        self,
+        cloud_properties: xr.Dataset,
+        problem_type: str = "two-stream",
+        add_to_input: bool = False,
+        variable_mapping: AtmosphericMapping | None = None,
+    ) -> xr.Dataset:
+        """
+        Compute cloud optical properties for liquid and ice clouds.
+
+        Args:
+            cloud_properties: Dataset containing cloud properties.
+            lw: Whether to compute liquid water phase (True) or ice water phase
+                (False).
+            add_to_input (bool): Whether to add the computed properties to the
+                input dataset (default: False).
+
+        Returns:
+            xr.Dataset: Dataset containing optical properties for both liquid
+                and ice phases.
+        """
+        cloud_optics = self._ds
+
+        if variable_mapping is None:
+            variable_mapping = create_default_mapping()
+        # Set mapping in accessor
+        cloud_properties.mapping.set_mapping(variable_mapping)
+
+        layer_dim = cloud_properties.mapping.get_dim("layer")
+        lwp = cloud_properties.mapping.get_var("lwp")
+        iwp = cloud_properties.mapping.get_var("iwp")
+        rel = cloud_properties.mapping.get_var("rel")
+        rei = cloud_properties.mapping.get_var("rei")
+
+        # Get dimensions
+        nlay = cloud_properties.sizes[layer_dim]
+
+        non_default_dims = [
+            d for d in cloud_properties.dims if d not in ["level", "layer", "gpt"]
+        ]
+        cloud_properties = cloud_properties.stack({"stacked_cols": non_default_dims})
+
+        # Determine if we're using band-averaged or spectral properties
+        gpt_dim = "nband" if "gpt" not in cloud_optics.sizes else "gpt"
+        gpt_out_dim = "bnd" if gpt_dim == "nband" else "gpt"
+        ngpt = cloud_optics.sizes["nband" if gpt_dim == "nband" else "gpt"]
+
+        # Sequentially process each chunk
+        # Create cloud masks
+        liq_mask = cloud_properties[lwp] > 0
+        ice_mask = cloud_properties[iwp] > 0
+
+        # Compute optical properties using lookup tables
+        # Liquid phase
+        step_size = (cloud_optics.radliq_upr - cloud_optics.radliq_lwr) / (
+            cloud_optics.sizes["nsize_liq"] - 1
+        )
+
+        ltau, ltaussa, ltaussag = xr.apply_ufunc(
+            compute_cld_from_table,
+            nlay,
+            ngpt,
+            liq_mask,
+            cloud_properties[lwp],
+            cloud_properties[rel],
+            cloud_optics.sizes["nsize_liq"],
+            step_size.values,
+            cloud_optics.radliq_lwr.values,
+            cloud_optics.extliq,
+            cloud_optics.ssaliq,
+            cloud_optics.asyliq,
+            input_core_dims=[
+                [],  # nlay
+                [],  # ngpt
+                [layer_dim],  # liq_mask
+                [layer_dim],  # lwp
+                [layer_dim],  # rel
+                [],  # nsize_liq
+                [],  # step_size
+                [],  # radliq_lwr
+                ["nsize_liq", gpt_dim],  # extliq
+                ["nsize_liq", gpt_dim],  # ssaliq
+                ["nsize_liq", gpt_dim],  # asyliq
+            ],
+            output_core_dims=[
+                [layer_dim, gpt_out_dim],  # ltau
+                [layer_dim, gpt_out_dim],  # ltaussa
+                [layer_dim, gpt_out_dim],  # ltaussag
+            ],
+            output_dtypes=[np.float64, np.float64, np.float64],
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    gpt_out_dim: ngpt,
+                },
+            },
+            dask="parallelized",
+        )
+
+        # Ice phase
+        step_size = (cloud_optics.diamice_upr - cloud_optics.diamice_lwr) / (
+            cloud_optics.sizes["nsize_ice"] - 1
+        )
+        ice_roughness = 1
+
+        itau, itaussa, itaussag = xr.apply_ufunc(
+            compute_cld_from_table,
+            nlay,
+            ngpt,
+            ice_mask,
+            cloud_properties[iwp],
+            cloud_properties[rei],
+            cloud_optics.sizes["nsize_ice"],
+            step_size.values,
+            cloud_optics.diamice_lwr.values,
+            cloud_optics.extice[ice_roughness, :, :],
+            cloud_optics.ssaice[ice_roughness, :, :],
+            cloud_optics.asyice[ice_roughness, :, :],
+            input_core_dims=[
+                [],  # nlay
+                [],  # ngpt
+                [layer_dim],  # ice_mask
+                [layer_dim],  # iwp
+                [layer_dim],  # rei
+                [],  # nsize_ice
+                [],  # step_size
+                [],  # diamice_lwr
+                ["nsize_ice", gpt_dim],  # extice
+                ["nsize_ice", gpt_dim],  # ssaice
+                ["nsize_ice", gpt_dim],  # asyice
+            ],
+            output_core_dims=[
+                [layer_dim, gpt_out_dim],  # itau
+                [layer_dim, gpt_out_dim],  # itaussa
+                [layer_dim, gpt_out_dim],  # itaussag
+            ],
+            output_dtypes=[np.float64, np.float64, np.float64],
+            dask_gufunc_kwargs={
+                "output_sizes": {
+                    gpt_out_dim: ngpt,
+                },
+            },
+            dask="parallelized",
+        )
+
+        ltau = ltau.unstack("stacked_cols")
+        ltaussa = ltaussa.unstack("stacked_cols")
+        ltaussag = ltaussag.unstack("stacked_cols")
+        itau = itau.unstack("stacked_cols")
+        itaussa = itaussa.unstack("stacked_cols")
+        itaussag = itaussag.unstack("stacked_cols")
+
+        # Combine liquid and ice contributions
+        if problem_type == "absorption":
+            tau = (ltau - ltaussa) + (itau - itaussa)
+            props = xr.Dataset({"tau": tau})
+        else:
+            tau = ltau + itau
+            taussa = ltaussa + itaussa
+            taussag = ltaussag + itaussag
+
+            # Apply the function with dask awareness.
+            ssa = xr.apply_ufunc(
+                safer_divide,
+                taussa,
+                tau,
+                dask="allowed",  # Allows lazy evaluation with dask arrays.
+                output_dtypes=[
+                    taussa.dtype
+                ],  # Ensure the output data type is correctly specified.
+            )
+
+            g = xr.apply_ufunc(
+                safer_divide,
+                taussag,
+                taussa,
+                dask="allowed",  # Allows lazy evaluation with dask arrays.
+                output_dtypes=[
+                    taussa.dtype
+                ],  # Ensure the output data type is correctly specified.
+            )
+
+            props = xr.Dataset({"tau": tau, "ssa": ssa, "g": g})
+
+        if add_to_input:
+            cloud_properties.update(props)
+            return
+
+        props.mapping.set_mapping(cloud_properties.mapping.mapping)
+        return props
