@@ -26,7 +26,7 @@ def _load_reference_data() -> xr.Dataset:
         load_example_file(RFMIP_FILES.REFERENCE_RLD),
         load_example_file(RFMIP_FILES.REFERENCE_RSU),
         load_example_file(RFMIP_FILES.REFERENCE_RSD),
-        ])
+        ], compat="equals")
 
 # Ideally we would tell mypy that gas_optics is an xarray accessor...
 def _test_get_fluxes_from_RFMIP_atmospheres(
