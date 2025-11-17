@@ -56,7 +56,7 @@ repos:
         args: [--ignore=E402]
 
 -   repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
+    rev: 0.8.2
     hooks:
     -   id: nbstripout
         files: \.ipynb$
