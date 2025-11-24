@@ -33,7 +33,7 @@ jobs:
         shell: "bash -l {0}"
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Install conda and dependencies
         uses: conda-incubator/setup-miniconda@v3.2.0
@@ -51,7 +51,7 @@ jobs:
       # Check out repository under $GITHUB_WORKSPACE
       #
       - name: Check out pyRTE
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Install pyRTE
         run: |
