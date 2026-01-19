@@ -7,7 +7,7 @@ repos:
     -   id: check-added-large-files
 
 -   repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.12.0
+    rev: 26.1.0
     hooks:
     -   id: black
         exclude: pyrte_rrtmgp/tests/(?!test_python_frontend).*
@@ -56,7 +56,7 @@ repos:
         args: [--ignore=E402]
 
 -   repo: https://github.com/kynan/nbstripout
-    rev: 0.8.2
+    rev: 0.9.0
     hooks:
     -   id: nbstripout
         files: \.ipynb$
