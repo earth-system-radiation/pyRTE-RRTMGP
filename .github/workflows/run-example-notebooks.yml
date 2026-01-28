@@ -44,7 +44,7 @@ jobs:
           conda-remove-defaults: true
           channels: conda-forge
           environment-file: example-notebooks-scripts.yml
-          auto-activate-base: false
+          auto-activate: false
           activate-environment: pyrte_notebook_tests
 
       #
