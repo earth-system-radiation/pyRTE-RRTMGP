@@ -53,6 +53,11 @@ jobs:
       - name: Check out pyRTE
         uses: actions/checkout@v6
 
+      - name: Find gfortran on macOS
+        if: runner.os == 'macOS'
+        run: |
+          echo "$(brew --prefix)/opt/gcc/bin" >> $GITHUB_PATH
+
       - name: Install pyRTE
         run: |
           echo `pwd`

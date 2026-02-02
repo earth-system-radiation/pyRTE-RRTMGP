@@ -1,0 +1,41 @@
+name: "pip install of pyRTE-RRTMGP"
+
+# Run these whenever ...
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - 'docs/**/*'
+  push:
+    paths-ignore:
+      - 'docs/**/*'
+
+# cancel running jobs if theres a newer push
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pip_install_build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}
+    steps:
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Checkout hash that triggered CI
+        uses: actions/checkout@v5
+
+      - name: Install pyRTE-RRTMGP
+        run: |
+          pip install -v .
+
+      - name: Run Tests
+        run: |
+          pyrte_rrtmgp run_tests

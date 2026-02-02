@@ -52,6 +52,20 @@ To verify your installation, you can run a set of tests with the following comma
 pyrte_rrtmgp run_tests
 ```
 
+### Instlling with `pip`
+
+pyRTE-RRTMGP can also be installed for development through `pip`. The `scikit-build-core` build backend is used by this package to compile and include files from RTE-RRTMGP. Before installation, please make sure your C, CXX, and Fortran compilers are accessible to the environment that will be used for installation. To perform the installation using `pip` run from the top level of the repository:
+
+```bash
+pip install -v .
+```
+
+To test the installation you can run:
+
+```bash
+pyrte_rrtmgp run_tests
+```
+
 <!-- end-installation-section -->
 
 For platforms not supported by the `conda` package and alternatives to installing with conda, see the [installation instructions in the documentation](https://pyrte-rrtmgp.readthedocs.io/en/latest/how_to/installation.html) and the [Contributor Guide](https://pyrte-rrtmgp.readthedocs.io/en/latest/how-to/installation-local-dev.html).
