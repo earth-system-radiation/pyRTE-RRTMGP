@@ -173,6 +173,7 @@ class RTEAccessor:
         g: xr.DataArray = (
             problem_ds["g"] if "g" in problem_ds else xr.zeros_like(problem_ds["tau"])
         )
+        do_rescaling: bool = "ssa" in problem_ds and "g" in problem_ds
 
         (
             solver_flux_up_broadband,
@@ -194,6 +195,7 @@ class RTEAccessor:
             problem_ds["surface_source"],
             problem_ds["surface_source_jacobian"],
             incident_flux,
+            do_rescaling,
             kwargs={"do_broadband": True, "top_at_1": top_at_1},
             input_core_dims=[
                 [],  # nlay
@@ -209,6 +211,7 @@ class RTEAccessor:
                 ["gpt"],  # sfc_src
                 ["gpt"],  # sfc_src_jac
                 ["gpt"],  # inc_flux
+                [],  # do_rescaling
             ],
             output_core_dims=[
                 [level_dim],  # solver_flux_up_broadband
