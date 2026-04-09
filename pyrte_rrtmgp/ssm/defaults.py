@@ -38,5 +38,21 @@ nu_max_sw_def = 50000.0
 nus_lw_def = np.linspace(50.0, 3000.0, nnu_def)
 nus_sw_def = np.linspace(1000.0, 45000.0, nnu_def)
 
+# default spectroscopic params
+triangle_params_def_lw = np.array([
+  [1., 282., 0., 64.],
+  [1., 24., 1600., 52.],
+  [2., 110., 667., 12.]
+])
+
+gas_names_def_lw = ["h2o", "co2"]
+
+triangle_params_def_sw = np.array([
+  [1., 1., 0., 1200.],
+  [2., 0., 0., 1000000.]
+]) 
+
+gas_names_def_sw = ["h2o", "o3"]
+
 
 
