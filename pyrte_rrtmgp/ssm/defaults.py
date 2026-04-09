@@ -1,12 +1,12 @@
 # Default constants and triangle parameters from mo_optics_ssm.F90 
-# Each triangle is defined by (kappa_0, nu_0, 1)
+# Each triangle is defined by (kappa_0, nu_0, l)
 
 import numpy as np
 
-TSUN_SSM = 5760.0 #default sun temeprature for SSM
-TSI = 1360.0 #default total solar irradiance
+TSUN_SSM = 5760.0 # default sun temeprature for SSM
+TSI = 1360.0 # default total solar irradiance
 
-#Molecular weights (kg/mol)
+# Molecular weights (kg/mol)
 MW_H2O = 0.018
 MW_CO2 = 0.044
 MW_O3 = 0.048
@@ -20,7 +20,7 @@ KAPPA_CLD_SW = 0.0001
 SSA_CLD_LW = 0.0
 SSA_CLD_SW = 0.9999
 
-# default cloud asymmetry
+# default for cloud asymmetry
 G_CLD_LW = 0.0
 G_CLD_SW = 0.85
 
@@ -39,6 +39,8 @@ NUS_LW_DEF = np.linspace(50.0, 3000.0, NNU_DEF)
 NUS_SW_DEF = np.linspace(1000.0, 45000.0, NNU_DEF)
 
 # default spectroscopic params
+# shape is (2 triangles, 4 parameters) - same as Fortran shape=[3,4]
+# columns: [gas_index, kappa_0, nu_0, l]
 TRIANGLE_PARAMS_DEF_LW = np.array([
   [1., 282., 0., 64.],
   [1., 24., 1600., 52.],
@@ -47,9 +49,11 @@ TRIANGLE_PARAMS_DEF_LW = np.array([
 
 GAS_NAMES_DEF_LW = ["h2o", "co2"]
 
+# shape is (2 triangles, 4 parameters)
+# columns: [gas_index, kappa_0, nu_0, l]
 TRIANGLE_PARAMS_DEF_SW = np.array([
-  [1., 1., 0., 1200.],
-  [2., 0., 0., 1000000.]
+  [1., 1., 0., 1200.],    #h2o
+  [2., 0., 0., 1000000.]  #o3
 ]) 
 
 GAS_NAMES_DEF_SW = ["h2o", "o3"]
