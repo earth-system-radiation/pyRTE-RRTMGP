@@ -18,7 +18,7 @@ from pyrte_rrtmgp.kernels.rte import (
     increment_1scalar_by_2stream,
     increment_2stream_by_1scalar,
     increment_2stream_by_2stream,
-    lw_solver_noscat,
+    lw_solver,
     sw_solver_2stream,
 )
 from pyrte_rrtmgp.utils import expand_variable_dims
@@ -173,6 +173,7 @@ class RTEAccessor:
         g: xr.DataArray = (
             problem_ds["g"] if "g" in problem_ds else xr.zeros_like(problem_ds["tau"])
         )
+        do_rescaling: bool = "ssa" in problem_ds and "g" in problem_ds
 
         (
             solver_flux_up_broadband,
@@ -180,7 +181,7 @@ class RTEAccessor:
             _,
             _,
         ) = xr.apply_ufunc(
-            lw_solver_noscat,
+            lw_solver,
             problem_ds.sizes[layer_dim],
             problem_ds.sizes["gpt"],
             ds,
@@ -194,7 +195,11 @@ class RTEAccessor:
             problem_ds["surface_source"],
             problem_ds["surface_source_jacobian"],
             incident_flux,
-            kwargs={"do_broadband": True, "top_at_1": top_at_1},
+            kwargs={
+                "do_broadband": True,
+                "do_rescaling": do_rescaling,
+                "top_at_1": top_at_1,
+            },
             input_core_dims=[
                 [],  # nlay
                 [],  # ngpt

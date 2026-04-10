@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.2
+      jupytext_version: 1.19.1
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -183,6 +183,31 @@ assert np.isclose(
 ).all()
 
 print("All-sky longwave calculations validated successfully")
+```
+
+### Scattering by clouds can be included in longwave calculations
+
+Here's an example demonstrating scattering by clouds. See the [pull request](https://github.com/earth-system-radiation/pyRTE-RRTMGP/pull/286) for a figure. 
+
+```python
+clouds_optical_props_scattering = cloud_optics_lw.compute(
+    atmosphere,
+    problem_type = rte.OpticsTypes.TWO_STREAM,
+)
+
+# identify cloud
+cloud_mask = ((atmosphere.iwp > 0) | (atmosphere.lwp > 0)).data.T[:, None, :] * np.ones_like(optical_props.tau)
+
+## add cloud optical properties for longwave scattering
+optical_props = optical_props.assign({
+    "ssa" : (("layer", "gpt", "column"), 0.6 * cloud_mask),
+    "g" : (("layer", "gpt", "column"), 0.8 * cloud_mask)
+})
+
+
+clouds_optical_props_scattering.rte.add_to(optical_props)
+
+fluxes_scattering = optical_props.rte.solve(add_to_input=False)
 ```
 
 # Shortwave calculations
