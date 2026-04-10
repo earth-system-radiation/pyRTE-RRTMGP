@@ -23,7 +23,7 @@ from pyrte_rrtmgp.pyrte_rrtmgp import (
 )
 
 
-def lw_solver_noscat(
+def lw_solver(
     nlay: int,
     ngpt: int,
     ds: npt.NDArray[np.float64],
@@ -37,11 +37,11 @@ def lw_solver_noscat(
     sfc_src: npt.NDArray[np.float64],
     sfc_src_jac: npt.NDArray[np.float64],
     inc_flux: npt.NDArray[np.float64],
-    do_rescaling: bool,
     top_at_1: bool = True,
     nmus: int = 1,
     do_broadband: bool = True,
     do_Jacobians: bool = False,
+    do_rescaling: bool = False,
 ) -> Tuple[
     npt.NDArray[np.float64],
     npt.NDArray[np.float64],
@@ -50,8 +50,8 @@ def lw_solver_noscat(
 ]:
     """Perform longwave radiation transfer calculations without scattering.
 
-    This function solves the longwave radiative transfer equation in the absence of
-    scattering, computing fluxes and optionally their Jacobians.
+    This function solves the longwave radiative transfer equation for absorption
+        and emission.
 
     Args:
         nlay: Number of layers
