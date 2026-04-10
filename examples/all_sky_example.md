@@ -5,7 +5,7 @@ jupyter:
       extension: .md
       format_name: markdown
       format_version: '1.3'
-      jupytext_version: 1.17.2
+      jupytext_version: 1.19.1
   kernelspec:
     display_name: Python 3 (ipykernel)
     language: python
@@ -185,12 +185,11 @@ assert np.isclose(
 print("All-sky longwave calculations validated successfully")
 ```
 
-### Effects of LW Scattering on Fluxes
+### Scattering by clouds can be included in longwave calculations
+
+Here's an example demonstrating scattering by clouds. See the [pull request](https://github.com/earth-system-radiation/pyRTE-RRTMGP/pull/286) for a figure. 
 
 ```python
-import matplotlib.pyplot as plt
-
-### run pyRTE-RRTMGP including LW scattering
 clouds_optical_props_scattering = cloud_optics_lw.compute(
     atmosphere,
     problem_type = rte.OpticsTypes.TWO_STREAM,
@@ -208,78 +207,7 @@ optical_props = optical_props.assign({
 
 clouds_optical_props_scattering.rte.add_to(optical_props)
 
-# compute longwave fluxes
 fluxes_scattering = optical_props.rte.solve(add_to_input=False)
-```
-
-```python
-### plot figures
-
-idx = 2
-
-fig, axes = plt.subplots(2, 2, figsize = (8, 5), sharey = True)
-axes[0, 0].plot(ref_data["lw_flux_up"].isel(col = idx), ref_data["p_lev"].isel(col = idx)/100, label = 'REFERENCE')
-axes[0, 0].plot(fluxes["lw_flux_up"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (no lw. scatt.)")
-axes[0, 0].plot(fluxes_scattering["lw_flux_up"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (lw. scatt.)")
-
-axes[0, 0].set_ylim([1000, 1])
-axes[0, 0].set_yscale('log')
-axes[0, 0].spines[['right', 'top']].set_visible(False)
-axes[0, 0].set_ylabel("Clear-sky atmosphere\npressure (hPa)")
-
-axes[0, 1].plot(ref_data["lw_flux_dn"].isel(col = idx), ref_data["p_lev"].isel(col = idx)/100, label = 'REFERENCE')
-axes[0, 1].plot(fluxes["lw_flux_down"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (no lw. scatt.)")
-axes[0, 1].plot(fluxes_scattering["lw_flux_down"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (lw. scatt.)")
-
-axes[0, 1].spines[['right', 'top']].set_visible(False)
-
-idx = 3
-axes[1, 0].plot(ref_data["lw_flux_up"].isel(col = idx), ref_data["p_lev"].isel(col = idx)/100, label = 'REFERENCE')
-axes[1, 0].plot(fluxes["lw_flux_up"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (no lw. scatt.)")
-axes[1, 0].plot(fluxes_scattering["lw_flux_up"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (lw. scatt.)")
-
-axes[1, 0].set_ylim([1000, 1])
-axes[1, 0].set_yscale('log')
-axes[1, 0].spines[['right', 'top']].set_visible(False)
-axes[1, 0].set_xlabel("LW Flux Up (W/m$^2$)")
-axes[1, 0].set_ylabel("Low and High Cloud\npressure (hPa)")
-
-axes[1, 1].plot(ref_data["lw_flux_dn"].isel(col = idx), ref_data["p_lev"].isel(col = idx)/100, label = 'REFERENCE')
-axes[1, 1].plot(fluxes["lw_flux_down"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (no lw. scatt.)")
-axes[1, 1].plot(fluxes_scattering["lw_flux_down"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (lw. scatt.)")
-
-axes[1, 1].spines[['right', 'top']].set_visible(False)
-axes[1, 1].set_xlabel("LW Flux Down (W/m$^2$)")
-
-
-axes[0, 0].legend(frameon = False)
-
-plt.show()
-
-fig, axes = plt.subplots(1, 2, figsize = (8, 2.5), sharey = True)
-
-idx = 3
-axes[0].plot(ref_data["lw_flux_up"].isel(col = idx).data - fluxes_scattering["lw_flux_up"].isel(column = idx).data, ref_data["p_lev"].isel(col = idx)/100, label = 'Ref. $-$ lw. scatt.')
-#axes[0].plot(fluxes["lw_flux_up"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (no lw. scatt.)")
-#axes[0].plot(f, ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (lw. scatt.)")
-
-axes[0].set_ylim([1000, 1])
-axes[0].set_yscale('log')
-axes[0].spines[['right', 'top']].set_visible(False)
-axes[0].set_xlabel("$\\Delta$ LW Flux Up (W/m$^2$)")
-axes[0].set_ylabel("Low and High Cloud\npressure (hPa)")
-
-axes[1].plot(ref_data["lw_flux_dn"].isel(col = idx).data - fluxes_scattering["lw_flux_down"].isel(column = idx).data, ref_data["p_lev"].isel(col = idx)/100, label = 'Ref. $-$ lw. scatt.')
-#axes[1].plot(fluxes["lw_flux_down"].isel(column = idx), ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (no lw. scatt.)")
-#axes[1].plot(, ref_data["p_lev"].isel(col = idx)/100, '--', label = "RRTMGP (lw. scatt.)")
-
-axes[1].spines[['right', 'top']].set_visible(False)
-axes[1].set_xlabel("$\\Delta$ LW Flux Down (W/m$^2$)")
-
-axes[0].legend(frameon = False)
-
-plt.show()
-
 ```
 
 # Shortwave calculations
