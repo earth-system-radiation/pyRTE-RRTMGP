@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         platform: [ubuntu-latest, macos-14, macos-latest]
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.11", "3.12", "3.13"]
         # when updating the tested Python versions, please also update README.md,
         # the conda.recipe/meta.yaml file, pyproject.toml, and (if necessary) the
         # .readthedocs.yaml file
@@ -46,7 +46,7 @@ jobs:
           auto-activate-base: true
 
       - name: Prepare
-        run: conda install conda-build conda-verify pytest liblief=0.14.1
+        run: conda install conda-build pytest liblief=0.14.1
 
       - name: Build
         run: conda build conda.recipe

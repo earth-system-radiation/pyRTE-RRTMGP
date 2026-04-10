@@ -3,7 +3,7 @@ name = "pyrte_rrtmgp"
 version = "0.2.1"
 description = "A Python interface to the RTE+RRTMGP Fortran software package."
 readme = "README.md"
-requires-python = ">=3.11,<3.13"
+requires-python = ">=3.11,<3.14"
 # when updating the tested Python versions, please also update README.md,
 # the conda.recipe/meta.yaml file, the conda.yml file for the GitHub Actions
 # workflow, and (if necessary) the .readthedocs.yaml file
