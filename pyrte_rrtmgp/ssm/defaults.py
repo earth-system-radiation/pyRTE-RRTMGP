@@ -3,8 +3,13 @@
 
 import numpy as np
 
-TSUN_SSM = 5760.0 # default sun temeprature for SSM
-TSI = 1360.0 # default total solar irradiance
+PLANCK_H = 6.626075540e-34      # Planck's constant [J s]
+LIGHTSPEED = 2.99792458e8       # Speed of light [m/s]
+BOLTZMANN_K = 1.38065812e-23    # Boltzmann constant [J/K]
+GRAV = 9.80665                  # Gravitational acceleration [m/s^2]
+
+TSUN_SSM = 5760.0 # default sun temeprature for SSM (K)
+TSI = 1360.0 # default total solar irradiance  (W/m^2)
 
 # Molecular weights (kg/mol)
 MW_H2O = 0.018
@@ -35,6 +40,7 @@ NU_MIN_SW_DEF = 0.0
 NU_MAX_SW_DEF = 50000.0
 
 # default wavenumber arrays
+# np.linspace reproduces the Fortran array constructor exactly
 NUS_LW_DEF = np.linspace(50.0, 3000.0, NNU_DEF)
 NUS_SW_DEF = np.linspace(1000.0, 45000.0, NNU_DEF)
 
