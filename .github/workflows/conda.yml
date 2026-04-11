@@ -46,7 +46,7 @@ jobs:
           auto-activate-base: true
 
       - name: Prepare
-        run: conda install conda-build pytest liblief=0.17.6
+        run: conda install conda-build pytest liblief=0.17.5
 
       - name: Build
         run: conda build conda.recipe
