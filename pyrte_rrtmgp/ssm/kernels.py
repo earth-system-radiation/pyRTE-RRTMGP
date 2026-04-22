@@ -9,7 +9,7 @@ from .defaults import BOLTZMANN_K, GRAV, LIGHTSPEED, M_DRY, PLANCK_H
 # Derived by converting B(nu_m, T) [W/m^2/sr/m^-1] to B(nu, T) [W/m^2/sr/cm^-1]:
 #   B = 2*h*c^2 * (100*nu)^3 / (exp(h*c*100*nu / (k*T)) - 1) * 100
 #     = C1 * nu^3 / (exp(C2*nu/T) - 1)
-_C1 = 2.0 * PLANCK_H * LIGHTSPEED**2 * 1e8   # W m^2 sr^-1 (normalised for cm^-1 grid)
+_C1 = 2.0 * PLANCK_H * LIGHTSPEED**2 * 1e8  # W m^2 sr^-1 (normalised for cm^-1 grid)
 _C2 = PLANCK_H * LIGHTSPEED * 100.0 / BOLTZMANN_K  # cm K  (hc/k in cm·K units)
 
 
@@ -34,7 +34,9 @@ def compute_col_gas(
     delta_p = np.abs(np.diff(plev, axis=-1))  # (ncol, nlay) [Pa]
     col_dry = delta_p / GRAV  # (ncol, nlay) [kg/m²]
     # mass mixing ratio = VMR * MW_gas / M_dry_air
-    mass_mix = vmr * mol_weights[np.newaxis, np.newaxis, :] / M_DRY  # (ncol, nlay, ngas)
+    mass_mix = (
+        vmr * mol_weights[np.newaxis, np.newaxis, :] / M_DRY
+    )  # (ncol, nlay, ngas)
     return mass_mix * col_dry[:, :, np.newaxis]  # (ncol, nlay, ngas) [kg/m²]
 
 

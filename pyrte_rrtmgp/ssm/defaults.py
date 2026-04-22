@@ -1,21 +1,21 @@
-# Default constants and triangle parameters from mo_optics_ssm.F90 
+# Default constants and triangle parameters from mo_optics_ssm.F90
 # Each triangle is defined by (kappa_0, nu_0, l)
 
 import numpy as np
 
-PLANCK_H = 6.626075540e-34      # Planck's constant [J s]
-LIGHTSPEED = 2.99792458e8       # Speed of light [m/s]
-BOLTZMANN_K = 1.38065812e-23    # Boltzmann constant [J/K]
-GRAV = 9.80665                  # Gravitational acceleration [m/s^2]
+PLANCK_H = 6.626075540e-34  # Planck's constant [J s]
+LIGHTSPEED = 2.99792458e8  # Speed of light [m/s]
+BOLTZMANN_K = 1.38065812e-23  # Boltzmann constant [J/K]
+GRAV = 9.80665  # Gravitational acceleration [m/s^2]
 
-TSUN_SSM = 5760.0 # default sun temeprature for SSM (K)
-TSI = 1360.0 # default total solar irradiance  (W/m^2)
+TSUN_SSM = 5760.0  # default sun temeprature for SSM (K)
+TSI = 1360.0  # default total solar irradiance  (W/m^2)
 
 # Molecular weights (kg/mol)
 MW_H2O = 0.018
 MW_CO2 = 0.044
 MW_O3 = 0.048
-M_DRY = 0.029 #dry air
+M_DRY = 0.029  # dry air
 
 # default cloud absorption coefficients (m2/kg)
 KAPPA_CLD_LW = 50.0
@@ -47,27 +47,24 @@ NUS_SW_DEF = np.linspace(1000.0, 45000.0, NNU_DEF)
 # default spectroscopic params
 # shape is (2 triangles, 4 parameters) - same as Fortran shape=[3,4]
 # columns: [gas_index, kappa_0, nu_0, l]
-TRIANGLE_PARAMS_DEF_LW = np.array([
-  [1., 282., 0., 64.],
-  [1., 24., 1600., 52.],
-  [2., 110., 667., 12.]
-])
+TRIANGLE_PARAMS_DEF_LW = np.array(
+    [[1.0, 282.0, 0.0, 64.0], [1.0, 24.0, 1600.0, 52.0], [2.0, 110.0, 667.0, 12.0]]
+)
 
 GAS_NAMES_DEF_LW = ["h2o", "co2"]
 
 # shape is (2 triangles, 4 parameters)
 # columns: [gas_index, kappa_0, nu_0, l]
-TRIANGLE_PARAMS_DEF_SW = np.array([
-  [1., 1., 0., 1200.],    #h2o
-  [2., 0., 0., 1000000.]  #o3
-]) 
+TRIANGLE_PARAMS_DEF_SW = np.array(
+    [[1.0, 1.0, 0.0, 1200.0], [2.0, 0.0, 0.0, 1000000.0]]  # h2o  # o3
+)
 
 GAS_NAMES_DEF_SW = ["h2o", "o3"]
 
-P_REF = 500.0 * 100.0 # reference pressure hPa -> Pa
+P_REF = 500.0 * 100.0  # reference pressure hPa -> Pa
 
 MOL_WEIGHTS = {
-  "h2o": MW_H2O,
-  "co2": MW_CO2,
-  "o3": MW_O3,
+    "h2o": MW_H2O,
+    "co2": MW_CO2,
+    "o3": MW_O3,
 }
