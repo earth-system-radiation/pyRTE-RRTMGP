@@ -43,7 +43,7 @@ jobs:
           miniconda-version: "latest"
           python-version: ${{ matrix.python-version }}
           channels: conda-forge
-          auto-activate-base: true
+          auto-activate: true
 
       - name: Prepare
         run: conda install conda-build pytest liblief=0.17.5
