@@ -8,7 +8,6 @@ from typing import Dict, Final, Iterable, cast
 import dask.array as da
 import numpy as np
 import numpy.typing as npt
-import pandas as pd
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
@@ -183,7 +182,12 @@ class BaseGasOptics:
             gas_values.append(values)
 
         gas_da: xr.DataArray = xr.concat(
-            gas_values, dim=pd.Index(gas_name_map.keys(), name="gas"), coords="minimal"
+            gas_values,
+            dim=xr.DataArray(
+                [k for k in gas_name_map.keys()],
+                dims=["gas"],
+            ),
+            coords="minimal",
         )
 
         col_dry = self.get_col_dry(gas_da.sel(gas="h2o"), atmosphere, latitude=None)
@@ -1108,7 +1112,10 @@ class SWGasOptics(BaseGasOptics):
         # Combine upper and lower Rayleigh coefficients
         krayl = xr.concat(
             [self._dataset["rayl_lower"], self._dataset["rayl_upper"]],
-            dim=pd.Index(["lower", "upper"], name="rayl_bound"),
+            dim=xr.DataArray(
+                ["lower", "upper"],
+                dims=["rayl_bound"],
+            ),
         )
 
         layer_dim = gas_interpolation_data.mapping.get_dim("layer")
