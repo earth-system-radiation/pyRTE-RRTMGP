@@ -43,7 +43,8 @@ Please ensure that new contributions pass the formatting and mypy checks before 
 pyRTE-RRTMTP uses [pytest](https://docs.pytest.org/) for testing. To run the tests, first install the required testing dependencies (optimally in a dedicated virtual environment):
 
 ```bash
-pip install -r tests/requirements-test.txt
+mamba env create -f dev-environment.yml
+mamba activate pyrte_dev
 ```
 
 Then, run the tests:
@@ -52,33 +53,4 @@ Then, run the tests:
 pytest tests
 ```
 
-(local-conda-build)=
-## How to Locally Build and Test the Conda Package
-
-Before contributing a change you should test the package locally to ensure that it builds correctly.
-
-To build the conda package locally, first set up a local development environment as described in the {ref}`local-install` section above.
-
-1. Make sure your local development environment is active (e.g. `conda activate pyrte_rrtmgp_dev`). Before you can build the conda package locally, you need to **install the conda build requirements** (if they aren't already on your system):
-
-    ```bash
-    conda install conda-build conda-verify
-    ```
-
-4. **Build the conda package locally**:
-
-    ```bash
-    conda build conda.recipe
-    ```
-
-5. **Install the locally built package** in your current conda environment:
-
-    ```bash
-    conda install -c ${CONDA_PREFIX}/conda-bld/ pyrte_rrtmgp
-    ```
-
-    ```{note}
-    Make sure to remove any other versions of the package that might be installed in your environment (e.g. if you used `pip install -e .` before)!
-    ```
-
-The recipe for the conda package is located in the `conda.recipe` directory in the GitHub repository. This recipe contains the metadata for the package, including the dependencies and the build instructions.
+New features should be accompanied with new tests.
