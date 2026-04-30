@@ -171,8 +171,6 @@ class BaseGasOptics:
         for gas_map in gas_name_map.values():
             if gas_map in atmosphere.data_vars:
                 values = atmosphere[gas_map]
-                if hasattr(values, "units"):
-                    values = values * float(values.units)
                 if values.ndim == 0:
                     values = xr.full_like(
                         atmosphere[pres_level_var].isel(level=0), values

@@ -90,33 +90,37 @@ atmosphere["pres_level"] = xr.ufuncs.maximum(
 ## Conform to expectations
 
 pyRRTMGP interprets the input `xr.Dataset` by looking for `xr.DataArray`s with specific names. 
-  Those names can be over-ridden via a mapping. 
-  Here we create such a mapping for the gases in the RFMIP dataset. 
-  The names as RRTMGP expects them are the keys in the dictionary; the valus are the names in the RFMIP dataset
+  Gases are specified with their chemical formula (or, for halocarbons, by an abbreviation), and 
+  volume mixing ratios are expected in absolute units, so the RFMIP datasets needs some manipulation. 
 
 
 ```python
-gas_mapping = {
-    "h2o": "water_vapor",
-    "co2": "carbon_dioxide_GM",
-    "o3": "ozone",
-    "n2o": "nitrous_oxide_GM",
-    "co": "carbon_monoxide_GM",
-    "ch4": "methane_GM",
-    "o2": "oxygen_GM",
-    "n2": "nitrogen_GM",
-    "ccl4": "carbon_tetrachloride_GM",
-    "cfc11": "cfc11_GM",
-    "cfc12": "cfc12_GM",
-    "cfc22": "hcfc22_GM",
-    "hfc143a": "hfc143a_GM",
-    "hfc125": "hfc125_GM",
-    "hfc23": "hfc23_GM",
-    "hfc32": "hfc32_GM",
-    "hfc134a": "hfc134a_GM",
-    "cf4": "cf4_GM",
-    "no2": "no2",
+gas_names = {
+    "water_vapor": "h2o",
+    "carbon_dioxide_GM": "co2",
+    "ozone":"o3",
+    "nitrous_oxide_GM": "n2o",
+    "carbon_monoxide_GM": "co",
+    "methane_GM": "ch4",
+    "oxygen_GM": "o2",
+    "nitrogen_GM": "n2",
+    "carbon_tetrachloride_GM": "ccl4",
+    "cfc11_GM": "cfc11",
+    "cfc12_GM": "cfc12",
+    "hcfc22_GM": "cfc22",
+    "hfc143a_GM": "hfc143a",
+    "hfc125_GM": "hfc125",
+    "hfc23_GM": "hfc23",
+    "hfc32_GM": "hfc32",
+    "hfc134a_GM": "hfc134a",
+    "cf4_GM": "cf4",
 }
+
+atmosphere = atmosphere.rename_vars(gas_names)
+for g in gas_names.values(): 
+    if hasattr(atmosphere[g], "units"):
+        atmosphere[g] *= float(atmosphere[g].units)
+        atmosphere[g].assign_attrs({"units":"1"})
 ```
 
 # Compute the spectrally-dependent optical properties 
@@ -129,7 +133,6 @@ For the longwave problem we will make a new dataset with the optical properties
 ```python
 optical_props = gas_optics_lw.compute(
     atmosphere,
-    gas_name_map=gas_mapping,
     add_to_input = False,
 )
 optical_props
@@ -142,7 +145,6 @@ For the shortave problem we will append the optical properties to the original d
 ```python
 gas_optics_sw.compute(
     atmosphere,
-    gas_name_map=gas_mapping,
 )
 atmosphere
 ```
@@ -184,7 +186,8 @@ ref = xr.merge([
 	load_example_file(RFMIP_FILES.REFERENCE_RLD),
 	load_example_file(RFMIP_FILES.REFERENCE_RSU), 
 	load_example_file(RFMIP_FILES.REFERENCE_RSD),
-	]
+	], 
+    compat='equals', 
 )
 ```
 
