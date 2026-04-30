@@ -14,3 +14,4 @@ dependencies:
   - jupytext
   - cmake
   - ninja
+  - pip
