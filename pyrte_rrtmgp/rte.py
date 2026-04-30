@@ -21,7 +21,6 @@ from pyrte_rrtmgp.kernels.rte import (
     lw_solver,
     sw_solver_2stream,
 )
-from pyrte_rrtmgp.utils import expand_variable_dims
 
 
 class OpticsTypes(StrEnum):
@@ -156,9 +155,10 @@ class RTEAccessor:
         ]
 
         # Expand surface emissivity dimensions if needed
-        needed_dims = non_default_dims + ["gpt"]
-        problem_ds = expand_variable_dims(
-            problem_ds, surface_emissivity_var, needed_dims
+        _, problem_ds[surface_emissivity_var] = xr.broadcast(
+            problem_ds,
+            problem_ds[surface_emissivity_var],
+            exclude=[layer_dim, level_dim, "bnd", "pair"],
         )
 
         problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
@@ -327,30 +327,40 @@ class RTEAccessor:
         boundary_conditions = self._compute_sw_boundary_conditions()
         problem_ds = xr.merge([problem_ds, boundary_conditions])
 
-        needed_dims = non_default_dims + ["gpt"]
-        if "surface_albedo_direct" in problem_ds.data_vars:
-            problem_ds = expand_variable_dims(
-                problem_ds, "surface_albedo_direct", needed_dims
-            )
-        if "surface_albedo_diffuse" in problem_ds.data_vars:
-            problem_ds = expand_variable_dims(
-                problem_ds, "surface_albedo_diffuse", needed_dims
-            )
+        for albedo in ["surface_albedo_direct", "surface_albedo_diffuse"]:
+            if albedo in problem_ds.data_vars:
+                _, problem_ds[albedo] = xr.broadcast(
+                    problem_ds,
+                    problem_ds[albedo],
+                    exclude=[layer_dim, level_dim, "bnd", "pair"],
+                )
 
-        # Expand mu0 dimensions if needed
-        needed_dims = non_default_dims + [layer_dim]
-        if "mu0" in problem_ds.data_vars:
-            problem_ds = expand_variable_dims(problem_ds, "mu0", needed_dims)
+        #
+        # Expand solar illumination dimensions if needed
+        #
+        _, problem_ds["mu0"] = xr.broadcast(
+            problem_ds,
+            problem_ds["mu0"],
+            exclude=[level_dim, "bnd", "gpt", "pair"],
+        )
 
-        needed_dims = non_default_dims + [level_dim]
-        problem_ds = expand_variable_dims(problem_ds, "solar_angle_mask", needed_dims)
+        _, problem_ds["solar_angle_mask"] = xr.broadcast(
+            problem_ds,
+            problem_ds["solar_angle_mask"],
+            exclude=[layer_dim, "bnd", "gpt", "pair"],
+        )
 
-        # Set diffuse incident flux
-        needed_dims = non_default_dims + ["gpt"]
+        #
+        # Top of domain sources for SW problems
+        #
         if "incident_flux_dif" not in problem_ds:
             problem_ds["incident_flux_dif"] = 0
-        problem_ds = expand_variable_dims(problem_ds, "incident_flux_dif", needed_dims)
-        problem_ds = expand_variable_dims(problem_ds, "toa_source", needed_dims)
+        for src in ["toa_source", "incident_flux_dif"]:
+            _, problem_ds[src] = xr.broadcast(
+                problem_ds,
+                problem_ds[src],
+                exclude=[layer_dim, level_dim, "bnd", "pair"],
+            )
 
         # Determine vertical orientation
         top_at_1: bool = problem_ds.attrs["top_at_1"]
