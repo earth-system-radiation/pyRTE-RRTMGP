@@ -21,7 +21,6 @@ from pyrte_rrtmgp.kernels.rte import (
     lw_solver,
     sw_solver_2stream,
 )
-from pyrte_rrtmgp.utils import expand_variable_dims
 
 
 class OpticsTypes(StrEnum):
@@ -336,16 +335,23 @@ class RTEAccessor:
                     exclude=[layer_dim, level_dim, "bnd", "pair"],
                 )
 
-        # Expand mu0 dimensions if needed
-        needed_dims = non_default_dims + [layer_dim]
-        if "mu0" in problem_ds.data_vars:
-            problem_ds = expand_variable_dims(problem_ds, "mu0", needed_dims)
+        #
+        # Expand solar illumination dimensions if needed
+        #
+        _, problem_ds["mu0"] = xr.broadcast(
+            problem_ds,
+            problem_ds["mu0"],
+            exclude=[level_dim, "bnd", "gpt", "pair"],
+        )
 
-        needed_dims = non_default_dims + [level_dim]
-        problem_ds = expand_variable_dims(problem_ds, "solar_angle_mask", needed_dims)
+        _, problem_ds["solar_angle_mask"] = xr.broadcast(
+            problem_ds,
+            problem_ds["solar_angle_mask"],
+            exclude=[layer_dim, "bnd", "gpt", "pair"],
+        )
 
         #
-        # Top of domains sources for SW problems
+        # Top of domain sources for SW problems
         #
         if "incident_flux_dif" not in problem_ds:
             problem_ds["incident_flux_dif"] = 0
