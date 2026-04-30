@@ -17,7 +17,6 @@ RFMIP_GAS_MAPPING =  {
     "hfc32": "hfc32_GM",
     "hfc134a": "hfc134a_GM",
     "cf4": "cf4_GM",
-    "no2": "no2",
 }
 
 RFMIP_GAS_MAPPING_SMALL =  {

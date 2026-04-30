@@ -20,6 +20,25 @@ from pyrte_rrtmgp.tests import (
 from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.rrtmgp import GasOptics
 
+def _load_atmos_data(
+    gas_name_mapping: Optional[dict[str, str]] = None,
+) -> xr.Dataset:
+
+    atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
+    if gas_name_mapping is None:
+        gas_name_mapping = RFMIP_GAS_MAPPING
+    #
+    # Gas name maps have keys, values reversed
+    #
+    atmosphere = atmosphere. \
+        rename_vars({v:k for k, v in gas_name_mapping.items()})
+    for g in gas_name_mapping.keys():
+        if hasattr(atmosphere[g], "units"):
+            atmosphere[g] *= float(atmosphere[g].units)
+            atmosphere[g].assign_attrs({"units":"1"})
+
+    return(atmosphere)
+
 def _load_reference_data() -> xr.Dataset:
      return xr.merge([
         load_example_file(RFMIP_FILES.REFERENCE_RLU),
@@ -28,24 +47,20 @@ def _load_reference_data() -> xr.Dataset:
         load_example_file(RFMIP_FILES.REFERENCE_RSD),
         ], compat="equals")
 
-# Ideally we would tell mypy that gas_optics is an xarray accessor...
 def _test_get_fluxes_from_RFMIP_atmospheres(
                  gas_optics: GasOptics,
                  gas_name_mapping: Optional[dict[str, str]] = None,
                  use_dask: bool = False) -> xr.Dataset:
     """Runs RFMIP clear-sky examples to exercise gas optics, solvers, and gas mapping """
+
+    atmosphere = _load_atmos_data(gas_name_mapping)
     # Load atmosphere data
-    atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})
-
-    if gas_name_mapping is None:
-        gas_name_mapping = RFMIP_GAS_MAPPING
 
     # Compute gas optics for the atmosphere
     gas_optics.compute( # type: ignore
         atmosphere,
-        gas_name_map=gas_name_mapping,
     )
 
     # Solve RTE
@@ -75,7 +90,7 @@ def _test_verify_rfmip_clr_sky(
         )
 
     # Load atmosphere, modify to match
-    atmosphere: xr.Dataset = load_example_file(RFMIP_FILES.ATMOSPHERE)
+    atmosphere = _load_atmos_data()
     if use_dask:
         atmosphere = atmosphere.chunk({"expt": 3})
     atmosphere["pres_level"] = xr.ufuncs.maximum(
@@ -86,7 +101,6 @@ def _test_verify_rfmip_clr_sky(
     # Gas optics
     gas_optics.compute( #type: ignore
         atmosphere,
-        gas_name_map=RFMIP_GAS_MAPPING,
     )
     # Solve RTE
     fluxes: xr.Dataset = atmosphere.rte.solve(add_to_input=False)
