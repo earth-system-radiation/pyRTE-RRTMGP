@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.17.1
+#       jupytext_version: 1.19.1
 #   kernelspec:
 #     display_name: pyrte-hk25-notebooks
 #     language: python
@@ -44,9 +44,9 @@ from pyrte_rrtmgp.rrtmgp_data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.data_types import OpticsTypes
 from pyrte_rrtmgp import rte
-from pyrte_rrtmgp.rrtmgp import GasOptics
+from pyrte_rrtmgp.rrtmgp import GasOptics, CloudOptics
+
 
 # %%
 import warnings
@@ -93,9 +93,9 @@ data["pressure_h"] = xr.concat([
 
 # %% [markdown]
 # ## Temperature on levels
-# Linear interpolation of temperature in pressure
-#   Temperature at top level is same as top layer 
-#   Temperature at bottom level is surface T (might be colder than lowest layer when elevation is high) 
+# - Linear interpolation of temperature in pressure
+# - Temperature at top level is same as top layer 
+# - Temperature at bottom level is surface T (might be colder than lowest layer when elevation is high) 
 #
 
 # %%
@@ -202,6 +202,9 @@ atmosphere = data.rename_dims({"pressure":"layer",
 atmosphere
 
 # %% [markdown]
+# Could chunk the atmosphere e.g. `.chunk({"cell":32})` or 64
+
+# %% [markdown]
 # # pyRTE
 #
 # ## Initialization 
@@ -243,11 +246,9 @@ gas_optics_sw = GasOptics(
 #
 sw_optics = gas_optics_sw.compute(
                 atmosphere,
-                problem_type=OpticsTypes.TWO_STREAM, 
+                problem_type=rte.OpticsTypes.TWO_STREAM, 
                 add_to_input=False,
 )
-
-
 
 # %%
 #
@@ -261,16 +262,18 @@ sw_optics["tau"].where(xr.ufuncs.isnan(sw_optics["tau"]), drop=True)
 #
 # Using 112 gpts this slice, and another from maybe 110-112, are NaNs
 #
+
 sw_optics["tau"].isel(cell=100, layer=-1).where(xr.ufuncs.isnan(sw_optics["tau"].isel(cell=100, layer=-1)), drop=True)
 # %%
 # 
 # LW gas optics
 #   Produces non-zero values of tau for 256 gpts 
 #   Doesn't work full stop with 128 gpts
+# As of pyRTE 0.2.3 actually failing with an indexing error
 #
 lw_optics = gas_optics_lw.compute(
                 atmosphere,
-                problem_type=OpticsTypes.ABSORPTION, 
+                problem_type=rte.OpticsTypes.ABSORPTION, 
                 add_to_input=False,
 )
 
@@ -283,7 +286,7 @@ lw_optics = gas_optics_lw.compute(
 #
 sw_cld_optics = cloud_optics_lw.compute(
     atmosphere, 
-    problem_type=OpticsTypes.TWO_STREAM
+    problem_type=rte.OpticsTypes.TWO_STREAM
 )
 sw_cld_optics["tau"]
 
@@ -293,7 +296,7 @@ sw_cld_optics["tau"]
 #
 lw_cld_optics = cloud_optics_lw.compute(
     atmosphere, 
-    problem_type=OpticsTypes.ABSORPTION
+    problem_type=rte.OpticsTypes.ABSORPTION
 )
 lw_cld_optics["tau"]
 
@@ -305,15 +308,16 @@ lw_cld_optics["tau"]
 #
 # Shortwave fluxes 
 # 
-sw_fluxes = xr.merge(
-        [cloud_optics_sw.compute(
+sw_fluxes = rte_solve(
+    xr.merge(
+        [cloud_optics_sw.compute_cloud_optics(
             atmosphere, 
-            problem_type=OpticsTypes.TWO_STREAM, 
+            problem_type=OpticsProblemTypes.TWO_STREAM, 
          )\
-         .rte.add_to(
-             gas_optics_sw.compute(
+         .add_to(
+             gas_optics_sw.compute_gas_optics(
                     atmosphere,
-                    problem_type=OpticsTypes.TWO_STREAM, 
+                    problem_type=OpticsProblemTypes.TWO_STREAM, 
                     add_to_input=False,
              ),
              delta_scale = True,
@@ -322,29 +326,30 @@ sw_fluxes = xr.merge(
                                 "mu0":0.86}
                    ),
         ],
-    ).
-    rte.solve(add_to_input = False,
+    ),
+    add_to_input = False,
 )
 
 # %%
 #
 # Longwave fluxes 
 # 
-lw_fluxes = xr.merge(
-        [cloud_optics_lw.compute(
+lw_fluxes = rte_solve(
+    xr.merge(
+        [cloud_optics_lw.compute_cloud_optics(
             atmosphere, 
-            problem_type=OpticsTypes.ABSORPTION, 
+            problem_type=OpticsProblemTypes.ABSORPTION, 
          )\
-         .rte.add_to(
-             gas_optics_lw.compute(
+         .add_to(
+             gas_optics_lw.compute_gas_optics(
                     atmosphere,
-                    problem_type=OpticsTypes.ABSORPTION, 
+                    problem_type=OpticsProblemTypes.ABSORPTION, 
                     add_to_input=False,
              ), 
          ), 
         xr.Dataset(data_vars = {"surface_emissivity":0.98}),
         ],
-    ).
-    rte.solve(add_to_input = False,
+    ),
+    add_to_input = False,
 )
 
