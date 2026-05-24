@@ -22,13 +22,14 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     compute_tau_rayleigh,
     interpolation,
 )
-from pyrte_rrtmgp.rrtmgp_data_files import (
+from pyrte_rrtmgp.rte import OpticsTypes
+
+from .data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
     download_rrtmgp_data,
 )
-from pyrte_rrtmgp.rte import OpticsTypes
-from pyrte_rrtmgp.utils import safer_divide
+from .utils import safer_divide
 
 # Gravitational parameters from Helmert's equation (m/s^2)
 
@@ -834,7 +835,7 @@ class BaseGasOptics:
         problem = self.compute_problem(atmosphere, gas_interpolation_data)
         sources = self.compute_sources(atmosphere, gas_interpolation_data)
         spectrum = self._dataset["bnd_limits_gpt"].to_dataset()
-        gas_optics = xr.merge([sources, problem, spectrum])
+        gas_optics = xr.merge([sources, problem, spectrum], compat="equals")
 
         if add_to_input:
             atmosphere.update(gas_optics)
@@ -1039,7 +1040,7 @@ class SWGasOptics(BaseGasOptics):
             0.0,
         ).rename("ssa")
         g = xr.zeros_like(tau["tau"]).rename("g")
-        return xr.merge([tau, ssa, g])
+        return xr.merge([tau, ssa, g], compat="equals")
 
     def compute_sources(
         self,
