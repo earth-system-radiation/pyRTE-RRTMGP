@@ -61,7 +61,7 @@ if do_plots: import matplotlib.pyplot as plt
 (The organization is a work in progress) 
 
 ```python
-from pyrte_rrtmgp.rrtmgp_data_files import (
+from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )

@@ -1,6 +1,6 @@
 import netCDF4  # noqa (avoids warning https://github.com/pydata/xarray/issues/7259)
 
-from pyrte_rrtmgp.rrtmgp_data_files import (
+from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )

@@ -47,7 +47,7 @@ For both longwave and shortwave problems we will
 import numpy as np
 import xarray as xr
 
-from pyrte_rrtmgp.rrtmgp_data_files import (
+from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )

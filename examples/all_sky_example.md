@@ -49,7 +49,7 @@ import numpy as np
 ### Importing pyRTE components
 
 ```python
-from pyrte_rrtmgp.rrtmgp_data_files import (
+from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )

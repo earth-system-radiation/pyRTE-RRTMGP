@@ -40,7 +40,7 @@ import xarray as xr
 import intake
 
 # %%
-from pyrte_rrtmgp.rrtmgp_data_files import (
+from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )

@@ -6,7 +6,7 @@ import dask.array as da
 
 from pyrte_rrtmgp.tests import ERROR_TOLERANCE
 
-from pyrte_rrtmgp.rrtmgp_data_files import (
+from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
