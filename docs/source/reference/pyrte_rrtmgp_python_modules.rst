@@ -8,34 +8,10 @@ The documentation below provides details for several of the high-level functions
 For more information about the low-level functions available in the ``pyrte_rrtmgp.kernels`` submodule, please go to :ref:`low_level_module_ref`.
 
 
-pyrte\_rrtmgp.rrtmgp module
----------------------------
-
-.. automodule:: pyrte_rrtmgp.rrtmgp
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyrte\_rrtmgp.utils module
---------------------------
-
-.. automodule:: pyrte_rrtmgp.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyrte\_rrtmgp.rte module
 ------------------------
 
 .. automodule:: pyrte_rrtmgp.rte
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-pyrte\_rrtmgp.rrtmgp.data_files module
---------------------------------------
-
-.. automodule:: pyrte_rrtmgp.rrtmgp.data_files
    :members:
    :undoc-members:
    :show-inheritance:
@@ -59,6 +35,22 @@ pyrte\_rrtmgp.cli module
 ------------------------
 
 .. automodule:: pyrte_rrtmgp.cli
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrte\_rrtmgp.rrtmgp module
+---------------------------
+
+.. automodule:: pyrte_rrtmgp.rrtmgp
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+pyrte\_rrtmgp.rrtmgp.data_files module
+--------------------------------------
+
+.. automodule:: pyrte_rrtmgp.rrtmgp.data_files
    :members:
    :undoc-members:
    :show-inheritance:
