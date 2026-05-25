@@ -18,14 +18,14 @@ A typical workflow with pyRTE-RRTMGP consists of the following steps:
 
 Initializing the {class}`~pyrte_rrtmgp.rrtmgp.GasOptics` class retrieves essential gas optics data for radiative transfer calculations. This data includes absorption coefficients and other optical properties for various atmospheric gases at different temperatures, pressures, and concentrations. See {class}`~pyrte_rrtmgp.rrtmgp.GasOptics` for more details.
 
-The package includes four default gas optics files, which can be accessed via the {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles` enum:
+The package includes four default gas optics files, which can be accessed via the {data}`~pyrte_rrtmgp.rrtmgp.data_files.GasOpticsFiles` enum:
 
 *   **Longwave:**
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.LW_G128`: Longwave gas optics file with 128 g-points.
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.LW_G256`: Longwave gas optics file with 256 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.GasOpticsFiles.LW_G128`: Longwave gas optics file with 128 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.GasOpticsFiles.LW_G256`: Longwave gas optics file with 256 g-points.
 *   **Shortwave:**
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.SW_G112`: Shortwave gas optics file with 112 g-points.
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.GasOpticsFiles.SW_G224`: Shortwave gas optics file with 224 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.GasOpticsFiles.SW_G112`: Shortwave gas optics file with 112 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.GasOpticsFiles.SW_G224`: Shortwave gas optics file with 224 g-points.
 
 The data is loaded by passing one of the values of the enum to the `GasOptics` constructor. For example:
 
@@ -40,16 +40,16 @@ File names can also be supplied directly.
 ### 2. Loading cloud optics data by initializing the {class}`~pyrte_rrtmgp.rrtmgp.CloudOptics` class
 
 {class}`~pyrte_rrtmgp.rrtmgp.CloudOptics` is the cloud equivalent of {class}`~pyrte_rrtmgp.rrtmgp.GasOptics`.
-pyRTE-RRTMGP includes cloud optics files which can be accessed via the {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles` enum:
+pyRTE-RRTMGP includes cloud optics files which can be accessed via the {data}`~pyrte_rrtmgp.rrtmgp.data_files.CloudOpticsFiles` enum:
 
 *   **Longwave:**
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.LW_BND`: Longwave cloud optics file with band points.
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.LW_G128`: Longwave cloud optics file with 128 g-points.
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.LW_G256`: Longwave cloud optics file with 256 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.CloudOpticsFiles.LW_BND`: Longwave cloud optics file with band points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.CloudOpticsFiles.LW_G128`: Longwave cloud optics file with 128 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.CloudOpticsFiles.LW_G256`: Longwave cloud optics file with 256 g-points.
 *   **Shortwave:**
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_BND`: Shortwave cloud optics file with band points.
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_G112`: Shortwave cloud optics file with 112 g-points.
-    *   {data}`~pyrte_rrtmgp.rrtmgp_data_files.CloudOpticsFiles.SW_G224`: Shortwave cloud optics file with 224 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.CloudOpticsFiles.SW_BND`: Shortwave cloud optics file with band points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.CloudOpticsFiles.SW_G112`: Shortwave cloud optics file with 112 g-points.
+    *   {data}`~pyrte_rrtmgp.rrtmgp.data_files.CloudOpticsFiles.SW_G224`: Shortwave cloud optics file with 224 g-points.
 
 Loading the data is the same as for the gas optics:
 ```python

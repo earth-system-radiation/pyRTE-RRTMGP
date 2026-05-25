@@ -32,10 +32,10 @@ pyrte\_rrtmgp.rte module
    :undoc-members:
    :show-inheritance:
 
-pyrte\_rrtmgp.rrtmgp_data_files module
+pyrte\_rrtmgp.rrtmgp.data_files module
 --------------------------------------
 
-.. automodule:: pyrte_rrtmgp.rrtmgp_data_files
+.. automodule:: pyrte_rrtmgp.rrtmgp.data_files
    :members:
    :undoc-members:
    :show-inheritance:
