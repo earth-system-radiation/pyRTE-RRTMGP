@@ -16,14 +16,6 @@ pyrte\_rrtmgp.rte module
    :undoc-members:
    :show-inheritance:
 
-pyrte\_rrtmgp.input_mapping module
-----------------------------------
-
-.. automodule:: pyrte_rrtmgp.input_mapping
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 pyrte\_rrtmgp.config module
 ---------------------------
 

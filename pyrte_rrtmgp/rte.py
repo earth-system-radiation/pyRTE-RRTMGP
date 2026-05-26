@@ -135,10 +135,6 @@ class RTEAccessor:
                 - lw_flux_down: Spectrally resolved downward flux
         """
         problem_ds = self._ds
-        layer_dim = problem_ds.mapping.get_dim("layer")
-        level_dim = problem_ds.mapping.get_dim("level")
-
-        surface_emissivity_var = problem_ds.mapping.get_var("surface_emissivity")
 
         nmus: int = 1
         top_at_1: bool = problem_ds.attrs["top_at_1"]
@@ -151,14 +147,14 @@ class RTEAccessor:
         non_default_dims = [
             d
             for d in problem_ds.dims
-            if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
+            if d not in ["layer", "level", "gpt", "bnd", "pair"]
         ]
 
         # Expand surface emissivity dimensions if needed
-        _, problem_ds[surface_emissivity_var] = xr.broadcast(
+        _, problem_ds["surface_emissivity"] = xr.broadcast(
             problem_ds,
-            problem_ds[surface_emissivity_var],
-            exclude=[layer_dim, level_dim, "bnd", "pair"],
+            problem_ds["surface_emissivity"],
+            exclude=["layer", "level", "bnd", "pair"],
         )
 
         problem_ds = problem_ds.stack({"stacked_cols": non_default_dims})
@@ -182,7 +178,7 @@ class RTEAccessor:
             _,
         ) = xr.apply_ufunc(
             lw_solver,
-            problem_ds.sizes[layer_dim],
+            problem_ds.sizes["layer"],
             problem_ds.sizes["gpt"],
             ds,
             weights,
@@ -191,7 +187,7 @@ class RTEAccessor:
             g,
             problem_ds["layer_source"],
             problem_ds["level_source"],
-            problem_ds[surface_emissivity_var],
+            problem_ds["surface_emissivity"],
             problem_ds["surface_source"],
             problem_ds["surface_source_jacobian"],
             incident_flux,
@@ -205,21 +201,21 @@ class RTEAccessor:
                 [],  # ngpt
                 ["gpt", "n_quad_angs"],  # ds
                 ["n_quad_angs"],  # weights
-                [layer_dim, "gpt"],  # tau
-                [layer_dim, "gpt"],  # ssa
-                [layer_dim, "gpt"],  # g
-                [layer_dim, "gpt"],  # lay_source
-                [level_dim, "gpt"],  # lev_source
+                ["layer", "gpt"],  # tau
+                ["layer", "gpt"],  # ssa
+                ["layer", "gpt"],  # g
+                ["layer", "gpt"],  # lay_source
+                ["level", "gpt"],  # lev_source
                 ["gpt"],  # sfc_emis
                 ["gpt"],  # sfc_src
                 ["gpt"],  # sfc_src_jac
                 ["gpt"],  # inc_flux
             ],
             output_core_dims=[
-                [level_dim],  # solver_flux_up_broadband
-                [level_dim],  # solver_flux_down_broadband
-                [level_dim, "gpt"],  # solver_flux_up
-                [level_dim, "gpt"],  # solver_flux_down
+                ["level"],  # solver_flux_up_broadband
+                ["level"],  # solver_flux_down_broadband
+                ["level", "gpt"],  # solver_flux_up
+                ["level", "gpt"],  # solver_flux_down
             ],
             output_dtypes=[np.float64, np.float64, np.float64, np.float64],
             dask="parallelized",
@@ -245,27 +241,21 @@ class RTEAccessor:
             Dataset containing solar zenith angles, surface albedos and solar angle mask
         """
         atmosphere = self._ds
-        layer_dim = atmosphere.mapping.get_dim("layer")
-        solar_zenith_angle_var = atmosphere.mapping.get_var("solar_zenith_angle")
-        surface_albedo_var = atmosphere.mapping.get_var("surface_albedo")
-        surface_albedo_dir_var = atmosphere.mapping.get_var("surface_albedo_direct")
-        surface_albedo_dif_var = atmosphere.mapping.get_var("surface_albedo_diffuse")
-
-        if surface_albedo_dir_var not in atmosphere.data_vars:
-            surface_albedo_direct = atmosphere[surface_albedo_var]
+        if "surface_albedo_direct" not in atmosphere.data_vars:
+            surface_albedo_direct = atmosphere["surface_albedo"]
             surface_albedo_direct = surface_albedo_direct.rename(
                 "surface_albedo_direct"
             )
-            surface_albedo_diffuse = atmosphere[surface_albedo_var]
+            surface_albedo_diffuse = atmosphere["surface_albedo"]
             surface_albedo_diffuse = surface_albedo_diffuse.rename(
                 "surface_albedo_diffuse"
             )
         else:
-            surface_albedo_direct = atmosphere[surface_albedo_dir_var]
+            surface_albedo_direct = atmosphere["surface_albedo_direct"]
             surface_albedo_direct = surface_albedo_direct.rename(
                 "surface_albedo_direct"
             )
-            surface_albedo_diffuse = atmosphere[surface_albedo_dif_var]
+            surface_albedo_diffuse = atmosphere["surface_albedo_diffuse"]
             surface_albedo_diffuse = surface_albedo_diffuse.rename(
                 "surface_albedo_diffuse"
             )
@@ -275,19 +265,19 @@ class RTEAccessor:
             surface_albedo_diffuse,
         ]
 
-        if solar_zenith_angle_var in atmosphere.data_vars:
-            usecol_values = atmosphere[solar_zenith_angle_var] < (
+        if "solar_zenith_angle" in atmosphere.data_vars:
+            usecol_values = atmosphere["solar_zenith_angle"] < (
                 90.0 - 2.0 * np.spacing(90.0)
             )
-            if layer_dim in usecol_values.dims:
+            if "layer" in usecol_values.dims:
                 usecol_values = usecol_values.rename("solar_angle_mask").isel(
-                    {layer_dim: 0}
+                    {"layer": 0}
                 )
             else:
                 usecol_values = usecol_values.rename("solar_angle_mask")
             mu0 = xr.where(
                 usecol_values,
-                np.cos(np.radians(atmosphere[solar_zenith_angle_var])),
+                np.cos(np.radians(atmosphere["solar_zenith_angle"])),
                 1.0,
             )
             data_vars.append(mu0.rename("mu0"))
@@ -315,13 +305,10 @@ class RTEAccessor:
                 - sw_flux_dir: Direct spectral flux
         """
         problem_ds = self._ds
-        layer_dim = problem_ds.mapping.get_dim("layer")
-        level_dim = problem_ds.mapping.get_dim("level")
-
         non_default_dims = [
             d
             for d in problem_ds.dims
-            if d not in [layer_dim, level_dim, "gpt", "bnd", "pair"]
+            if d not in ["layer", "level", "gpt", "bnd", "pair"]
         ]
 
         boundary_conditions = self._compute_sw_boundary_conditions()
@@ -332,7 +319,7 @@ class RTEAccessor:
                 _, problem_ds[albedo] = xr.broadcast(
                     problem_ds,
                     problem_ds[albedo],
-                    exclude=[layer_dim, level_dim, "bnd", "pair"],
+                    exclude=["layer", "level", "bnd", "pair"],
                 )
 
         #
@@ -341,13 +328,13 @@ class RTEAccessor:
         _, problem_ds["mu0"] = xr.broadcast(
             problem_ds,
             problem_ds["mu0"],
-            exclude=[level_dim, "bnd", "gpt", "pair"],
+            exclude=["level", "bnd", "gpt", "pair"],
         )
 
         _, problem_ds["solar_angle_mask"] = xr.broadcast(
             problem_ds,
             problem_ds["solar_angle_mask"],
-            exclude=[layer_dim, "bnd", "gpt", "pair"],
+            exclude=["layer", "bnd", "gpt", "pair"],
         )
 
         #
@@ -359,7 +346,7 @@ class RTEAccessor:
             _, problem_ds[src] = xr.broadcast(
                 problem_ds,
                 problem_ds[src],
-                exclude=[layer_dim, level_dim, "bnd", "pair"],
+                exclude=["layer", "level", "bnd", "pair"],
             )
 
         # Determine vertical orientation
@@ -377,7 +364,7 @@ class RTEAccessor:
             solver_flux_dir_broadband,
         ) = xr.apply_ufunc(
             sw_solver_2stream,
-            problem_ds.sizes[layer_dim],
+            problem_ds.sizes["layer"],
             problem_ds.sizes["gpt"],
             problem_ds["tau"],
             problem_ds["ssa"],
@@ -391,22 +378,22 @@ class RTEAccessor:
             input_core_dims=[
                 [],  # nlay
                 [],  # ngpt
-                [layer_dim, "gpt"],  # tau
-                [layer_dim, "gpt"],  # ssa
-                [layer_dim, "gpt"],  # g
-                [layer_dim],  # mu0
+                ["layer", "gpt"],  # tau
+                ["layer", "gpt"],  # ssa
+                ["layer", "gpt"],  # g
+                ["layer"],  # mu0
                 ["gpt"],  # sfc_alb_dir
                 ["gpt"],  # sfc_alb_dif
                 ["gpt"],  # inc_flux_dir
                 ["gpt"],  # inc_flux_dif
             ],
             output_core_dims=[
-                [level_dim, "gpt"],  # solver_flux_up
-                [level_dim, "gpt"],  # solver_flux_down
-                [level_dim, "gpt"],  # solver_flux_dir
-                [level_dim],  # solver_flux_up_broadband
-                [level_dim],  # solver_flux_down_broadband
-                [level_dim],  # solver_flux_dir_broadband
+                ["level", "gpt"],  # solver_flux_up
+                ["level", "gpt"],  # solver_flux_down
+                ["level", "gpt"],  # solver_flux_dir
+                ["level"],  # solver_flux_up_broadband
+                ["level"],  # solver_flux_down_broadband
+                ["level"],  # solver_flux_dir_broadband
             ],
             output_dtypes=[
                 np.float64,
@@ -417,7 +404,7 @@ class RTEAccessor:
                 np.float64,
             ],
             dask_gufunc_kwargs={
-                "output_sizes": {level_dim: problem_ds.sizes[layer_dim] + 1}
+                "output_sizes": {"level": problem_ds.sizes["layer"] + 1}
             },
             dask="parallelized",
         )
@@ -485,15 +472,11 @@ class RTEAccessor:
         op1 = self._ds
         op2 = other
 
-        layer_dim = op2.mapping.get_dim("layer")
-        level_dim = op2.mapping.get_dim("level")
         gpt_dim = "gpt"
         bnd_dim = "bnd"
 
         non_default_dims = [
-            d
-            for d in op2.dims
-            if d not in [layer_dim, level_dim, gpt_dim, bnd_dim, "pair"]
+            d for d in op2.dims if d not in ["layer", "level", gpt_dim, bnd_dim, "pair"]
         ]
         op1 = op1.stack({"stacked_cols": non_default_dims})
         op2 = op2.stack({"stacked_cols": non_default_dims})
@@ -513,7 +496,7 @@ class RTEAccessor:
         if delta_scale:
             self.delta_scale_optical_props(op1)
 
-        nlay = op2.sizes[layer_dim]
+        nlay = op2.sizes["layer"]
         ngpt = op2.sizes[gpt_dim]
 
         # Check if input has only tau (1-stream) or tau, ssa, g (2-stream)
@@ -730,8 +713,7 @@ class RTEAccessor:
             outside [0,1]
         """
         # Get dimensions
-        layer_dim = optical_props.mapping.get_dim("layer")
-        nlay = optical_props.sizes[layer_dim]
+        nlay = optical_props.sizes["layer"]
 
         gpt_dim = "gpt" if "gpt" in optical_props.sizes else "bnd"
         ngpt = optical_props.sizes[gpt_dim]
@@ -739,10 +721,10 @@ class RTEAccessor:
         for var in ["tau", "ssa", "g"]:
             if var in optical_props.data_vars:
                 transposed_data = optical_props[var].transpose(
-                    "stacked_cols", layer_dim, gpt_dim
+                    "stacked_cols", "layer", gpt_dim
                 )
                 optical_props[var] = (
-                    ["stacked_cols", layer_dim, gpt_dim],
+                    ["stacked_cols", "layer", gpt_dim],
                     transposed_data.values,
                 )
                 optical_props[var].values = np.asfortranarray(optical_props[var].values)
@@ -760,10 +742,10 @@ class RTEAccessor:
                 input_core_dims=[
                     [],  # nlay
                     [],  # ngpt
-                    [layer_dim, gpt_dim],  # tau
-                    [layer_dim, gpt_dim],  # ssa
-                    [layer_dim, gpt_dim],  # g
-                    [layer_dim, gpt_dim],  # f
+                    ["layer", gpt_dim],  # tau
+                    ["layer", gpt_dim],  # ssa
+                    ["layer", gpt_dim],  # g
+                    ["layer", gpt_dim],  # f
                 ],
                 output_dtypes=[np.float64],
                 dask="parallelized",
@@ -779,9 +761,9 @@ class RTEAccessor:
                 input_core_dims=[
                     [],  # nlay
                     [],  # ngpt
-                    [layer_dim, gpt_dim],  # tau
-                    [layer_dim, gpt_dim],  # ssa
-                    [layer_dim, gpt_dim],  # g
+                    ["layer", gpt_dim],  # tau
+                    ["layer", gpt_dim],  # ssa
+                    ["layer", gpt_dim],  # g
                 ],
                 output_dtypes=[np.float64],
                 dask="parallelized",
