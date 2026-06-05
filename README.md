@@ -1,4 +1,4 @@
-[![CI passing](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/run-tests.yml/badge.svg)](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/run-tests.yml)
+[![CI passing](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/run-example-notebooks.yml/badge.svg)](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/run-example-notebooks.yml)
 [![Mypy](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/mypy.yml/badge.svg)](https://github.com/earth-system-radiation/pyRTE-RRTMGP/actions/workflows/mypy.yml)
 [![Documentation Status](https://readthedocs.org/projects/pyrte-rrtmgp/badge/?version=latest)](https://pyrte-rrtmgp.readthedocs.io/en/latest/?badge=latest)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10982460.svg)](https://doi.org/10.5281/zenodo.10982460)
