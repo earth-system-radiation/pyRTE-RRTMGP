@@ -10,6 +10,7 @@ dependencies:
   - pytest
   - rte_rrtmgp
   - dask
+  - scipy
   - typing_extensions
   - pre-commit
   - cmake

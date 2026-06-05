@@ -19,6 +19,7 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     interpolation,
 )
 from pyrte_rrtmgp.rte import OpticsTypes
+from pyrte_rrtmgp.utils import AVOGAD
 
 from .data_files import (
     CloudOpticsFiles,
@@ -42,11 +43,6 @@ M_DRY: Final[float] = 0.028964
 
 M_H2O: Final[float] = 0.018016
 """Water vapor (molecular mass in kg/mol)"""
-
-# Avogadro's number (molecules/mol)
-
-AVOGAD: Final[float] = 6.02214076e23
-"""Avogadro's number (molecules/mol)"""
 
 logger = logging.getLogger(__name__)
 
