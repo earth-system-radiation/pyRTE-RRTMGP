@@ -1,14 +1,11 @@
 """Constants and functions for radiative transfer and gas optics calculations."""
 
-from typing import Any, Final
+from typing import Any
 
 import numpy as np
-from scipy.constants import N_A
 from scipy.constants import Boltzmann as k_B
 from scipy.constants import h
 from scipy.constants import speed_of_light as c
-
-AVOGAD: Final[float] = N_A
 
 
 #######################

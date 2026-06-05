@@ -8,6 +8,7 @@ from typing import Dict, Final, Iterable, cast
 import dask.array as da
 import numpy as np
 import numpy.typing as npt
+import scipy.constants as sc
 import xarray as xr
 
 from pyrte_rrtmgp.config import DEFAULT_GAS_MAPPING
@@ -19,7 +20,6 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     interpolation,
 )
 from pyrte_rrtmgp.rte import OpticsTypes
-from pyrte_rrtmgp.utils import AVOGAD
 
 from .data_files import (
     CloudOpticsFiles,
@@ -28,13 +28,7 @@ from .data_files import (
 )
 from .utils import safer_divide
 
-# Gravitational parameters from Helmert's equation (m/s^2)
-
-HELMERT1: Final[float] = 9.80665
-"""Standard gravity at sea level"""
-
-HELMERT2: Final[float] = 0.02586
-"""Gravity variation with latitude"""
+AVOGAD: Final[float] = sc.N_A
 
 # Molecular masses (kg/mol)
 
@@ -179,7 +173,7 @@ class BaseGasOptics:
             coords="minimal",
         )
 
-        col_dry = self.get_col_dry(gas_da.sel(gas="h2o"), atmosphere, latitude=None)
+        col_dry = self.get_col_dry(gas_da.sel(gas="h2o"), atmosphere)
 
         gas_da = gas_da * col_dry
         gas_da = xr.concat(
@@ -665,31 +659,17 @@ class BaseGasOptics:
     def get_col_dry(
         vmr_h2o: xr.DataArray,
         atmosphere: xr.Dataset,
-        latitude: xr.DataArray | None = None,
     ) -> xr.DataArray:
         """Calculate the dry column of the atmosphere.
 
         Args:
             vmr_h2o: Water vapor volume mixing ratio
             atmosphere: Dataset containing atmospheric conditions
-            latitude: Latitude of the location
 
         Returns:
             DataArray containing dry column of the atmosphere
         """
-        non_default_dims = [d for d in atmosphere.dims if d not in ["level", "layer"]]
-
         plev = atmosphere["pres_level"]
-
-        # Convert latitude to g0 DataArray
-        if latitude is not None:
-            g0 = xr.DataArray(
-                HELMERT1 - HELMERT2 * np.cos(2.0 * np.pi * latitude / 180.0),
-                dims=non_default_dims,
-                coords={d: atmosphere[d] for d in non_default_dims},
-            )
-        else:
-            g0 = xr.full_like(plev.isel(level=0), HELMERT1)
 
         # Calculate pressure difference between layers
         delta_plev = np.abs(plev.diff(dim="level")).rename({"level": "layer"})
@@ -699,7 +679,7 @@ class BaseGasOptics:
         m_air = (M_DRY + M_H2O * vmr_h2o) * fact
 
         # Calculate col_dry using xarray operations
-        col_dry = 10.0 * delta_plev * AVOGAD * fact / (1000.0 * m_air * 100.0 * g0)
+        col_dry = 10.0 * delta_plev * AVOGAD * fact / (1000.0 * m_air * 100.0 * sc.g)
 
         return col_dry.rename("dry_air")
 
