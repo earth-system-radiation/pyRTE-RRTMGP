@@ -12,7 +12,7 @@ on:
       - 'docs/**/*'
 
 jobs:
-  build:
+  run-tests:
     strategy:
       fail-fast: false
       matrix:
