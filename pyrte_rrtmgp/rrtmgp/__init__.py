@@ -20,7 +20,6 @@ from pyrte_rrtmgp.kernels.rrtmgp import (
     interpolation,
 )
 from pyrte_rrtmgp.rte import OpticsTypes
-from pyrte_rrtmgp.utils import M_DRY, get_molmass
 
 from .data_files import (
     CloudOpticsFiles,
@@ -31,7 +30,15 @@ from .utils import safer_divide
 
 AVOGAD: Final[float] = sc.N_A
 
-M_H2O: Final[float] = get_molmass("H2O")
+# Molecular masses (kg/mol)
+#   In principle these should come from pyrte.utils but those
+#   values differ from the values used in RRTMGP by about 5e-5
+#   (relative) which makes comparison to Fortran versions fail.
+
+M_DRY: Final[float] = 0.028964
+"""Dry air (molecular mass in kg/mol)"""
+
+M_H2O: Final[float] = 0.018016
 """Water vapor (molecular mass in kg/mol)"""
 
 logger = logging.getLogger(__name__)
