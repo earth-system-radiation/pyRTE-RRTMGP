@@ -9,6 +9,7 @@ dependencies:
   - python >=3.11,<3.15
   - pyrte_rrtmgp
   - dask
+  - scipy
   - typing_extensions
   - matplotlib
   - jupyter
