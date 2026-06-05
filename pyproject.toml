@@ -13,7 +13,8 @@ dependencies = [
   "netcdf4>=1.7.2",
   "requests>=2.4.0",
   "pytest>=6.0.0",
-  "scipy>1.0.0"
+  "scipy>1.0.0",
+  "numba>=0.64.0"
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -34,7 +35,8 @@ test = [
   "dask >=2023.5.0",
   "netcdf4>=1.7.2",
   "requests>=2.4.0",
-  "scipy>1.0.0"
+  "scipy>1.0.0",
+  "numba>=0.64.0"
 ]
 
 [project.scripts]

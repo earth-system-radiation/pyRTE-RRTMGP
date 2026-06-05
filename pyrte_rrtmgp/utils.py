@@ -1,8 +1,7 @@
 """Constants and functions for radiative transfer and gas optics calculations."""
 
-from typing import Any
-
 import numpy as np
+from numba import float64, vectorize
 from scipy.constants import Boltzmann as k_B
 from scipy.constants import h
 from scipy.constants import speed_of_light as c
@@ -12,7 +11,8 @@ from scipy.constants import speed_of_light as c
 #
 # Planck function and its inverse.
 #
-def B_nu(T: Any, nu: Any) -> Any:
+@vectorize([float64(float64, float64)])
+def B_nu(T: float64, nu: float64) -> float64:
     """
     Planck function.
 
@@ -28,7 +28,8 @@ def B_nu(T: Any, nu: Any) -> Any:
     return ((2 * h * (c**2) * (nu**3)) / (np.exp((h * c * nu) / (k_B * T)) - 1)) * 100
 
 
-def Tb_nu(B: Any, nu: Any) -> Any:
+@vectorize([float64(float64, float64)])
+def Tb_nu(B: float64, nu: float64) -> float64:
     """
     Inverse Planck function.
 

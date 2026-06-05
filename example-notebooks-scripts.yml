@@ -9,6 +9,7 @@ dependencies:
   - python >=3.11,<3.15
   - rte_rrtmgp
   - dask
+  - numba>=0.64
   - scipy
   - typing_extensions
   - jupyter
