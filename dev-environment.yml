@@ -13,6 +13,7 @@ dependencies:
   - numba>=0.64
   - scipy
   - typing_extensions
+  - molmass
   - pre-commit
   - cmake
   - ninja
