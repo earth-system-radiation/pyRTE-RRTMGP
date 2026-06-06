@@ -228,5 +228,5 @@ print("RFMIP clear-sky calculations validated")
 
 # Variants
 
-See the `pyRTE-quick-start notebook for more examples, including how to parallelize computations with `dask` and 
-  how to add clouds to the problem, and how to combine multiple steps of the calculation at once 
+See the `pyRTE-quick-start` notebook for more examples, including how to parallelize computations with `dask`,  
+  how to add clouds to the problem, and how to combine multiple steps of the calculation at once.
