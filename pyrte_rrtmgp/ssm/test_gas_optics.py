@@ -5,30 +5,12 @@ from gasOptics import GasOptics
 
 
 """
-Minimal longwave GasOptics smoke test.
+First simple longwave GasOptics test.
 
 This script builds one spectral gas-optics object, feeds it a single-layer
 atmospheric xarray Dataset, runs compute(), and prints every returned field.
-It intentionally does not assert on values yet; the goal is to inspect the
-shape and numerical output before writing stricter tests.
 """
 
-
-np.set_printoptions(threshold=np.inf, linewidth=120)
-
-
-def print_dataarray(name, dataarray):
-    """Print one compute() output with dimensions, coordinates, and values."""
-    print(name)
-    print("-" * len(name))
-    print(f"dims: {dataarray.dims}")
-    print(f"shape: {dataarray.shape}")
-    print("coords:")
-    for coord_name, coord in dataarray.coords.items():
-        print(f"  {coord_name}: {coord.values}")
-    print("values:")
-    print(dataarray.values)
-    print()
 
 
 def print_positive_check(name, dataarray):
