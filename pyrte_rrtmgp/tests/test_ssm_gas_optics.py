@@ -9,7 +9,7 @@ fields are strictly positive.
 
 import numpy as np
 import xarray as xr
-from ssm.gasOptics import GasOptics
+from pyrte_rrtmgp.ssm import GasOptics
 
 # Spectral triangle table. Tags are individual absorption components; tags
 # with a suffix, such as h2o-rot, share the physical gas name before "-".
