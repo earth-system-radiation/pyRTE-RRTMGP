@@ -9,9 +9,6 @@ from scipy.constants import g
 
 from .. import utils
 
-PLANCK_H: Final[float] = utils.h  # Planck's constant [J s]
-LIGHTSPEED: Final[float] = utils.c  # Speed of light [m/s]
-BOLTZMANN_K: Final[float] = utils.k_B  # Boltzmann constant [J/K]
 GRAV: Final[float] = g  # Gravitational acceleration [m/s^2]
 
 TSUN_SSM = 5760.0  # default sun temeprature for SSM (K)

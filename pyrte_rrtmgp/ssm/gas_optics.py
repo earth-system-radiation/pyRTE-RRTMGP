@@ -10,8 +10,9 @@ from typing import Tuple
 
 import numpy as np
 import xarray as xr
-from defaults import MOL_WEIGHTS
-from kernels import (
+
+from .default import MOL_WEIGHTS
+from .kernels import (
     compute_absorption_coeffs,
     compute_layer_mass,
     compute_planck_source,
