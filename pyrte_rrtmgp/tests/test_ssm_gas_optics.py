@@ -9,32 +9,7 @@ fields are strictly positive.
 
 import numpy as np
 import xarray as xr
-from pyrte_rrtmgp.ssm import GasOptics
-
-# Spectral triangle table. Tags are individual absorption components; tags
-# with a suffix, such as h2o-rot, share the physical gas name before "-".
-params = ["nu0", "l", "kappa0"]
-tags = ["co2", "h2o-rot", "h2o-vr", "h2o-cont"]
-
-atmos_data = xr.Dataset(
-    coords={
-        "tags": tags,
-        "params": params,
-    },
-    data_vars={
-        "triangles": (
-            ["tags", "params"],
-            np.array(
-                [
-                    [667.5, 10.2, 500.0],
-                    [150.0, 58.0, 165.0],
-                    [1500.0, 60.0, 15.0],
-                    [700.0, 275.0, 0.1],
-                ]
-            ),
-        )
-    },
-)
+from pyrte_rrtmgp.ssm import GasOptics, SSM_CP26
 
 # Wavenumber grid and spectral band widths used by the Planck source terms.
 nus = xr.DataArray(
@@ -54,10 +29,10 @@ dnus = xr.DataArray(
 
 # Construct the gas-optics calculator from the spectral data.
 gas_optics = GasOptics(
-    atmos_data=atmos_data,
+    atmos_data=SSM_CP26,
     nus=nus,
     dnus=dnus,
-    pref=1.0e5,
+    pref = SSM_CP26.pref
 )
 
 # Single-layer atmospheric input. This keeps the original 1D play/plev shape

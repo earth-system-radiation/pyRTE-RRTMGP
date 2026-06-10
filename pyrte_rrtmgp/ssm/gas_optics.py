@@ -25,6 +25,29 @@ MOL_WEIGHTS: Final[dict[str, float]] = {
     "o3": utils.get_molmass("O3"),
 }
 
+#
+# Simple spectral model from Czarnecki and Pincus 2026
+#
+SSM_CP26: Final[xr.Dataset] = xr.Dataset(
+    coords={
+        "tags": ["co2", "h2o-rot", "h2o-vr", "h2o-cont"],
+        "params": ["nu0", "l", "kappa0"],
+    },
+    data_vars={
+        "triangles": (
+            ["tags", "params"],
+            np.array(
+                [
+                    [667.5, 10.2, 500.0],
+                    [150.0, 58.0, 165.0],
+                    [1500.0, 60.0, 15.0],
+                    [700.0, 275.0, 0.1],
+                ]
+            ),
+        )
+    },
+).assign_attrs({"pref": 1000.22})
+
 
 class GasOptics:
     """Gas optics class for the simple spectral model (LW only for now)."""
@@ -34,7 +57,7 @@ class GasOptics:
         atmos_data: xr.Dataset,
         nus: xr.DataArray,
         dnus: xr.DataArray,
-        pref: float = 1.0e5,
+        pref: float,
     ) -> None:
         """
         Initialize gas-optics data for longwave calculations.
