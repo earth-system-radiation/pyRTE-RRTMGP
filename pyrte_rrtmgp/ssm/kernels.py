@@ -13,7 +13,7 @@ https://doi.org/10.1029/2025MS005405
 import numpy as np
 import xarray as xr
 
-from .defaults import PLANCK_H, LIGHTSPEED, BOLTZMANN_K, GRAV
+from defaults import PLANCK_H, LIGHTSPEED, BOLTZMANN_K, GRAV
 
 """
     Compute reference absorption coefficients for each spectral tag.
@@ -82,8 +82,8 @@ def compute_layer_mass(
     m_dry: float = 0.029,
 ) -> xr.DataArray:
    
-    _, lev_dim = plev.dims
-    _, lay_dim = play.dims
+    lev_dim = plev.dims[-1]
+    lay_dim = play.dims[-1]
 
     dp = abs(plev.diff(lev_dim))
     dp = dp.rename({lev_dim: lay_dim})
