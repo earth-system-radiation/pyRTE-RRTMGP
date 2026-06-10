@@ -46,8 +46,9 @@ def compute_absorption_coeffs(
     ell = triangles.sel(param="l")
     kappa0 = triangles.sel(param="kappa0")
 
-    absorption_coeffs = kappa0 * np.exp(-abs(nus - nu0) / ell)
-    absorption_coeffs = absorption_coeffs.rename("absorption_coeffs")
+    absorption_coeffs = (kappa0 * np.exp(-abs(nus - nu0) / ell)).rename(
+        "absorption_coeffs"
+    )
     absorption_coeffs.attrs["units"] = "m2 kg-1"
 
     return absorption_coeffs
@@ -105,7 +106,13 @@ def compute_layer_mass(
     return layer_mass
 
 
-"""
+def compute_tau(
+    absorption_coeffs: xr.DataArray,
+    play: xr.DataArray,
+    pref: float,
+    layer_mass: xr.DataArray,
+) -> xr.DataArray:
+    """
     Compute absorption optical depth.
 
     Optical depth is computed as the pressure-scaled sum over spectral tags:
@@ -133,27 +140,20 @@ def compute_layer_mass(
     -------
     xr.DataArray
         Optical depth with dimensions ``(column_dim, layer_dim, "gpt")``.
-"""
-
-
-def compute_tau(
-    absorption_coeffs: xr.DataArray,
-    play: xr.DataArray,
-    pref: float,
-    layer_mass: xr.DataArray,
-) -> xr.DataArray:
-    """Compute optical depth from simple spectral model."""
+    """
     if pref != 0.0:
         p_scaling = play / pref
     else:
         p_scaling = xr.ones_like(play)
 
-    tau = p_scaling * (layer_mass * absorption_coeffs).sum("tag")
-    tau = tau.rename("tau")
+    tau = (p_scaling * (layer_mass * absorption_coeffs).sum("tag")).rename("tau")
 
     return tau
 
 
+#
+# Underlying B_nu function is numba vectorized
+#
 def compute_planck_source(
     T: xr.DataArray,
     nus: xr.DataArray,
