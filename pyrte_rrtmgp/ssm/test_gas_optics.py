@@ -1,8 +1,6 @@
 import numpy as np
 import xarray as xr
-
 from gasOptics import GasOptics
-
 
 """
 Minimal longwave GasOptics smoke test.

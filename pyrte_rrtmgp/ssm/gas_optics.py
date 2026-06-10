@@ -1,6 +1,5 @@
 import numpy as np
 import xarray as xr
-
 from defaults import MOL_WEIGHTS
 from kernels import (
     compute_absorption_coeffs,
@@ -8,6 +7,7 @@ from kernels import (
     compute_planck_source,
     compute_tau,
 )
+
 """
     Longwave gas-optics calculator for the Simple Spectral Model.
 
@@ -15,24 +15,26 @@ from kernels import (
     and molecular weights, then computes optical depth and Planck source
     terms from atmospheric xarray inputs.
 """
+
+
 class GasOptics:
-    
     """
     Initialize gas-optics data for longwave calculations.
 
     Parameters
     ----------
     atmos_data:
-        Dataset containing ``triangles`` with dimensions ``("tags", "params")``. 
+        Dataset containing ``triangles`` with dimensions ``("tags", "params")``.
         Parameters are ``"nu0"``, ``"l"``, and ``"kappa0"``.
 
     nus:
 
     dnus:
-        
+
     pref:
-        
+
     """
+
     def __init__(
         self,
         atmos_data: xr.Dataset,
@@ -40,12 +42,12 @@ class GasOptics:
         dnus: xr.DataArray,
         pref=1.0e5,
     ):
-        
+
         self._init_inputs(
-        atmos_data=atmos_data,
-        nus=nus,
-        dnus=dnus,
-        pref=pref,
+            atmos_data=atmos_data,
+            nus=nus,
+            dnus=dnus,
+            pref=pref,
         )
 
         self._validate_inputs()
@@ -54,15 +56,17 @@ class GasOptics:
             triangles=self.triangles,
             nus=self.nus,
         )
+
     """
     Normalize and store constructor inputs.
 
-    Not sure if we really need this. 
+    Not sure if we really need this.
     If all the inputs are expected to be in form of xarray dataset, this is then useless.
 
     """
+
     def _init_inputs(self, atmos_data, nus, dnus, pref):
-    
+
         self.atmos_data = atmos_data
 
         self.triangles = atmos_data["triangles"].rename(
@@ -80,9 +84,7 @@ class GasOptics:
             name="gas",
         )
 
-        self.gases = tuple(
-            dict.fromkeys(str(gas) for gas in self.gases_by_tag.values)
-        )
+        self.gases = tuple(dict.fromkeys(str(gas) for gas in self.gases_by_tag.values))
 
         self.triangles = self.triangles.assign_coords(
             tag=list(self.tags),
@@ -92,9 +94,7 @@ class GasOptics:
         self.nus = self._as_gpt_array(nus, "nus")
         self.nus.attrs.setdefault("units", "cm^-1")
 
-        self.dnus = self._as_gpt_array(dnus, "dnus").assign_coords(
-            gpt=self.nus["gpt"]
-        )
+        self.dnus = self._as_gpt_array(dnus, "dnus").assign_coords(gpt=self.nus["gpt"])
         self.dnus.attrs.setdefault("units", "cm^-1")
 
         self.pref = float(pref)
@@ -166,6 +166,7 @@ class GasOptics:
             surface_temperature,
             vmr,
         )
+
     """
     Compute longwave optical depth and Planck source terms.
 
@@ -280,14 +281,14 @@ class GasOptics:
         ).transpose(*surface_temperature.dims, "gpt")
 
         return xr.Dataset(
-        data_vars={
-            "tau": tau,
-            "lay_source": lay_source,
-            "lev_source": lev_source,
-            "sfc_source": sfc_source,
-            "nus": self.nus,
-            "dnus": self.dnus,
-        }
+            data_vars={
+                "tau": tau,
+                "lay_source": lay_source,
+                "lev_source": lev_source,
+                "sfc_source": sfc_source,
+                "nus": self.nus,
+                "dnus": self.dnus,
+            }
         )
 
     """
@@ -299,7 +300,7 @@ class GasOptics:
     """
 
     def _validate_inputs(self):
-        
+
         if len(self.tags) == 0:
             raise ValueError("optics_data must contain at least one tag")
 

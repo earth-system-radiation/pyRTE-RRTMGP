@@ -12,8 +12,7 @@ https://doi.org/10.1029/2025MS005405
 
 import numpy as np
 import xarray as xr
-
-from defaults import PLANCK_H, LIGHTSPEED, BOLTZMANN_K, GRAV
+from defaults import BOLTZMANN_K, GRAV, LIGHTSPEED, PLANCK_H
 
 """
     Compute reference absorption coefficients for each spectral tag.
@@ -32,11 +31,13 @@ from defaults import PLANCK_H, LIGHTSPEED, BOLTZMANN_K, GRAV
     xr.DataArray
         Absorption coefficients with dims ("tag", "gpt").
 """
+
+
 def compute_absorption_coeffs(
     triangles: xr.DataArray,
     nus: xr.DataArray,
 ) -> xr.DataArray:
-    
+
     nu0 = triangles.sel(param="nu0")
     ell = triangles.sel(param="l")
     kappa0 = triangles.sel(param="kappa0")
@@ -46,6 +47,7 @@ def compute_absorption_coeffs(
     absorption_coeffs.attrs["units"] = "m2 kg-1"
 
     return absorption_coeffs
+
 
 """
     Convert volume mixing ratios and pressure levels to gas layer masses.
@@ -74,6 +76,7 @@ def compute_absorption_coeffs(
         Layer mass with dims ("tag", column_dim, layer_dim). Mass of each gas in each layer [kg m^-2]
 """
 
+
 def compute_layer_mass(
     vmr: xr.DataArray,
     plev: xr.DataArray,
@@ -81,7 +84,7 @@ def compute_layer_mass(
     mol_weights: xr.DataArray,
     m_dry: float = 0.029,
 ) -> xr.DataArray:
-   
+
     lev_dim = plev.dims[-1]
     lay_dim = play.dims[-1]
 
@@ -98,6 +101,7 @@ def compute_layer_mass(
     layer_mass.attrs["units"] = "kg m-2"
 
     return layer_mass
+
 
 """
     Compute absorption optical depth.
@@ -128,13 +132,15 @@ def compute_layer_mass(
     xr.DataArray
         Optical depth with dimensions ``(column_dim, layer_dim, "gpt")``.
 """
+
+
 def compute_tau(
     absorption_coeffs: xr.DataArray,
     play: xr.DataArray,
     pref: float,
     layer_mass: xr.DataArray,
 ) -> xr.DataArray:
-    
+
     if pref != 0.0:
         p_scaling = play / pref
     else:
@@ -147,9 +153,9 @@ def compute_tau(
 
 
 """
-planck_function() calculates how much radiation a perfect blackbody emits at wavelength nu given temperature T, 
+planck_function() calculates how much radiation a perfect blackbody emits at wavelength nu given temperature T,
 per unit wavelength interval, per unit solid angle. In other words, the spectral radiance of a blackbody per unit wavenumber:
-B_nu(T, nu) = 100 * 2*h*c^2 * (100*nu)^3 
+B_nu(T, nu) = 100 * 2*h*c^2 * (100*nu)^3
                   / [exp(h*c*100*nu / (k_B * T)) - 1]
 
     Parameters
@@ -167,15 +173,17 @@ B_nu(T, nu) = 100 * 2*h*c^2 * (100*nu)^3
         Spectral radiance broadcast over the dimensions of ``T`` and ``nu``.
 """
 
+
 def planck_function(
     T: xr.DataArray,
     nu: xr.DataArray,
 ) -> xr.DataArray:
-    
+
     nu_si = nu / 100.0
-    numerator = 100.0 * 2.0 * PLANCK_H * (nu_si ** 3) * (LIGHTSPEED ** 2)
+    numerator = 100.0 * 2.0 * PLANCK_H * (nu_si**3) * (LIGHTSPEED**2)
     exponent = (PLANCK_H * LIGHTSPEED * nu_si) / (BOLTZMANN_K * T)
     return numerator / (np.exp(exponent) - 1.0)
+
 
 """
     compute_planck_source() computes the spectrally integrated Planck source function.
@@ -205,15 +213,16 @@ def planck_function(
     xr.DataArray
         Band-integrated Planck source with the dimensions of ``T`` plus
         ``"gpt"``.
-        Band-integrated Planck radiance [W m^-2 sr^-1]   
+        Band-integrated Planck radiance [W m^-2 sr^-1]
     """
+
 
 def compute_planck_source(
     T: xr.DataArray,
     nus: xr.DataArray,
     dnus: xr.DataArray,
 ) -> xr.DataArray:
-    
+
     source = planck_function(T, nus) * dnus
     source = source.rename("planck_source")
     source.attrs["units"] = "W m-2 sr-1"
