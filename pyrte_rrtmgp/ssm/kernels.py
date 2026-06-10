@@ -10,11 +10,22 @@ https://doi.org/10.1029/2025MS005405
 
 """
 
-import numpy as np
-import xarray as xr
-from defaults import BOLTZMANN_K, GRAV, LIGHTSPEED, PLANCK_H
+from typing import Final
 
-"""
+import numpy as np
+import scipy.constants as sc
+import xarray as xr
+
+from pyrte_rrtmgp.utils import B_nu
+
+GRAV: Final[float] = sc.g
+
+
+def compute_absorption_coeffs(
+    triangles: xr.DataArray,
+    nus: xr.DataArray,
+) -> xr.DataArray:
+    """
     Compute reference absorption coefficients for each spectral tag.
 
     Parameters
@@ -30,14 +41,7 @@ from defaults import BOLTZMANN_K, GRAV, LIGHTSPEED, PLANCK_H
     -------
     xr.DataArray
         Absorption coefficients with dims ("tag", "gpt").
-"""
-
-
-def compute_absorption_coeffs(
-    triangles: xr.DataArray,
-    nus: xr.DataArray,
-) -> xr.DataArray:
-
+    """
     nu0 = triangles.sel(param="nu0")
     ell = triangles.sel(param="l")
     kappa0 = triangles.sel(param="kappa0")
@@ -49,7 +53,14 @@ def compute_absorption_coeffs(
     return absorption_coeffs
 
 
-"""
+def compute_layer_mass(
+    vmr: xr.DataArray,
+    plev: xr.DataArray,
+    play: xr.DataArray,
+    mol_weights: xr.DataArray,
+    m_dry: float = 0.029,
+) -> xr.DataArray:
+    """
     Convert volume mixing ratios and pressure levels to gas layer masses.
 
     Parameters
@@ -73,18 +84,9 @@ def compute_absorption_coeffs(
     Returns
     -------
     xr.DataArray
-        Layer mass with dims ("tag", column_dim, layer_dim). Mass of each gas in each layer [kg m^-2]
-"""
-
-
-def compute_layer_mass(
-    vmr: xr.DataArray,
-    plev: xr.DataArray,
-    play: xr.DataArray,
-    mol_weights: xr.DataArray,
-    m_dry: float = 0.029,
-) -> xr.DataArray:
-
+        Layer mass with dims ("tag", column_dim, layer_dim).
+        Mass of each gas in each layer [kg m^-2]
+    """
     lev_dim = plev.dims[-1]
     lay_dim = play.dims[-1]
 
@@ -140,7 +142,7 @@ def compute_tau(
     pref: float,
     layer_mass: xr.DataArray,
 ) -> xr.DataArray:
-
+    """Compute optical depth from simple spectral model."""
     if pref != 0.0:
         p_scaling = play / pref
     else:
@@ -152,79 +154,13 @@ def compute_tau(
     return tau
 
 
-"""
-planck_function() calculates how much radiation a perfect blackbody emits at wavelength nu given temperature T,
-per unit wavelength interval, per unit solid angle. In other words, the spectral radiance of a blackbody per unit wavenumber:
-B_nu(T, nu) = 100 * 2*h*c^2 * (100*nu)^3
-                  / [exp(h*c*100*nu / (k_B * T)) - 1]
-
-    Parameters
-    ----------
-    T:
-        Temperature in K. May have any atmospheric dimensions.
-
-    nu:
-        Wavenumber grid in cm^-1, typically with dimension ``"gpt"``.
-
-    Returns
-    -------
-    xr.DataArray
-        Spectral radiance [ W m^-2 sr^-1 (cm^-1)^-1]
-        Spectral radiance broadcast over the dimensions of ``T`` and ``nu``.
-"""
-
-
-def planck_function(
-    T: xr.DataArray,
-    nu: xr.DataArray,
-) -> xr.DataArray:
-
-    nu_si = nu / 100.0
-    numerator = 100.0 * 2.0 * PLANCK_H * (nu_si**3) * (LIGHTSPEED**2)
-    exponent = (PLANCK_H * LIGHTSPEED * nu_si) / (BOLTZMANN_K * T)
-    return numerator / (np.exp(exponent) - 1.0)
-
-
-"""
-    compute_planck_source() computes the spectrally integrated Planck source function.
-    For each wavenumber band, the source is:
-      source(..., nu) = B_nu(T, nu) * dnu
-
-      where dnu is the width of the spectral band. This is the band-integrated radiance, or the total emission in the wavenumber interval
-
-
-    The source is evaluated as ``planck_function(T, nus) * dnus``. xarray
-    broadcasting expands atmospheric temperature fields over the ``"gpt"``
-    spectral dimension.
-
-    Parameters
-    ----------
-    T:  Temperature [K]
-        Temperature field in K.
-
-    nus:Wavenumber at each spectral point [cm^-1]
-        Wavenumber grid with dimension ``"gpt"``.
-
-    dnus:Width of each spectral band [cm^-1]
-         Spectral band widths with dimension ``"gpt"``.
-
-    Returns
-    -------
-    xr.DataArray
-        Band-integrated Planck source with the dimensions of ``T`` plus
-        ``"gpt"``.
-        Band-integrated Planck radiance [W m^-2 sr^-1]
-    """
-
-
 def compute_planck_source(
     T: xr.DataArray,
     nus: xr.DataArray,
     dnus: xr.DataArray,
 ) -> xr.DataArray:
-
-    source = planck_function(T, nus) * dnus
-    source = source.rename("planck_source")
+    """Compute and annotate radiation source function."""
+    source = (B_nu(T, nus) * dnus).rename("planck_source")
     source.attrs["units"] = "W m-2 sr-1"
 
     return source
