@@ -6,18 +6,24 @@ Longwave gas-optics calculator for the Simple Spectral Model.
     terms from atmospheric xarray inputs.
 """
 
-from typing import Any, Tuple
+from typing import Any, Final, Tuple
 
 import numpy as np
 import xarray as xr
 
-from .default import MOL_WEIGHTS
+from .. import utils
 from .kernels import (
     compute_absorption_coeffs,
     compute_layer_mass,
     compute_planck_source,
     compute_tau,
 )
+
+MOL_WEIGHTS: Final[dict[str, float]] = {
+    "h2o": utils.get_molmass("H2O"),
+    "co2": utils.get_molmass("CO2"),
+    "o3": utils.get_molmass("O3"),
+}
 
 
 class GasOptics:
