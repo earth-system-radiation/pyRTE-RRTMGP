@@ -1,21 +1,27 @@
+"""Physical constants and default for simple spectral model."""
+
 # Default constants and triangle parameters from mo_optics_ssm.F90
 # Each triangle is defined by (kappa_0, nu_0, l)
+from typing import Final
 
 import numpy as np
+from scipy.constants import g
 
-PLANCK_H = 6.626075540e-34  # Planck's constant [J s]
-LIGHTSPEED = 2.99792458e8  # Speed of light [m/s]
-BOLTZMANN_K = 1.38065812e-23  # Boltzmann constant [J/K]
-GRAV = 9.80665  # Gravitational acceleration [m/s^2]
+from .. import utils
+
+PLANCK_H: Final[float] = utils.h  # Planck's constant [J s]
+LIGHTSPEED: Final[float] = utils.c  # Speed of light [m/s]
+BOLTZMANN_K: Final[float] = utils.k_B  # Boltzmann constant [J/K]
+GRAV: Final[float] = g  # Gravitational acceleration [m/s^2]
 
 TSUN_SSM = 5760.0  # default sun temeprature for SSM (K)
 TSI = 1360.0  # default total solar irradiance  (W/m^2)
 
 # Molecular weights (kg/mol)
-MW_H2O = 0.018
-MW_CO2 = 0.044
-MW_O3 = 0.048
-M_DRY = 0.029  # dry air
+MW_H2O: Final[float] = utils.get_molmass("H2O")
+MW_CO2: Final[float] = utils.get_molmass("CO2")
+MW_O3: Final[float] = utils.get_molmass("O3")
+M_DRY: Final[float] = utils.M_DRY  # dry air
 
 # default cloud absorption coefficients (m2/kg)
 KAPPA_CLD_LW = 50.0
