@@ -5,18 +5,30 @@ from gasOptics import GasOptics
 
 
 """
-First simple longwave GasOptics test.
+Minimal longwave GasOptics smoke test.
 
 This script builds one spectral gas-optics object, feeds it a single-layer
 atmospheric xarray Dataset, runs compute(), and prints every returned field.
+It prints the result for inspection and checks that the returned compute()
+fields are strictly positive.
 """
 
 
+np.set_printoptions(threshold=np.inf, linewidth=120)
 
-def print_positive_check(name, dataarray):
-    """Report whether all values in one output are strictly positive."""
-    is_positive = bool((dataarray > 0).all())
-    print(f"{name} all positive: {is_positive}")
+
+def print_dataarray(name, dataarray):
+    """Print one compute() output with dimensions, coordinates, and values."""
+    print(name)
+    print("-" * len(name))
+    print(f"dims: {dataarray.dims}")
+    print(f"shape: {dataarray.shape}")
+    print("coords:")
+    for coord_name, coord in dataarray.coords.items():
+        print(f"  {coord_name}: {coord.values}")
+    print("values:")
+    print(dataarray.values)
+    print()
 
 
 # Spectral triangle table. Tags are individual absorption components; tags
@@ -91,8 +103,6 @@ result = gas_optics.compute(layer)
 
 # Print every field returned by compute() with full values for manual inspection.
 print(result)
-
-
 
 assert bool((result.tau > 0.0).all())
 assert bool((result.lay_source > 0.0).all())
