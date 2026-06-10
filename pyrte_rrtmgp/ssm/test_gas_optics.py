@@ -93,7 +93,8 @@ result = gas_optics.compute(layer)
 print(result)
 
 
-print("positivity checks")
-print("-----------------")
-for variable_name in ("tau", "lay_source", "lev_source", "sfc_source"):
-    print_positive_check(variable_name, result[variable_name])
+
+assert bool((result.tau > 0.0).all())
+assert bool((result.lay_source > 0.0).all())
+assert bool((result.lev_source > 0.0).all())
+assert bool((result.sfc_source > 0.0).all())
