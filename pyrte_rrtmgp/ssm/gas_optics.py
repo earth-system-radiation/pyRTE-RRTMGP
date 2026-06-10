@@ -1,3 +1,13 @@
+"""
+Longwave gas-optics calculator for the Simple Spectral Model.
+
+    The class stores spectral absorption data, wavenumber grid information,
+    and molecular weights, then computes optical depth and Planck source
+    terms from atmospheric xarray inputs.
+"""
+
+from typing import Tuple
+
 import numpy as np
 import xarray as xr
 from defaults import MOL_WEIGHTS
@@ -8,41 +18,33 @@ from kernels import (
     compute_tau,
 )
 
-"""
-    Longwave gas-optics calculator for the Simple Spectral Model.
-
-    The class stores spectral absorption data, wavenumber grid information,
-    and molecular weights, then computes optical depth and Planck source
-    terms from atmospheric xarray inputs.
-"""
-
 
 class GasOptics:
-    """
-    Initialize gas-optics data for longwave calculations.
-
-    Parameters
-    ----------
-    atmos_data:
-        Dataset containing ``triangles`` with dimensions ``("tags", "params")``.
-        Parameters are ``"nu0"``, ``"l"``, and ``"kappa0"``.
-
-    nus:
-
-    dnus:
-
-    pref:
-
-    """
+    """Gas optics class for the simple spectral model (LW only for now)."""
 
     def __init__(
         self,
         atmos_data: xr.Dataset,
         nus: xr.DataArray,
         dnus: xr.DataArray,
-        pref=1.0e5,
-    ):
+        pref: float = 1.0e5,
+    ) -> None:
+        """
+        Initialize gas-optics data for longwave calculations.
 
+        Parameters
+        ----------
+        atmos_data:
+            Dataset containing ``triangles`` with dimensions ``("tags", "params")``.
+            Parameters are ``"nu0"``, ``"l"``, and ``"kappa0"``.
+
+        nus:
+
+        dnus:
+
+        pref:
+
+        """
         self._init_inputs(
             atmos_data=atmos_data,
             nus=nus,
@@ -57,16 +59,17 @@ class GasOptics:
             nus=self.nus,
         )
 
-    """
-    Normalize and store constructor inputs.
+    def _init_inputs(
+        self, atmos_data: xr.Dataset, nus: xr.DataArray, dnus: xr.DataArray, pref: float
+    ) -> None:
+        """
+        Normalize and store constructor inputs.
 
-    Not sure if we really need this.
-    If all the inputs are expected to be in form of xarray dataset, this is then useless.
+        Not sure if we really need this.
+        If all the inputs are expected to be in form of xarray dataset,
+           this is then useless.
 
-    """
-
-    def _init_inputs(self, atmos_data, nus, dnus, pref):
-
+        """
         self.atmos_data = atmos_data
 
         self.triangles = atmos_data["triangles"].rename(
@@ -110,7 +113,7 @@ class GasOptics:
             attrs={"units": "kg mol^-1"},
         )
 
-    def _as_gpt_array(self, values, name):
+    def _as_gpt_array(self, values: xr.DataArray | np.array, name: str) -> xr.DataArray:
         """
         Return a one-dimensional spectral DataArray on dimension ``gpt``.
 
@@ -127,7 +130,7 @@ class GasOptics:
 
         return xr.DataArray(values, dims=("gpt",), name=name)
 
-    def _as_layer_array(self, values, layer_dim):
+    def _as_layer_array(self, values: xr.DataArray, layer_dim: str) -> xr.DataArray:
         """
         Ensure an atmospheric layer field uses the requested layer dimension.
 
@@ -141,7 +144,14 @@ class GasOptics:
 
         return values.rename({values.dims[-1]: layer_dim})
 
-    def _extract_layer_inputs(self, layer):
+    def _extract_layer_inputs(self, layer: xr.Dataset) -> Tuple[
+        xr.DataArray,
+        xr.DataArray,
+        xr.DataArray,
+        xr.DataArray,
+        xr.DataArray,
+        xr.DataArray,
+    ]:
         """
         Pull the standard GasOptics inputs from a single atmospheric Dataset.
 
@@ -167,42 +177,6 @@ class GasOptics:
             vmr,
         )
 
-    """
-    Compute longwave optical depth and Planck source terms.
-
-    Parameters
-    ----------
-    pres_level:
-        Pressure at layer interfaces, with dimensions
-        ``(column_dim, level_dim)``.
-
-    pres_layer:
-        Pressure at layer centers, with dimensions
-        ``(column_dim, layer_dim)``.
-
-    temp_level:
-        Temperature at layer interfaces, with dimensions
-        ``(column_dim, level_dim)``.
-
-    temp_layer:
-        Temperature at layer centers, with dimensions
-        ``(column_dim, layer_dim)``.
-
-    surface_temperature:
-        Surface temperature, typically with dimension ``column_dim``.
-
-    vmr:
-        Dataset containing volume mixing ratio fields for each physical gas.
-        For example, tags ``"h2o-rot"`` and ``"h2o-cont"`` both use
-        ``vmr["h2o"]``.
-
-    Returns
-    -------
-    xr.Dataset
-        Dataset containing ``tau``, ``lay_source``, ``lev_source``,
-        ``sfc_source``, ``nus``, and ``dnus``.
-    """
-
     def compute(
         self,
         layer: xr.Dataset = None,
@@ -213,6 +187,41 @@ class GasOptics:
         surface_temperature: xr.DataArray = None,
         vmr: xr.Dataset = None,
     ) -> xr.Dataset:
+        """
+        Compute longwave optical depth and Planck source terms.
+
+        Parameters
+        ----------
+        pres_level:
+            Pressure at layer interfaces, with dimensions
+            ``(column_dim, level_dim)``.
+
+        pres_layer:
+            Pressure at layer centers, with dimensions
+            ``(column_dim, layer_dim)``.
+
+        temp_level:
+            Temperature at layer interfaces, with dimensions
+            ``(column_dim, level_dim)``.
+
+        temp_layer:
+            Temperature at layer centers, with dimensions
+            ``(column_dim, layer_dim)``.
+
+        surface_temperature:
+            Surface temperature, typically with dimension ``column_dim``.
+
+        vmr:
+            Dataset containing volume mixing ratio fields for each physical gas.
+            For example, tags ``"h2o-rot"`` and ``"h2o-cont"`` both use
+            ``vmr["h2o"]``.
+
+        Returns
+        -------
+        xr.Dataset
+            Dataset containing ``tau``, ``lay_source``, ``lev_source``,
+            ``sfc_source``, ``nus``, and ``dnus``.
+        """
         if layer is not None:
             (
                 pres_level,
@@ -291,16 +300,14 @@ class GasOptics:
             }
         )
 
-    """
-    Validate initialized gas-optics inputs.
+    def _validate_inputs(self) -> None:
+        """
+        Validate initialized gas-optics inputs.
 
-    Checks that tags are unique, gases have known molecular weights,
-    triangle parameters are complete and finite, spectral grids are one
-    dimensional and aligned, and all physical quantities have valid ranges.
-    """
-
-    def _validate_inputs(self):
-
+        Checks that tags are unique, gases have known molecular weights,
+        triangle parameters are complete and finite, spectral grids are one
+        dimensional and aligned, and all physical quantities have valid ranges.
+        """
         if len(self.tags) == 0:
             raise ValueError("optics_data must contain at least one tag")
 
@@ -327,7 +334,6 @@ class GasOptics:
             raise ValueError("triangles must be finite")
 
         kappa0 = self.triangles.sel(param="kappa0")
-        nu0 = self.triangles.sel(param="nu0")
         ell = self.triangles.sel(param="l")
 
         if not bool((kappa0 >= 0).all()):

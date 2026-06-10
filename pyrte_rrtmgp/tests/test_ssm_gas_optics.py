@@ -1,7 +1,3 @@
-import numpy as np
-import xarray as xr
-from gasOptics import GasOptics
-
 """
 Minimal longwave GasOptics smoke test.
 
@@ -11,23 +7,9 @@ It prints the result for inspection and checks that the returned compute()
 fields are strictly positive.
 """
 
-
-np.set_printoptions(threshold=np.inf, linewidth=120)
-
-
-def print_dataarray(name, dataarray):
-    """Print one compute() output with dimensions, coordinates, and values."""
-    print(name)
-    print("-" * len(name))
-    print(f"dims: {dataarray.dims}")
-    print(f"shape: {dataarray.shape}")
-    print("coords:")
-    for coord_name, coord in dataarray.coords.items():
-        print(f"  {coord_name}: {coord.values}")
-    print("values:")
-    print(dataarray.values)
-    print()
-
+import numpy as np
+import xarray as xr
+from ssm.gasOptics import GasOptics
 
 # Spectral triangle table. Tags are individual absorption components; tags
 # with a suffix, such as h2o-rot, share the physical gas name before "-".
@@ -98,9 +80,6 @@ layer["surface_temperature"] = np.array([305.0])
 
 # Run the longwave gas-optics calculation.
 result = gas_optics.compute(layer)
-
-# Print every field returned by compute() with full values for manual inspection.
-print(result)
 
 assert bool((result.tau > 0.0).all())
 assert bool((result.lay_source > 0.0).all())
