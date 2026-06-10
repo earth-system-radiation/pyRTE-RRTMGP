@@ -1,8 +1,8 @@
 import numpy as np
 import xarray as xr
 
-from .defaults import MOL_WEIGHTS
-from .kernels import (
+from defaults import MOL_WEIGHTS
+from kernels import (
     compute_absorption_coeffs,
     compute_layer_mass,
     compute_planck_source,
@@ -76,7 +76,7 @@ class GasOptics:
         self.gases_by_tag = xr.DataArray(
             [tag.split("-")[0] for tag in self.tags],
             dims=("tag",),
-            coords={"tag": self.tags},
+            coords={"tag": list(self.tags)},
             name="gas",
         )
 
@@ -85,24 +85,17 @@ class GasOptics:
         )
 
         self.triangles = self.triangles.assign_coords(
-            tag=self.tags,
+            tag=list(self.tags),
             gas=("tag", self.gases_by_tag.values),
         )
 
-        self.nus = xr.DataArray(
-            nus,
-            dims=("gpt",),
-            name="nus",
-            attrs={"units": "cm^-1"},
-        )
+        self.nus = self._as_gpt_array(nus, "nus")
+        self.nus.attrs.setdefault("units", "cm^-1")
 
-        self.dnus = xr.DataArray(
-            dnus,
-            dims=("gpt",),
-            coords={"gpt": self.nus["gpt"]},
-            name="dnus",
-            attrs={"units": "cm^-1"},
+        self.dnus = self._as_gpt_array(dnus, "dnus").assign_coords(
+            gpt=self.nus["gpt"]
         )
+        self.dnus.attrs.setdefault("units", "cm^-1")
 
         self.pref = float(pref)
 
@@ -110,11 +103,68 @@ class GasOptics:
             [MOL_WEIGHTS[gas] for gas in self.gases_by_tag.values],
             dims=("tag",),
             coords={
-                "tag": self.tags,
+                "tag": list(self.tags),
                 "gas": ("tag", self.gases_by_tag.values),
             },
             name="mol_weights",
             attrs={"units": "kg mol^-1"},
+        )
+
+    def _as_gpt_array(self, values, name):
+        """
+        Return a one-dimensional spectral DataArray on dimension ``gpt``.
+
+        ``nus`` and ``dnus`` may already be xarray DataArrays or plain array-like
+        inputs. This helper preserves existing xarray metadata when possible,
+        renames the DataArray to ``name``, and standardizes its only dimension
+        to ``gpt`` so spectral kernels can broadcast over the same coordinate.
+        """
+        if isinstance(values, xr.DataArray):
+            array = values.rename(name)
+            if array.ndim == 1 and "gpt" not in array.dims:
+                array = array.rename({array.dims[0]: "gpt"})
+            return array
+
+        return xr.DataArray(values, dims=("gpt",), name=name)
+
+    def _as_layer_array(self, values, layer_dim):
+        """
+        Ensure an atmospheric layer field uses the requested layer dimension.
+
+        Gas concentrations and layer temperatures must align with the pressure
+        layer coordinate used by ``pres_layer``. This helper leaves matching
+        DataArrays unchanged and otherwise renames the final dimension to
+        ``layer_dim``. It does not add or remove dimensions.
+        """
+        if values.dims[-1] == layer_dim:
+            return values
+
+        return values.rename({values.dims[-1]: layer_dim})
+
+    def _extract_layer_inputs(self, layer):
+        """
+        Pull the standard GasOptics inputs from a single atmospheric Dataset.
+
+        The expected dataset fields are ``plev``, ``play``, ``Tlev``, ``Tlay``,
+        ``surface_temperature``, and one variable for each physical gas such as
+        ``h2o`` or ``co2``. The returned objects are passed directly to
+        ``compute`` so callers can use ``compute(layer)`` instead of supplying
+        every atmospheric field separately.
+        """
+        pres_level = layer["plev"]
+        pres_layer = layer["play"]
+        temp_level = layer["Tlev"]
+        temp_layer = self._as_layer_array(layer["Tlay"], pres_layer.dims[-1])
+        surface_temperature = layer["surface_temperature"]
+        vmr = layer[list(self.gases)]
+
+        return (
+            pres_level,
+            pres_layer,
+            temp_level,
+            temp_layer,
+            surface_temperature,
+            vmr,
         )
     """
     Compute longwave optical depth and Planck source terms.
@@ -153,27 +203,54 @@ class GasOptics:
     """
 
     def compute(
-            self, 
-            pres_level: xr.DataArray,
-            pres_layer: xr.DataArray,
-            temp_level: xr.DataArray,
-            temp_layer: xr.DataArray,
-            surface_temperature: xr.DataArray,
-            vmr: xr.Dataset,
+        self,
+        layer: xr.Dataset = None,
+        pres_level: xr.DataArray = None,
+        pres_layer: xr.DataArray = None,
+        temp_level: xr.DataArray = None,
+        temp_layer: xr.DataArray = None,
+        surface_temperature: xr.DataArray = None,
+        vmr: xr.Dataset = None,
     ) -> xr.Dataset:
-        
-        
+        if layer is not None:
+            (
+                pres_level,
+                pres_layer,
+                temp_level,
+                temp_layer,
+                surface_temperature,
+                vmr,
+            ) = self._extract_layer_inputs(layer)
+        elif any(
+            value is None
+            for value in (
+                pres_level,
+                pres_layer,
+                temp_level,
+                temp_layer,
+                surface_temperature,
+                vmr,
+            )
+        ):
+            raise ValueError(
+                "Either pass layer, or pass all explicit atmospheric inputs."
+            )
 
+        temp_layer = self._as_layer_array(temp_layer, pres_layer.dims[-1])
+
+        vmr_by_tag = xr.concat(
+            [
+                self._as_layer_array(vmr[str(gas)], pres_layer.dims[-1])
+                for gas in self.gases_by_tag.values
+            ],
+            dim=xr.IndexVariable("tag", list(self.tags)),
+        )
         vmr_by_tag = vmr_by_tag.assign_coords(
             gas=("tag", self.gases_by_tag.values),
         )
 
-        vmr = vmr.assign_coords(
-            gas=("tag", self.gases_by_tag.values),
-        )
-
         layer_mass = compute_layer_mass(
-            vmr=vmr,
+            vmr=vmr_by_tag,
             plev=pres_level,
             play=pres_layer,
             mol_weights=self.mol_weights_by_tag,
@@ -186,24 +263,28 @@ class GasOptics:
             layer_mass=layer_mass,
         )
 
+        lay_source = compute_planck_source(
+            temp_layer,
+            self.nus,
+            self.dnus,
+        ).transpose(*temp_layer.dims, "gpt")
+        lev_source = compute_planck_source(
+            temp_level,
+            self.nus,
+            self.dnus,
+        ).transpose(*temp_level.dims, "gpt")
+        sfc_source = compute_planck_source(
+            surface_temperature,
+            self.nus,
+            self.dnus,
+        ).transpose(*surface_temperature.dims, "gpt")
+
         return xr.Dataset(
         data_vars={
             "tau": tau,
-            "lay_source": compute_planck_source(
-                temp_layer,
-                self.nus,
-                self.dnus,
-            ),
-            "lev_source": compute_planck_source(
-                temp_level,
-                self.nus,
-                self.dnus,
-            ),
-            "sfc_source": compute_planck_source(
-                surface_temperature,
-                self.nus,
-                self.dnus,
-            ),
+            "lay_source": lay_source,
+            "lev_source": lev_source,
+            "sfc_source": sfc_source,
             "nus": self.nus,
             "dnus": self.dnus,
         }
