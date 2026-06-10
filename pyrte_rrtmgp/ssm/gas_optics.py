@@ -6,7 +6,7 @@ Longwave gas-optics calculator for the Simple Spectral Model.
     terms from atmospheric xarray inputs.
 """
 
-from typing import Tuple
+from typing import Any, Tuple
 
 import numpy as np
 import xarray as xr
@@ -114,7 +114,7 @@ class GasOptics:
             attrs={"units": "kg mol^-1"},
         )
 
-    def _as_gpt_array(self, values: xr.DataArray | np.array, name: str) -> xr.DataArray:
+    def _as_gpt_array(self, values: Any, name: str) -> xr.DataArray:
         """
         Return a one-dimensional spectral DataArray on dimension ``gpt``.
 
