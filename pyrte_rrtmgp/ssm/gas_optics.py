@@ -54,7 +54,7 @@ class GasOptics:
 
     def __init__(
         self,
-        atmos_data: xr.Dataset,
+        spectral_data: xr.Dataset,
         nus: xr.DataArray,
         dnus: xr.DataArray,
         pref: float,
@@ -64,7 +64,7 @@ class GasOptics:
 
         Parameters
         ----------
-        atmos_data:
+        spectral_data:
             Dataset containing ``triangles`` with dimensions ``("tags", "params")``.
             Parameters are ``"nu0"``, ``"l"``, and ``"kappa0"``.
 
@@ -75,39 +75,42 @@ class GasOptics:
         pref:
 
         """
-        self._init_inputs(
-            atmos_data=atmos_data,
+        triangles = self._init_inputs(
+            spectral_data=spectral_data,
             nus=nus,
             dnus=dnus,
             pref=pref,
         )
 
-        self._validate_inputs()
+        self._validate_inputs(triangles)
 
         self.absorption_coeffs = compute_absorption_coeffs(
-            triangles=self.triangles,
-            nus=self.nus,
-        )
-
-    def _init_inputs(
-        self, atmos_data: xr.Dataset, nus: xr.DataArray, dnus: xr.DataArray, pref: float
-    ) -> None:
+            triangles=triangles,
+            nus=self.spectral_grid["nus"],
+        ) 
+        
+        def _init_inputs(
+        self,
+        spectral_data: xr.Dataset,
+        nus: xr.DataArray,
+        dnus: xr.DataArray,
+        pref: float,
+    ) -> xr.DataArray:
         """
         Normalize and store constructor inputs.
 
-        Not sure if we really need this.
-        If all the inputs are expected to be in form of xarray dataset,
-           this is then useless.
+        ``spectral_data`` is only needed during construction to validate the
+        spectral triangle table and compute absorption coefficients. This
+        method prepares that triangle table and returns it, but does not store
+        it on the object.
 
         """
-        self.atmos_data = atmos_data
-
-        self.triangles = atmos_data["triangles"].rename(
+        triangles = spectral_data["triangles"].rename(
             {"tags": "tag", "params": "param"}
         )
 
         self.tags = tuple(
-            str(tag).lower() for tag in self.triangles.coords["tag"].values
+            str(tag).lower() for tag in triangles.coords["tag"].values
         )
 
         self.gases_by_tag = xr.DataArray(
@@ -119,16 +122,23 @@ class GasOptics:
 
         self.gases = tuple(dict.fromkeys(str(gas) for gas in self.gases_by_tag.values))
 
-        self.triangles = self.triangles.assign_coords(
+        triangles = triangles.assign_coords(
             tag=list(self.tags),
             gas=("tag", self.gases_by_tag.values),
         )
 
-        self.nus = self._as_gpt_array(nus, "nus")
-        self.nus.attrs.setdefault("units", "cm^-1")
+        nus = self._as_gpt_array(nus, "nus")
+        nus.attrs.setdefault("units", "cm^-1")
 
-        self.dnus = self._as_gpt_array(dnus, "dnus").assign_coords(gpt=self.nus["gpt"])
-        self.dnus.attrs.setdefault("units", "cm^-1")
+        dnus = self._as_gpt_array(dnus, "dnus").assign_coords(gpt=nus["gpt"])
+        dnus.attrs.setdefault("units", "cm^-1")
+
+        self.spectral_grid = xr.Dataset(
+            data_vars={
+                "nus": nus,
+                "dnus": dnus,
+            }
+        )
 
         self.pref = float(pref)
 
@@ -142,6 +152,8 @@ class GasOptics:
             name="mol_weights",
             attrs={"units": "kg mol^-1"},
         )
+
+        return triangles
 
     def _as_gpt_array(self, values: Any, name: str) -> xr.DataArray:
         """
