@@ -46,12 +46,10 @@ def compute_absorption_coeffs(
     ell = triangles.sel(param="l")
     kappa0 = triangles.sel(param="kappa0")
 
-    absorption_coeffs = (kappa0 * np.exp(-abs(nus - nu0) / ell)).rename(
-        "absorption_coeffs"
-    )
-    absorption_coeffs.attrs["units"] = "m2 kg-1"
+    return absorption_coeffs = (
+        kappa0 * np.exp(-abs(nus - nu0) / ell)
+    ).rename("absorption_coeffs").assign_attrs({"units": "m2 kg-1"})
 
-    return absorption_coeffs
 
 
 def compute_layer_mass(
@@ -97,13 +95,12 @@ def compute_layer_mass(
     if lay_dim in play.coords:
         dp = dp.assign_coords({lay_dim: play[lay_dim]})
 
-    mmr = vmr * (mol_weights / m_dry)
-    layer_mass = mmr * dp / GRAV
-
-    layer_mass = layer_mass.rename("layer_mass")
-    layer_mass.attrs["units"] = "kg m-2"
-
-    return layer_mass
+    return (
+        vmr
+        * (mol_weights / m_dry)
+        * dp
+        / GRAV
+    ).rename("layer_mass").assign_attrs({"units": "kg m-2"})
 
 
 def compute_tau(
@@ -141,14 +138,12 @@ def compute_tau(
     xr.DataArray
         Optical depth with dimensions ``(column_dim, layer_dim, "gpt")``.
     """
-    if pref != 0.0:
-        p_scaling = play / pref
-    else:
-        p_scaling = xr.ones_like(play)
+    return (
+        (play / pref if pref != 0.0 else xr.ones_like(play))
+        * xr.dot(layer_mass, absorption_coeffs, dims="tag")
+    ).rename("tau")
 
-    tau = (p_scaling * (layer_mass * absorption_coeffs).sum("tag")).rename("tau")
 
-    return tau
 
 
 #
