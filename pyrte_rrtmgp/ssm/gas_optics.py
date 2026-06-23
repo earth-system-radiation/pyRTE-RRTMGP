@@ -113,18 +113,20 @@ class GasOptics:
             str(tag).lower() for tag in triangles.coords["tag"].values
         )
 
-        self.gases_by_tag = xr.DataArray(
+        self.species_by_tag = xr.DataArray(
             [tag.split("-")[0] for tag in self.tags],
             dims=("tag",),
             coords={"tag": list(self.tags)},
-            name="gas",
+            name="species",
         )
 
-        self.gases = tuple(dict.fromkeys(str(gas) for gas in self.gases_by_tag.values))
+       self.species = tuple(
+            dict.fromkeys(str(species) for species in self.species_by_tag.values)
+        )
 
         triangles = triangles.assign_coords(
             tag=list(self.tags),
-            gas=("tag", self.gases_by_tag.values),
+            species=("tag", self.species_by_tag.values),
         )
 
         nus = self._as_gpt_array(nus, "nus")
@@ -143,11 +145,11 @@ class GasOptics:
         self.pref = float(pref)
 
         self.mol_weights_by_tag = xr.DataArray(
-            [MOL_WEIGHTS[gas] for gas in self.gases_by_tag.values],
+            [MOL_WEIGHTS[species] for species in self.species_by_tag.values],
             dims=("tag",),
             coords={
                 "tag": list(self.tags),
-                "gas": ("tag", self.gases_by_tag.values),
+                "species": ("tag", self.species_by_tag.values),
             },
             name="mol_weights",
             attrs={"units": "kg mol^-1"},
@@ -198,7 +200,7 @@ class GasOptics:
         Pull the standard GasOptics inputs from a single atmospheric Dataset.
 
         The expected dataset fields are ``plev``, ``play``, ``Tlev``, ``Tlay``,
-        ``surface_temperature``, and one variable for each physical gas such as
+        ``surface_temperature``, and one variable for each species such as
         ``h2o`` or ``co2``. The returned objects are passed directly to
         ``compute`` so callers can use ``compute(layer)`` instead of supplying
         every atmospheric field separately.
@@ -208,7 +210,7 @@ class GasOptics:
         temp_level = layer["Tlev"]
         temp_layer = self._as_layer_array(layer["Tlay"], pres_layer.dims[-1])
         surface_temperature = layer["surface_temperature"]
-        vmr = layer[list(self.gases)]
+        vmr = layer[list(self.species)]
 
         return (
             pres_level,
@@ -218,7 +220,6 @@ class GasOptics:
             surface_temperature,
             vmr,
         )
-
     def compute(
         self,
         layer: xr.Dataset = None,
@@ -254,7 +255,7 @@ class GasOptics:
             Surface temperature, typically with dimension ``column_dim``.
 
         vmr:
-            Dataset containing volume mixing ratio fields for each physical gas.
+            Dataset containing volume mixing ratio fields for each species.
             For example, tags ``"h2o-rot"`` and ``"h2o-cont"`` both use
             ``vmr["h2o"]``.
 
@@ -262,7 +263,11 @@ class GasOptics:
         -------
         xr.Dataset
             Dataset containing ``tau``, ``lay_source``, ``lev_source``,
-            ``sfc_source``, ``nus``, and ``dnus``.
+            ``sfc_source``, ``nus``, and ``dnus``. The dataset also has a
+            ``top_at_1`` attribute. ``top_at_1`` is ``True`` when pressure
+            increases with layer index, meaning the first layer is nearest the
+            top of atmosphere. For a single-layer atmosphere, this ordering is
+            inferred from ``pres_level`` instead of ``pres_layer``.
         """
         if layer is not None:
             (
@@ -290,22 +295,13 @@ class GasOptics:
 
         temp_layer = self._as_layer_array(temp_layer, pres_layer.dims[-1])
 
-        vmr_by_tag = xr.concat(
-            [
-                self._as_layer_array(vmr[str(gas)], pres_layer.dims[-1])
-                for gas in self.gases_by_tag.values
-            ],
-            dim=xr.IndexVariable("tag", list(self.tags)),
-        )
-        vmr_by_tag = vmr_by_tag.assign_coords(
-            gas=("tag", self.gases_by_tag.values),
-        )
-
         layer_mass = compute_layer_mass(
-            vmr=vmr_by_tag,
+            vmr=vmr,
             plev=pres_level,
             play=pres_layer,
             mol_weights=self.mol_weights_by_tag,
+            tags=self.tags,
+            species_by_tag=self.species_by_tag,
         )
 
         tau = compute_tau(
@@ -317,19 +313,22 @@ class GasOptics:
 
         lay_source = compute_planck_source(
             temp_layer,
-            self.nus,
-            self.dnus,
+            self.spectral_grid["nus"],
+            self.spectral_grid["dnus"],
         ).transpose(*temp_layer.dims, "gpt")
         lev_source = compute_planck_source(
             temp_level,
-            self.nus,
-            self.dnus,
+            self.spectral_grid["nus"],
+            self.spectral_grid["dnus"],
         ).transpose(*temp_level.dims, "gpt")
         sfc_source = compute_planck_source(
             surface_temperature,
-            self.nus,
-            self.dnus,
+            self.spectral_grid["nus"],
+            self.spectral_grid["dnus"],
         ).transpose(*surface_temperature.dims, "gpt")
+
+        p = pres_layer if pres_layer.sizes[pres_layer.dims[-1]] > 1 else pres_level
+        top_at_1 = bool(p.isel({p.dims[-1]: -1}) > p.isel({p.dims[-1]: 0}))
 
         return xr.Dataset(
             data_vars={
@@ -337,16 +336,17 @@ class GasOptics:
                 "lay_source": lay_source,
                 "lev_source": lev_source,
                 "sfc_source": sfc_source,
-                "nus": self.nus,
-                "dnus": self.dnus,
+                "nus": self.spectral_grid["nus"],
+                "dnus": self.spectral_grid["dnus"],
             }
-        )
+        ).assign_attrs({"top_at_1": top_at_1})
+    
 
     def _validate_inputs(self) -> None:
         """
         Validate initialized gas-optics inputs.
 
-        Checks that tags are unique, gases have known molecular weights,
+        Checks that tags are unique, species have known molecular weights,
         triangle parameters are complete and finite, spectral grids are one
         dimensional and aligned, and all physical quantities have valid ranges.
         """
@@ -356,9 +356,9 @@ class GasOptics:
         if len(set(self.tags)) != len(self.tags):
             raise ValueError("tags must be unique")
 
-        for gas in self.gases:
-            if gas not in MOL_WEIGHTS:
-                raise ValueError(f"Unknown gas name: {gas}")
+        for species in self.species:
+            if species not in MOL_WEIGHTS:
+                raise ValueError(f"Unknown species name: {species}")
 
         if self.triangles.ndim != 2:
             raise ValueError("triangles must be 2D with dimensions tag and param")
