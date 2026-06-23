@@ -50,13 +50,13 @@ def compute_absorption_coeffs(
         kappa0 * np.exp(-abs(nus - nu0) / ell)
     ).rename("absorption_coeffs").assign_attrs({"units": "m2 kg-1"})
 
-
-
 def compute_layer_mass(
-    vmr: xr.DataArray,
+    vmr: xr.Dataset,
     plev: xr.DataArray,
     play: xr.DataArray,
     mol_weights: xr.DataArray,
+    tags=None,
+    species_by_tag=None,
     m_dry: float = 0.029,
 ) -> xr.DataArray:
     """
@@ -65,7 +65,9 @@ def compute_layer_mass(
     Parameters
     ----------
     vmr:
-        Volume mixing ratio with dims ("tag", column_dim, layer_dim).
+        Dataset containing one volume mixing ratio variable per species.
+        ``tags`` and ``species_by_tag`` are used to build the tag-indexed VMR
+        array with ``xr.concat``.
 
     plev:
         Pressure at layer interfaces with dims (column_dim, level_dim).
@@ -89,8 +91,21 @@ def compute_layer_mass(
     lev_dim = plev.dims[-1]
     lay_dim = play.dims[-1]
 
-    dp = abs(plev.diff(lev_dim))
-    dp = dp.rename({lev_dim: lay_dim})
+    if tags is None or species_by_tag is None:
+        raise ValueError("tags and species_by_tag are required")
+
+    vmr = (
+        xr.concat(
+            [
+                _as_layer_array(vmr[str(species)], lay_dim)
+                for species in species_by_tag.values
+            ],
+            dim=xr.IndexVariable("tag", list(tags)),
+        )
+        .assign_coords(species=("tag", species_by_tag.values))
+    )
+
+    dp = abs(plev.diff(lev_dim)).rename({lev_dim: lay_dim})
 
     if lay_dim in play.coords:
         dp = dp.assign_coords({lay_dim: play[lay_dim]})
@@ -101,6 +116,7 @@ def compute_layer_mass(
         * dp
         / GRAV
     ).rename("layer_mass").assign_attrs({"units": "kg m-2"})
+
 
 
 def compute_tau(
