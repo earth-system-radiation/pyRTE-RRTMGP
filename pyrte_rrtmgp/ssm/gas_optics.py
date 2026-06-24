@@ -89,7 +89,7 @@ class GasOptics:
             nus=self.spectral_grid["nus"],
         ) 
         
-        def _init_inputs(
+    def _init_inputs(
         self,
         spectral_data: xr.Dataset,
         nus: xr.DataArray,
