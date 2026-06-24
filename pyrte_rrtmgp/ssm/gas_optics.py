@@ -120,7 +120,7 @@ class GasOptics:
             name="species",
         )
 
-       self.species = tuple(
+        self.species = tuple(
             dict.fromkeys(str(species) for species in self.species_by_tag.values)
         )
 
