@@ -340,9 +340,8 @@ class GasOptics:
                 "dnus": self.spectral_grid["dnus"],
             }
         ).assign_attrs({"top_at_1": top_at_1})
-    
 
-    def _validate_inputs(self) -> None:
+    def _validate_inputs(self, triangles: xr.DataArray) -> None:
         """
         Validate initialized gas-optics inputs.
 
@@ -360,23 +359,23 @@ class GasOptics:
             if species not in MOL_WEIGHTS:
                 raise ValueError(f"Unknown species name: {species}")
 
-        if self.triangles.ndim != 2:
+        if triangles.ndim != 2:
             raise ValueError("triangles must be 2D with dimensions tag and param")
 
-        if set(self.triangles.dims) != {"tag", "param"}:
+        if set(triangles.dims) != {"tag", "param"}:
             raise ValueError("triangles must have dimensions tag and param")
 
         required_params = {"nu0", "l", "kappa0"}
-        params = set(str(p) for p in self.triangles.coords["param"].values)
+        params = set(str(p) for p in triangles.coords["param"].values)
 
         if params != required_params:
             raise ValueError("triangles params must be exactly nu0, l, and kappa0")
 
-        if not bool(np.isfinite(self.triangles).all()):
+        if not bool(np.isfinite(triangles).all()):
             raise ValueError("triangles must be finite")
 
-        kappa0 = self.triangles.sel(param="kappa0")
-        ell = self.triangles.sel(param="l")
+        kappa0 = triangles.sel(param="kappa0")
+        ell = triangles.sel(param="l")
 
         if not bool((kappa0 >= 0).all()):
             raise ValueError("kappa0 must be >= 0")
@@ -384,31 +383,34 @@ class GasOptics:
         if not bool((ell > 0).all()):
             raise ValueError("triangle l must be > 0")
 
-        if self.nus.ndim != 1:
+        nus = self.spectral_grid["nus"]
+        dnus = self.spectral_grid["dnus"]
+
+        if nus.ndim != 1:
             raise ValueError("nus must be 1D")
 
-        if self.nus.sizes["gpt"] < 2:
+        if nus.sizes["gpt"] < 2:
             raise ValueError("nus must contain at least two points")
 
-        if not bool(np.isfinite(self.nus).all()):
+        if not bool(np.isfinite(nus).all()):
             raise ValueError("nus must be finite")
 
-        if not np.all(np.diff(self.nus.values) > 0):
+        if not np.all(np.diff(nus.values) > 0):
             raise ValueError("nus must be strictly increasing")
 
         if not np.isfinite(self.pref) or self.pref < 0:
             raise ValueError("pref must be finite and >= 0")
-        if self.dnus.ndim != 1:
+        if dnus.ndim != 1:
             raise ValueError("dnus must be 1D")
 
-        if "gpt" not in self.dnus.dims:
+        if "gpt" not in dnus.dims:
             raise ValueError("dnus must have dimension gpt")
 
-        if self.dnus.sizes["gpt"] != self.nus.sizes["gpt"]:
+        if dnus.sizes["gpt"] != nus.sizes["gpt"]:
             raise ValueError("dnus must have the same length as nus")
 
-        if not bool(np.isfinite(self.dnus).all()):
+        if not bool(np.isfinite(dnus).all()):
             raise ValueError("dnus must be finite")
 
-        if not bool((self.dnus > 0).all()):
+        if not bool((dnus > 0).all()):
             raise ValueError("dnus must be positive")
