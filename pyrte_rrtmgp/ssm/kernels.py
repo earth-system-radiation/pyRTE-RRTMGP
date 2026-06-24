@@ -46,9 +46,11 @@ def compute_absorption_coeffs(
     ell = triangles.sel(param="l")
     kappa0 = triangles.sel(param="kappa0")
 
-    return absorption_coeffs = (
+    absorption_coeffs = (
         kappa0 * np.exp(-abs(nus - nu0) / ell)
     ).rename("absorption_coeffs").assign_attrs({"units": "m2 kg-1"})
+    
+    return absorption_coeffs
 
 def compute_layer_mass(
     vmr: xr.Dataset,
