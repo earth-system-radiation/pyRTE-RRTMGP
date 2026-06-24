@@ -29,7 +29,7 @@ dnus = xr.DataArray(
 
 # Construct the gas-optics calculator from the spectral data.
 gas_optics = GasOptics(
-    atmos_data=SSM_CP26,
+    spectral_data=SSM_CP26,
     nus=nus,
     dnus=dnus,
     pref = SSM_CP26.pref
