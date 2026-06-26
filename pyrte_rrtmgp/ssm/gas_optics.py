@@ -174,19 +174,6 @@ class GasOptics:
 
         return xr.DataArray(values, dims=("gpt",), name=name)
 
-    def _as_layer_array(self, values: xr.DataArray, layer_dim: str) -> xr.DataArray:
-        """
-        Ensure an atmospheric layer field uses the requested layer dimension.
-
-        Gas concentrations and layer temperatures must align with the pressure
-        layer coordinate used by ``pres_layer``. This helper leaves matching
-        DataArrays unchanged and otherwise renames the final dimension to
-        ``layer_dim``. It does not add or remove dimensions.
-        """
-        if values.dims[-1] == layer_dim:
-            return values
-
-        return values.rename({values.dims[-1]: layer_dim})
 
     def _extract_layer_inputs(self, layer: xr.Dataset) -> Tuple[
         xr.DataArray,
@@ -208,7 +195,7 @@ class GasOptics:
         pres_level = layer["plev"]
         pres_layer = layer["play"]
         temp_level = layer["Tlev"]
-        temp_layer = self._as_layer_array(layer["Tlay"], pres_layer.dims[-1])
+        temp_layer = layer["Tlay"]
         surface_temperature = layer["surface_temperature"]
         vmr = layer[list(self.species)]
 
