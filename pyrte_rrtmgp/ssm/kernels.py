@@ -20,6 +20,12 @@ from pyrte_rrtmgp.utils import B_nu
 
 GRAV: Final[float] = sc.g
 
+def _as_layer_array(values: xr.DataArray, layer_dim: str) -> xr.DataArray:
+    """Return values with its final dimension named like the layer grid."""
+    if values.dims[-1] == layer_dim:
+        return values
+
+    return values.rename({values.dims[-1]: layer_dim})
 
 def compute_absorption_coeffs(
     triangles: xr.DataArray,
