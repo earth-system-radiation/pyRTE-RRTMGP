@@ -164,7 +164,7 @@ def compute_tau(
     """
     return (
         (play / pref if pref != 0.0 else xr.ones_like(play))
-        * xr.dot(layer_mass, absorption_coeffs, dims="tag")
+        * xr.dot(layer_mass, absorption_coeffs, dim="tag")
     ).rename("tau")
 
 
