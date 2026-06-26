@@ -280,8 +280,6 @@ class GasOptics:
                 "Either pass layer, or pass all explicit atmospheric inputs."
             )
 
-        temp_layer = self._as_layer_array(temp_layer, pres_layer.dims[-1])
-
         layer_mass = compute_layer_mass(
             vmr=vmr,
             plev=pres_level,
