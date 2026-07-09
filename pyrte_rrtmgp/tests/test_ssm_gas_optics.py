@@ -1,10 +1,11 @@
 """
 Minimal longwave GasOptics smoke test.
 
-This script builds one spectral gas-optics object, feeds it a single-layer
-atmospheric xarray Dataset, runs compute(), and prints every returned field.
-It prints the result for inspection and checks that the returned compute()
-fields are strictly positive.
+This script builds one spectral gas-optics object, feeds it a small two-layer
+atmospheric xarray Dataset, runs compute(), and checks that the returned
+compute() fields are strictly positive. Field names and dimension names
+(``layer``/``level``) match the RRTMGP convention used elsewhere in
+pyRTE-RRTMGP, so the same Dataset works with either gas-optics implementation.
 """
 
 import numpy as np
@@ -32,31 +33,28 @@ gas_optics = GasOptics(
     spectral_data=SSM_CP26,
     nus=nus,
     dnus=dnus,
-    pref = SSM_CP26.pref
+    pref=SSM_CP26.pref,
 )
 
-# Single-layer atmospheric input. This keeps the original 1D play/plev shape
-# instead of adding a synthetic column dimension.
+# Two-layer atmospheric input using the standard layer/level dimension names.
+# Pressure decreases with index (surface first), matching rce-states.nc. The
+# well-mixed co2 is given once for the column and broadcast across layers.
 layer = xr.Dataset(
-    coords={
-        "plev": np.array([1.001e05, 9.99e04]),
-        "play": np.array([1.0e05]),
-        "species": np.array(["h2o", "co2"]),
-    },
     data_vars={
-        "Tlay": (["play"], np.array([300.0])),
-        "Tlev": (["plev"], np.array([300.0, 300.0])),
-        "dp": (["play"], np.array([200.0])),
-        "h2o": (["play"], np.array([0.03661])),
-        "co2": (["play"], np.array([400e-6])),
+        "pres_level": (["level"], np.array([1.001e05, 9.90e04, 8.00e04])),
+        "pres_layer": (["layer"], np.array([9.955e04, 8.95e04])),
+        "temp_layer": (["layer"], np.array([300.0, 295.0])),
+        "temp_level": (["level"], np.array([300.0, 297.0, 293.0])),
+        "h2o": (["layer"], np.array([0.03661, 0.02])),
+        "co2": np.array(400e-6),
     },
 )
-layer["surface_temperature"] = np.array([305.0])
+layer["surface_temperature"] = np.array(305.0)
 
 # Run the longwave gas-optics calculation.
 result = gas_optics.compute(layer)
 
 assert bool((result.tau > 0.0).all())
-assert bool((result.lay_source > 0.0).all())
-assert bool((result.lev_source > 0.0).all())
-assert bool((result.sfc_source > 0.0).all())
+assert bool((result.layer_source > 0.0).all())
+assert bool((result.level_source > 0.0).all())
+assert bool((result.surface_source > 0.0).all())
