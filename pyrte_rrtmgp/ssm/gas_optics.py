@@ -6,7 +6,7 @@ Longwave gas-optics calculator for the Simple Spectral Model.
     terms from atmospheric xarray inputs.
 """
 
-from typing import Any, Final, Tuple
+from typing import Any, Final
 
 import numpy as np
 import xarray as xr
@@ -69,49 +69,19 @@ class GasOptics:
             Parameters are ``"nu0"``, ``"l"``, and ``"kappa0"``.
 
         nus:
+            Wavenumber grid points [cm^-1].
 
         dnus:
+            Spectral band widths [cm^-1].
 
         pref:
-
-        """
-        triangles = self._init_inputs(
-            spectral_data=spectral_data,
-            nus=nus,
-            dnus=dnus,
-            pref=pref,
-        )
-
-        self._validate_inputs(triangles)
-
-        self.absorption_coeffs = compute_absorption_coeffs(
-            triangles=triangles,
-            nus=self.spectral_grid["nus"],
-        ) 
-        
-    def _init_inputs(
-        self,
-        spectral_data: xr.Dataset,
-        nus: xr.DataArray,
-        dnus: xr.DataArray,
-        pref: float,
-    ) -> xr.DataArray:
-        """
-        Normalize and store constructor inputs.
-
-        ``spectral_data`` is only needed during construction to validate the
-        spectral triangle table and compute absorption coefficients. This
-        method prepares that triangle table and returns it, but does not store
-        it on the object.
-
+            Reference pressure [Pa].
         """
         triangles = spectral_data["triangles"].rename(
             {"tags": "tag", "params": "param"}
         )
 
-        self.tags = tuple(
-            str(tag).lower() for tag in triangles.coords["tag"].values
-        )
+        self.tags = tuple(str(tag) for tag in triangles.coords["tag"].values)
 
         self.species_by_tag = xr.DataArray(
             [tag.split("-")[0] for tag in self.tags],
@@ -147,15 +117,17 @@ class GasOptics:
         self.mol_weights_by_tag = xr.DataArray(
             [MOL_WEIGHTS[species] for species in self.species_by_tag.values],
             dims=("tag",),
-            coords={
-                "tag": list(self.tags),
-                "species": ("tag", self.species_by_tag.values),
-            },
+            coords={"tag": list(self.tags)},
             name="mol_weights",
             attrs={"units": "kg mol^-1"},
         )
 
-        return triangles
+        self._validate_inputs(triangles)
+
+        self.absorption_coeffs = compute_absorption_coeffs(
+            triangles=triangles,
+            nus=self.spectral_grid["nus"],
+        )
 
     def _as_gpt_array(self, values: Any, name: str) -> xr.DataArray:
         """
@@ -174,111 +146,43 @@ class GasOptics:
 
         return xr.DataArray(values, dims=("gpt",), name=name)
 
-
-    def _extract_layer_inputs(self, layer: xr.Dataset) -> Tuple[
-        xr.DataArray,
-        xr.DataArray,
-        xr.DataArray,
-        xr.DataArray,
-        xr.DataArray,
-        xr.DataArray,
-    ]:
-        """
-        Pull the standard GasOptics inputs from a single atmospheric Dataset.
-
-        The expected dataset fields are ``plev``, ``play``, ``Tlev``, ``Tlay``,
-        ``surface_temperature``, and one variable for each species such as
-        ``h2o`` or ``co2``. The returned objects are passed directly to
-        ``compute`` so callers can use ``compute(layer)`` instead of supplying
-        every atmospheric field separately.
-        """
-        pres_level = layer["plev"]
-        pres_layer = layer["play"]
-        temp_level = layer["Tlev"]
-        temp_layer = layer["Tlay"]
-        surface_temperature = layer["surface_temperature"]
-        vmr = layer[list(self.species)]
-
-        return (
-            pres_level,
-            pres_layer,
-            temp_level,
-            temp_layer,
-            surface_temperature,
-            vmr,
-        )
     def compute(
         self,
-        layer: xr.Dataset = None,
-        pres_level: xr.DataArray = None,
-        pres_layer: xr.DataArray = None,
-        temp_level: xr.DataArray = None,
-        temp_layer: xr.DataArray = None,
-        surface_temperature: xr.DataArray = None,
-        vmr: xr.Dataset = None,
-    ) -> xr.Dataset:
+        layer: xr.Dataset,
+        add_to_input: bool = False,
+    ) -> xr.Dataset | None:
         """
         Compute longwave optical depth and Planck source terms.
 
         Parameters
         ----------
-        pres_level:
-            Pressure at layer interfaces, with dimensions
-            ``(column_dim, level_dim)``.
+        layer:
+            Atmospheric Dataset with fields ``pres_level``, ``pres_layer``,
+            ``temp_level``, ``temp_layer``, ``surface_temperature``, and one
+            volume mixing ratio variable per species (e.g. ``h2o``, ``co2``).
+            These names match ``pyrte_rrtmgp.rrtmgp.GasOptics`` and the RTE
+            driver examples.
 
-        pres_layer:
-            Pressure at layer centers, with dimensions
-            ``(column_dim, layer_dim)``.
-
-        temp_level:
-            Temperature at layer interfaces, with dimensions
-            ``(column_dim, level_dim)``.
-
-        temp_layer:
-            Temperature at layer centers, with dimensions
-            ``(column_dim, layer_dim)``.
-
-        surface_temperature:
-            Surface temperature, typically with dimension ``column_dim``.
-
-        vmr:
-            Dataset containing volume mixing ratio fields for each species.
-            For example, tags ``"h2o-rot"`` and ``"h2o-cont"`` both use
-            ``vmr["h2o"]``.
+        add_to_input:
+            If ``True``, write the computed optics fields into ``layer`` in
+            place and return ``None``; otherwise return them as a new Dataset.
 
         Returns
         -------
-        xr.Dataset
-            Dataset containing ``tau``, ``lay_source``, ``lev_source``,
-            ``sfc_source``, ``nus``, and ``dnus``. The dataset also has a
-            ``top_at_1`` attribute. ``top_at_1`` is ``True`` when pressure
-            increases with layer index, meaning the first layer is nearest the
-            top of atmosphere. For a single-layer atmosphere, this ordering is
-            inferred from ``pres_level`` instead of ``pres_layer``.
+        xr.Dataset | None
+            Dataset containing ``tau``, ``layer_source``, ``level_source``,
+            ``surface_source``, ``surface_source_jacobian``, ``nus``, and
+            ``dnus``, with a ``top_at_1`` attribute. ``top_at_1`` is ``True``
+            when pressure increases with layer index, meaning the first layer
+            is nearest the top of atmosphere. Returns ``None`` when
+            ``add_to_input`` is ``True``.
         """
-        if layer is not None:
-            (
-                pres_level,
-                pres_layer,
-                temp_level,
-                temp_layer,
-                surface_temperature,
-                vmr,
-            ) = self._extract_layer_inputs(layer)
-        elif any(
-            value is None
-            for value in (
-                pres_level,
-                pres_layer,
-                temp_level,
-                temp_layer,
-                surface_temperature,
-                vmr,
-            )
-        ):
-            raise ValueError(
-                "Either pass layer, or pass all explicit atmospheric inputs."
-            )
+        pres_level = layer["pres_level"]
+        pres_layer = layer["pres_layer"]
+        temp_level = layer["temp_level"]
+        temp_layer = layer["temp_layer"]
+        surface_temperature = layer["surface_temperature"]
+        vmr = layer[list(self.species)]
 
         layer_mass = compute_layer_mass(
             vmr=vmr,
@@ -296,35 +200,49 @@ class GasOptics:
             layer_mass=layer_mass,
         )
 
-        lay_source = compute_planck_source(
+        layer_source = compute_planck_source(
             temp_layer,
             self.spectral_grid["nus"],
             self.spectral_grid["dnus"],
         ).transpose(*temp_layer.dims, "gpt")
-        lev_source = compute_planck_source(
+        level_source = compute_planck_source(
             temp_level,
             self.spectral_grid["nus"],
             self.spectral_grid["dnus"],
         ).transpose(*temp_level.dims, "gpt")
-        sfc_source = compute_planck_source(
+        surface_source = compute_planck_source(
             surface_temperature,
             self.spectral_grid["nus"],
             self.spectral_grid["dnus"],
         ).transpose(*surface_temperature.dims, "gpt")
+        # lw_solver requires a surface source Jacobian array, but only uses it
+        # when do_Jacobians=True (not set by rte.RTEAccessor.solve()), so a
+        # zero placeholder of the right shape is sufficient here.
+        surface_source_jacobian = xr.zeros_like(surface_source)
 
-        p = pres_layer if pres_layer.sizes[pres_layer.dims[-1]] > 1 else pres_level
-        top_at_1 = bool(p.isel({p.dims[-1]: -1}) > p.isel({p.dims[-1]: 0}))
+        lay_dim = pres_layer.dims[-1]
+        top_at_1 = bool(
+            (pres_layer.isel({lay_dim: -1}) > pres_layer.isel({lay_dim: 0})).all()
+        )
 
-        return xr.Dataset(
+        output_ds = xr.Dataset(
             data_vars={
                 "tau": tau,
-                "lay_source": lay_source,
-                "lev_source": lev_source,
-                "sfc_source": sfc_source,
+                "layer_source": layer_source,
+                "level_source": level_source,
+                "surface_source": surface_source,
+                "surface_source_jacobian": surface_source_jacobian,
                 "nus": self.spectral_grid["nus"],
                 "dnus": self.spectral_grid["dnus"],
             }
         ).assign_attrs({"top_at_1": top_at_1})
+
+        if add_to_input:
+            layer.update(output_ds)
+            layer.attrs["top_at_1"] = top_at_1
+            return None
+
+        return output_ds
 
     def _validate_inputs(self, triangles: xr.DataArray) -> None:
         """
