@@ -20,12 +20,6 @@ from pyrte_rrtmgp.utils import B_nu
 
 GRAV: Final[float] = sc.g
 
-def _as_layer_array(values: xr.DataArray, layer_dim: str) -> xr.DataArray:
-    """Return values with its final dimension named like the layer grid."""
-    if values.dims[-1] == layer_dim:
-        return values
-
-    return values.rename({values.dims[-1]: layer_dim})
 
 def compute_absorption_coeffs(
     triangles: xr.DataArray,
@@ -55,16 +49,17 @@ def compute_absorption_coeffs(
     absorption_coeffs = (
         kappa0 * np.exp(-abs(nus - nu0) / ell)
     ).rename("absorption_coeffs").assign_attrs({"units": "m2 kg-1"})
-    
+
     return absorption_coeffs
+
 
 def compute_layer_mass(
     vmr: xr.Dataset,
     plev: xr.DataArray,
     play: xr.DataArray,
     mol_weights: xr.DataArray,
-    tags=None,
-    species_by_tag=None,
+    tags,
+    species_by_tag,
     m_dry: float = 0.029,
 ) -> xr.DataArray:
     """
@@ -75,7 +70,8 @@ def compute_layer_mass(
     vmr:
         Dataset containing one volume mixing ratio variable per species.
         ``tags`` and ``species_by_tag`` are used to build the tag-indexed VMR
-        array with ``xr.concat``.
+        array with ``xr.concat``. Well-mixed species given as a single value
+        per column are broadcast across the layer grid.
 
     plev:
         Pressure at layer interfaces with dims (column_dim, level_dim).
@@ -99,13 +95,10 @@ def compute_layer_mass(
     lev_dim = plev.dims[-1]
     lay_dim = play.dims[-1]
 
-    if tags is None or species_by_tag is None:
-        raise ValueError("tags and species_by_tag are required")
-
     vmr = (
         xr.concat(
             [
-                _as_layer_array(vmr[str(species)], lay_dim)
+                vmr[str(species)].broadcast_like(play)
                 for species in species_by_tag.values
             ],
             dim=xr.IndexVariable("tag", list(tags)),
@@ -115,16 +108,12 @@ def compute_layer_mass(
 
     dp = abs(plev.diff(lev_dim)).rename({lev_dim: lay_dim})
 
-    if lay_dim in play.coords:
-        dp = dp.assign_coords({lay_dim: play[lay_dim]})
-
     return (
         vmr
         * (mol_weights / m_dry)
         * dp
         / GRAV
     ).rename("layer_mass").assign_attrs({"units": "kg m-2"})
-
 
 
 def compute_tau(
@@ -151,7 +140,7 @@ def compute_tau(
         Layer pressures [Pa]
 
     pref:
-        Reference pressure in Pa. If zero, pressure scaling is set to one.
+        Reference pressure in Pa.
 
     layer_mass:
         Gas layer mass with dimensions ``("tag", column_dim, layer_dim)``.
@@ -163,11 +152,8 @@ def compute_tau(
         Optical depth with dimensions ``(column_dim, layer_dim, "gpt")``.
     """
     return (
-        (play / pref if pref != 0.0 else xr.ones_like(play))
-        * xr.dot(layer_mass, absorption_coeffs, dim="tag")
+        (play / pref) * xr.dot(layer_mass, absorption_coeffs, dim="tag")
     ).rename("tau")
-
-
 
 
 #
