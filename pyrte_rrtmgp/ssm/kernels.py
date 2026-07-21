@@ -47,8 +47,10 @@ def compute_absorption_coeffs(
     kappa0 = triangles.sel(param="kappa0")
 
     absorption_coeffs = (
-        kappa0 * np.exp(-abs(nus - nu0) / ell)
-    ).rename("absorption_coeffs").assign_attrs({"units": "m2 kg-1"})
+        (kappa0 * np.exp(-abs(nus - nu0) / ell))
+        .rename("absorption_coeffs")
+        .assign_attrs({"units": "m2 kg-1"})
+    )
 
     return absorption_coeffs
 
@@ -95,25 +97,18 @@ def compute_layer_mass(
     lev_dim = plev.dims[-1]
     lay_dim = play.dims[-1]
 
-    vmr = (
-        xr.concat(
-            [
-                vmr[str(species)].broadcast_like(play)
-                for species in species_by_tag.values
-            ],
-            dim=xr.IndexVariable("tag", list(tags)),
-        )
-        .assign_coords(species=("tag", species_by_tag.values))
-    )
+    vmr = xr.concat(
+        [vmr[str(species)].broadcast_like(play) for species in species_by_tag.values],
+        dim=xr.IndexVariable("tag", list(tags)),
+    ).assign_coords(species=("tag", species_by_tag.values))
 
     dp = abs(plev.diff(lev_dim)).rename({lev_dim: lay_dim})
 
     return (
-        vmr
-        * (mol_weights / m_dry)
-        * dp
-        / GRAV
-    ).rename("layer_mass").assign_attrs({"units": "kg m-2"})
+        (vmr * (mol_weights / m_dry) * dp / GRAV)
+        .rename("layer_mass")
+        .assign_attrs({"units": "kg m-2"})
+    )
 
 
 def compute_tau(
@@ -151,9 +146,9 @@ def compute_tau(
     xr.DataArray
         Optical depth with dimensions ``(column_dim, layer_dim, "gpt")``.
     """
-    return (
-        (play / pref) * xr.dot(layer_mass, absorption_coeffs, dim="tag")
-    ).rename("tau")
+    return ((play / pref) * xr.dot(layer_mass, absorption_coeffs, dim="tag")).rename(
+        "tau"
+    )
 
 
 #
