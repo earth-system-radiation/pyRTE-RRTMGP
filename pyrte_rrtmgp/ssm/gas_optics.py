@@ -48,6 +48,14 @@ SSM_CP26: Final[xr.Dataset] = xr.Dataset(
     },
 ).assign_attrs({"pref": 1000.22})
 
+SSM_W26: Final[xr.Dataset] = xr.Dataset(
+    coords={
+        "tags": ["co2", "h2o-rot", "h2o-vr"],
+        "params": ["nu0", "l", "kappa0"],
+    },
+    ...  [667.0, 12.0, 110.0], [0.0, 64.0, 282.0], [1600.0, 52.0, 24.0]
+).assign_attrs({"pref": 500.0})
+
 
 class GasOptics:
     """Gas optics class for the simple spectral model (LW only for now)."""
