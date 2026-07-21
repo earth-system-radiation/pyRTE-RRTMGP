@@ -1170,9 +1170,8 @@ class GasOptics:
             dataset = xr.load_dataset(file_path)
         elif gas_optics_file is not None:
             rte_rrtmgp_dir = download_rrtmgp_data()
-            dataset = xr.load_dataset(
-                os.path.join(rte_rrtmgp_dir, gas_optics_file.value)
-            )
+            file = rte_rrtmgp_dir / gas_optics_file.value  # type: ignore
+            dataset = xr.load_dataset(file)
         else:
             raise ValueError("Either file_path or gas_optics_file must be provided")
 
@@ -1239,7 +1238,7 @@ class CloudOptics:
         elif cloud_optics_file is not None:
             rte_rrtmgp_dir = download_rrtmgp_data()
             dataset = xr.load_dataset(
-                os.path.join(rte_rrtmgp_dir, cloud_optics_file.value)
+                rte_rrtmgp_dir / cloud_optics_file.value  # type: ignore
             )
         else:
             raise ValueError("Either file_path or cloud_optics_file must be provided")

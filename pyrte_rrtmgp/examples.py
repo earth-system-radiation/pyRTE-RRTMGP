@@ -4,7 +4,6 @@ Files and functions for Python versions of the clear-sky (RFMIP) and all-sky exa
 from the Fortran RTE+RRTMGP package
 """
 
-import os
 from enum import StrEnum
 
 import numpy as np
@@ -70,7 +69,7 @@ def load_example_file(file: ALLSKY_EXAMPLES | RFMIP_FILES) -> xr.Dataset:
         xr.Dataset: The loaded dataset
     """
     rte_rrtmgp_dir = download_rrtmgp_data()
-    ref_path = os.path.join(rte_rrtmgp_dir, file.value)
+    ref_path = rte_rrtmgp_dir / file.value  # type: ignore
     return xr.load_dataset(ref_path, decode_cf=False)
 
 

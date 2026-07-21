@@ -68,7 +68,7 @@ def Tb_nu(B: float64, nu: float64) -> float64:
     return (h * c * nu) / k_B * 1 / np.log((2 * h * (c**2) * nu**3) * 100.0 / B + 1)
 
 
-###
+#######################
 #
 # Molar mass of gases
 #
