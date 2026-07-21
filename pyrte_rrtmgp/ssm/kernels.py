@@ -10,8 +10,9 @@ https://doi.org/10.1029/2025MS005405
 
 """
 
-from typing import Final
 from collections.abc import Sequence
+from typing import Final
+
 import numpy as np
 import scipy.constants as sc
 import xarray as xr
