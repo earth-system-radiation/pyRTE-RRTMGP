@@ -52,6 +52,7 @@ layer = xr.Dataset(
 layer["surface_temperature"] = np.array(305.0)
 
 # Run the longwave gas-optics calculation.
+assert result is not None
 result = gas_optics.compute(layer)
 
 assert bool((result.tau > 0.0).all())
