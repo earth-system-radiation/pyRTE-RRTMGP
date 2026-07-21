@@ -11,7 +11,7 @@ https://doi.org/10.1029/2025MS005405
 """
 
 from typing import Final
-
+from collections.abc import Sequence
 import numpy as np
 import scipy.constants as sc
 import xarray as xr
@@ -60,8 +60,8 @@ def compute_layer_mass(
     plev: xr.DataArray,
     play: xr.DataArray,
     mol_weights: xr.DataArray,
-    tags,
-    species_by_tag,
+    tags: Sequence[str],
+    species_by_tag: xr.DataArray
     m_dry: float = 0.029,
 ) -> xr.DataArray:
     """
@@ -97,7 +97,7 @@ def compute_layer_mass(
     lev_dim = plev.dims[-1]
     lay_dim = play.dims[-1]
 
-    vmr = xr.concat(
+    vmr_by_tag = xr.concat(
         [vmr[str(species)].broadcast_like(play) for species in species_by_tag.values],
         dim=xr.IndexVariable("tag", list(tags)),
     ).assign_coords(species=("tag", species_by_tag.values))
@@ -105,7 +105,7 @@ def compute_layer_mass(
     dp = abs(plev.diff(lev_dim)).rename({lev_dim: lay_dim})
 
     return (
-        (vmr * (mol_weights / m_dry) * dp / GRAV)
+        (vmr_by_tag * (mol_weights / m_dry) * dp / GRAV)
         .rename("layer_mass")
         .assign_attrs({"units": "kg m-2"})
     )
