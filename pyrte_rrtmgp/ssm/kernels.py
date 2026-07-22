@@ -62,7 +62,7 @@ def compute_layer_mass(
     play: xr.DataArray,
     mol_weights: xr.DataArray,
     tags: Sequence[str],
-    species_by_tag: xr.DataArray
+    species_by_tag: xr.DataArray,
     m_dry: float = 0.029,
 ) -> xr.DataArray:
     """
