@@ -162,7 +162,7 @@ class GasOptics:
     def compute(
         self,
         layer: xr.Dataset,
-        add_to_input: bool = False,
+        add_to_input: bool = True,
     ) -> xr.Dataset | None:
         """
         Compute longwave optical depth and Planck source terms.

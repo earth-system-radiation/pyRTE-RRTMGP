@@ -21,28 +21,18 @@ from pyrte_rrtmgp.ssm    import (
 #
 # pyRRTMGP LW GasOptics fails using 128 g-points
 #
-print("GasOpticsFiles.LW_G256: ", GasOpticsFiles.LW_G256)
 GasOpticsGP_LW: GasOpticsRRTMGP = GasOpticsRRTMGP(gas_optics_file = GasOpticsFiles.LW_G256)
 GasOpticsGP_SW: GasOpticsRRTMGP = GasOpticsRRTMGP(gas_optics_file = GasOpticsFiles.SW_G112)
 # Wavenumber grid and spectral band widths used by the Planck source terms.
-_ssm_nus = xr.DataArray(
-    np.array([100.0, 200.0, 500.0, 700.0, 1000.0]),
-    dims=("gpt",),
-    name="nus",
-    attrs={"units": "cm^-1"},
-)
 
-_ssm_dnus = xr.DataArray(
-    np.array([100.0, 100.0, 300.0, 200.0, 300.0]),
-    dims=("gpt",),
-    coords={"gpt": _ssm_nus["gpt"]},
-    name="dnus",
-    attrs={"units": "cm^-1"},
-)
+nus = np.linspace(50., 3000., 41)
+_mids = 0.5 * (nus[:-1] + nus[1:])
+dnus = np.concatenate([_mids, [3500.]]) - np.concatenate([[0.], _mids])
+
 GasOpticsSSM_LW: GasOpticsSSM = GasOpticsSSM(
     spectral_data=SSM_W26,
-    nus=_ssm_nus,
-    dnus=_ssm_dnus,
+    nus=nus,
+    dnus=dnus,
     pref=SSM_W26.pref,
 )
 
@@ -78,7 +68,7 @@ def _test_get_fluxes_from_rte_example(
 @pytest.mark.parametrize(
     "example, gas_optics",
     [   (state, gas_optics)
-         for gas_optics in [GasOpticsGP_LW, GasOpticsGP_SW] \
+         for gas_optics in [GasOpticsGP_LW, GasOpticsGP_SW, GasOpticsSSM_LW] \
          for state in ["RCE_STATES", "RFMIP_STATES", "CKDMIP_STATES"]
     ],
 )

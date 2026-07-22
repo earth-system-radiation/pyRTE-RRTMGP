@@ -95,15 +95,12 @@ def compute_layer_mass(
         Layer mass with dims ("tag", column_dim, layer_dim).
         Mass of each gas in each layer [kg m^-2]
     """
-    lev_dim = plev.dims[-1]
-    lay_dim = play.dims[-1]
-
     vmr_by_tag = xr.concat(
         [vmr[str(species)].broadcast_like(play) for species in species_by_tag.values],
         dim=xr.IndexVariable("tag", list(tags)),
     ).assign_coords(species=("tag", species_by_tag.values))
 
-    dp = abs(plev.diff(lev_dim)).rename({lev_dim: lay_dim})
+    dp = abs(plev.diff(dim="level")).rename({"level": "layer"})
 
     return (
         (vmr_by_tag * (mol_weights / m_dry) * dp / GRAV)
