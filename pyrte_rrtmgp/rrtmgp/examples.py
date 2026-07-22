@@ -56,7 +56,22 @@ class ALLSKY_EXAMPLES(StrEnum):
     REF_SW = "examples/all-sky/reference/rrtmgp-allsky-sw.nc"
 
 
-def load_example_file(file: ALLSKY_EXAMPLES | RFMIP_FILES) -> xr.Dataset:
+class RTE_EXAMPLES(StrEnum):
+    """rte-examples files.
+
+    Each contains state and boundary condition information usable directly by
+    pyRTE and pyRRTMGP
+    """
+
+    REF_RCE_LW = "examples/rte-examples/reference/rrtmgp-lw-rce.nc"
+    REF_RCE_SW = "examples/rte-examples/reference/rrtmgp-sw-rce.nc"
+    REF_RFMIP_LW = "examples/rte-examples/reference/rrtmgp-lw-rfmip.nc"
+    REF_RFMIP_SW = "examples/rte-examples/reference/rrtmgp-sw-rfmip.nc"
+    REF_CKDMIP_LW = "examples/rte-examples/reference/rrtmgp-lw-ckdmip.nc"
+    REF_CKDMIP_SW = "examples/rte-examples/reference/rrtmgp-sw-ckdmip.nc"
+
+
+def load_example_file(file: ALLSKY_EXAMPLES | RFMIP_FILES | RTE_EXAMPLES) -> xr.Dataset:
     """Load an example file.
 
     This would work for any file in the download directory but it's

@@ -4,11 +4,12 @@ import xarray as xr
 import pytest
 from typing import Dict, Optional, Any
 
-from pyrte_rrtmgp.rte import OpticsTypes
 from pyrte_rrtmgp.rrtmgp.data_files import GasOpticsFiles
+from pyrte_rrtmgp.rrtmgp.examples import RTE_EXAMPLES
+
 from pyrte_rrtmgp.rte_examples import (
     load_rte_example_file,
-    RTEExamplesFiles
+    RTEExamplesFiles,
 )
 
 from pyrte_rrtmgp import rte
