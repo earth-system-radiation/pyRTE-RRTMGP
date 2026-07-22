@@ -11,20 +11,30 @@ from pyrte_rrtmgp.rte_examples import (
     RTEExamplesFiles,
 )
 
+#
+# RRTMGP optics
+#
 from pyrte_rrtmgp.rrtmgp.examples   import RTE_EXAMPLES
 from pyrte_rrtmgp.rrtmgp.data_files import GasOpticsFiles
 from pyrte_rrtmgp.rrtmgp import GasOptics as GasOpticsRRTMGP
-from pyrte_rrtmgp.ssm    import (
+#
+# SSM optics
+#
+from pyrte_rrtmgp.ssm import (
     SSM_W26,
     GasOptics as GasOpticsSSM,
 )
+
 #
 # pyRRTMGP LW GasOptics fails using 128 g-points
 #
 GasOpticsGP_LW: GasOpticsRRTMGP = GasOpticsRRTMGP(gas_optics_file = GasOpticsFiles.LW_G256)
 GasOpticsGP_SW: GasOpticsRRTMGP = GasOpticsRRTMGP(gas_optics_file = GasOpticsFiles.SW_G112)
-# Wavenumber grid and spectral band widths used by the Planck source terms.
 
+#
+# Define SSM optics
+#   Wavenumber grid and spectral band widths used by the Planck source terms.
+#
 nus = np.linspace(50., 3000., 41)
 _mids = 0.5 * (nus[:-1] + nus[1:])
 dnus = np.concatenate([_mids, [3500.]]) - np.concatenate([[0.], _mids])
@@ -63,7 +73,7 @@ def _test_get_fluxes_from_rte_example(
 #
 #### Tests start here
 #
-# Should add tests against reference answers
+# Should add checks against reference answers
 #
 @pytest.mark.parametrize(
     "example, gas_optics",
@@ -79,6 +89,9 @@ def test_rte_example(example, gas_optics) -> None:
                 gas_optics,
         )
 
+#
+# SSM gas optics doesn't play well with dask
+#
 @pytest.mark.parametrize(
     "example, gas_optics",
     [   (state, gas_optics)
