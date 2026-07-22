@@ -5,8 +5,8 @@ import xarray as xr
 
 from pyrte_rrtmgp.rrtmgp.data_files import GasOpticsFiles
 
-from pyrte_rrtmgp.examples import RFMIP_FILES
-from pyrte_rrtmgp.examples import load_example_file
+from pyrte_rrtmgp.rrtmgp.examples import RFMIP_FILES
+from pyrte_rrtmgp.rrtmgp.examples import load_example_file
 
 from pyrte_rrtmgp.tests import RFMIP_GAS_MAPPING
 

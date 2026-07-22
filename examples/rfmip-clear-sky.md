@@ -53,7 +53,7 @@ from pyrte_rrtmgp.rrtmgp.data_files import (
 )
 from pyrte_rrtmgp import rte
 from pyrte_rrtmgp.rrtmgp import GasOptics
-from pyrte_rrtmgp.examples import RFMIP_FILES, load_example_file
+from pyrte_rrtmgp.rrtmgp.examples import RFMIP_FILES, load_example_file
 ```
 
 ## Initialize pyRRTMGP gas optics calculations 

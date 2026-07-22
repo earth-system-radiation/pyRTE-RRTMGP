@@ -53,7 +53,7 @@ from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.examples import (
+from pyrte_rrtmgp.rrtmgp.examples import (
     compute_RCE_clouds,
     compute_RCE_profiles,
     load_example_file,

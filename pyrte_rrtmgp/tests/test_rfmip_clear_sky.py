@@ -7,7 +7,7 @@ from typing import Dict, Optional, Any
 
 from pyrte_rrtmgp.rte import OpticsTypes
 from pyrte_rrtmgp.rrtmgp.data_files import GasOpticsFiles
-from pyrte_rrtmgp.examples import (
+from pyrte_rrtmgp.rrtmgp.examples import (
     load_example_file,
     RFMIP_FILES
 )

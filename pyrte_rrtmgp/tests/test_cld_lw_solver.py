@@ -10,7 +10,7 @@ from pyrte_rrtmgp.rrtmgp.data_files import (
     CloudOpticsFiles,
     GasOpticsFiles,
 )
-from pyrte_rrtmgp.examples import (
+from pyrte_rrtmgp.rrtmgp.examples import (
     ALLSKY_EXAMPLES,
     compute_RCE_profiles,
     compute_RCE_clouds,
