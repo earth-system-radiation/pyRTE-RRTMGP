@@ -54,9 +54,9 @@ def ssm_smoke_test() -> None:
     layer["surface_temperature"] = np.array(305.0)
 
     # Run the longwave gas-optics calculation.
-    assert result is not None
-    result = gas_optics.compute(layer)
+    result: xr.Dataset  = gas_optics.compute(layer)
 
+    assert bool(result is not None)
     assert bool((result.tau > 0.0).all())
     assert bool((result.layer_source > 0.0).all())
     assert bool((result.level_source > 0.0).all())
