@@ -12,6 +12,7 @@ import numpy as np
 import xarray as xr
 
 from .. import utils
+from .default import NUS_LW_DEF, P_REF, band_widths
 from .kernels import (
     compute_absorption_coeffs,
     compute_layer_mass,
@@ -26,7 +27,8 @@ MOL_WEIGHTS: Final[dict[str, float]] = {
 }
 
 #
-# Simple spectral model from Czarnecki and Pincus 2026
+# Simple spectral model from Czarnecki and Pincus 2026.
+# The pref attribute is the reference pressure in Pa.
 #
 SSM_CP26: Final[xr.Dataset] = xr.Dataset(
     coords={
@@ -46,8 +48,9 @@ SSM_CP26: Final[xr.Dataset] = xr.Dataset(
             ),
         )
     },
-).assign_attrs({"pref": 1000.22})
+).assign_attrs({"pref": 100022.0})
 
+# Williams 2026 defaults; pref is the reference pressure in Pa.
 SSM_W26: Final[xr.Dataset] = xr.Dataset(
     coords={
         "tags": ["co2", "h2o-rot", "h2o-vr"],
@@ -59,7 +62,7 @@ SSM_W26: Final[xr.Dataset] = xr.Dataset(
             np.array([[667.0, 12.0, 110.0], [0.0, 64.0, 282.0], [1600.0, 52.0, 24.0]]),
         )
     },
-).assign_attrs({"pref": 500.0})
+).assign_attrs({"pref": 50000.0})
 
 
 class GasOptics:
@@ -67,29 +70,52 @@ class GasOptics:
 
     def __init__(
         self,
-        spectral_data: xr.Dataset,
-        nus: xr.DataArray,
-        dnus: xr.DataArray,
-        pref: float,
+        spectral_data: xr.Dataset | None = None,
+        nus: xr.DataArray | None = None,
+        dnus: xr.DataArray | None = None,
+        pref: float | None = None,
     ) -> None:
         """
         Initialize gas-optics data for longwave calculations.
+
+        Every argument is optional. ``GasOptics()`` with no arguments gives the
+        Fortran RTE-SSM longwave default configuration: the :data:`SSM_W26`
+        triangles on a 41-point grid from 50 to 3000 cm^-1, with band edges
+        midway between points clamped to [0, 3500] cm^-1, at pref = 50000 Pa.
 
         Parameters
         ----------
         spectral_data:
             Dataset containing ``triangles`` with dimensions ``("tags", "params")``.
             Parameters are ``"nu0"``, ``"l"``, and ``"kappa0"``.
+            Defaults to :data:`SSM_W26`.
 
         nus:
-            Wavenumber grid points [cm^-1].
+            Wavenumber grid points [cm^-1], strictly increasing.
+            Defaults to ``NUS_LW_DEF``, i.e. ``linspace(50, 3000, 41)``.
 
         dnus:
-            Spectral band widths [cm^-1].
+            Spectral band widths [cm^-1], one per ``nus`` point. Defaults to
+            the band-edge rule of :func:`~pyrte_rrtmgp.ssm.default.band_widths`
+            applied to ``nus``, so a custom ``nus`` still gets matching widths.
 
         pref:
-            Reference pressure [Pa].
+            Reference pressure [Pa]. Defaults to the ``pref`` attribute of
+            ``spectral_data`` (50000 Pa for :data:`SSM_W26`, 100022 Pa for
+            :data:`SSM_CP26`), falling back to ``P_REF`` if that attribute is
+            absent.
         """
+        if spectral_data is None:
+            spectral_data = SSM_W26
+        if nus is None:
+            nus = xr.DataArray(NUS_LW_DEF, dims=("gpt",))
+        if dnus is None:
+            # derive widths from whatever nus is in use, so supplying a custom
+            # grid without matching widths still works
+            dnus = xr.DataArray(band_widths(np.asarray(nus)), dims=("gpt",))
+        if pref is None:
+            pref = float(spectral_data.attrs.get("pref", P_REF))
+
         triangles = spectral_data["triangles"].rename(
             {"tags": "tag", "params": "param"}
         )
