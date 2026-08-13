@@ -47,6 +47,39 @@ NU_MAX_SW_DEF = 50000.0
 NUS_LW_DEF = np.linspace(50.0, 3000.0, NNU_DEF)
 NUS_SW_DEF = np.linspace(1000.0, 45000.0, NNU_DEF)
 
+
+def band_widths(
+    nus: np.ndarray,
+    nu_min: float = NU_MIN_LW_DEF,
+    nu_max: float = NU_MAX_LW_DEF,
+) -> np.ndarray:
+    """
+    Spectral width to credit to each wavenumber in ``nus`` [cm^-1].
+
+    Reproduces the Fortran band-limit rule of mo_optics_ssm.F90: band edges sit
+    midway between neighbouring ``nus``, with the outermost edges clamped to
+    ``nu_min`` and ``nu_max``. The widths sum exactly to ``nu_max - nu_min``.
+
+    Parameters
+    ----------
+    nus:
+        Wavenumber grid points [cm^-1], strictly increasing.
+
+    nu_min, nu_max:
+        Outer edges of the spectral range [cm^-1].
+
+    Returns
+    -------
+    np.ndarray
+        Band widths [cm^-1], same length as ``nus``.
+    """
+    mids = 0.5 * (nus[:-1] + nus[1:])
+    return np.diff(np.concatenate(([nu_min], mids, [nu_max])))
+
+
+# default band widths matching NUS_LW_DEF
+DNUS_LW_DEF = band_widths(NUS_LW_DEF)
+
 # default spectroscopic params
 # shape is (3 triangles, 4 parameters) - same as Fortran shape=[3,4]
 # columns: [gas_index, kappa_0, nu_0, l]
@@ -64,7 +97,7 @@ TRIANGLE_PARAMS_DEF_SW = np.array(
 
 GAS_NAMES_DEF_SW = ["h2o", "o3"]
 
-P_REF = 500.0 * 100.0  # reference pressure hPa -> Pa
+P_REF = 50000.0  # reference pressure [Pa]
 
 MOL_WEIGHTS = {
     "h2o": MW_H2O,
