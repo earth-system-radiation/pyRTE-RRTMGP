@@ -7,19 +7,19 @@ repos:
     -   id: check-added-large-files
 
 -   repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.5.1
+    rev: 26.10.1
     hooks:
     -   id: black
         exclude: pyrte_rrtmgp/tests/(?!test_python_frontend).*
 
 -   repo: https://github.com/pycqa/isort
-    rev: 9.0.1
+    rev: 10.0.0b1
     hooks:
     -   id: isort
         exclude: ^pyrte_rrtmgp/tests/(?!test_python_frontend).*
 
 -   repo: https://github.com/pycqa/flake8
-    rev: 7.3.0
+    rev: 7.4.1
     hooks:
     -   id: flake8
         additional_dependencies: [
@@ -30,7 +30,7 @@ repos:
         exclude: ^pyrte_rrtmgp/tests/(?!test_python_frontend).*
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.1
+    rev: v2.4.0
     hooks:
     - id: mypy
       exclude: ^pyrte_rrtmgp/tests/(?!test_python_frontend).*
