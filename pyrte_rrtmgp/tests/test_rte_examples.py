@@ -10,16 +10,27 @@ from pyrte_rrtmgp.rte_examples import (
     load_rte_example_file,
     RTEExamplesFiles,
 )
+# from pyrte_rrtmgp.tests import ERROR_TOLERANCE
+# Replaced with a relative tolerance of 5e-4 in test_rte_example_values
+#   RFMIP states have largest discrepencies
 
 #
 # RRTMGP optics
 #
-from pyrte_rrtmgp.rrtmgp.examples   import RTE_EXAMPLES
+from pyrte_rrtmgp.rrtmgp.examples import (
+    RTE_EXAMPLES as RTE_EXAMPLES_RRTMGP,
+    load_example_file as load_example_results_rrtmgp,
+)
 from pyrte_rrtmgp.rrtmgp.data_files import GasOpticsFiles
 from pyrte_rrtmgp.rrtmgp import GasOptics as GasOpticsRRTMGP
+
 #
 # SSM optics
 #
+from pyrte_rrtmgp.rrtmgp.examples   import (
+    RTE_EXAMPLES as RTE_EXAMPLES_SSM,
+    load_example_file as load_example_results_ssm,
+)
 from pyrte_rrtmgp.ssm import (
     SSM_W26,
     GasOptics as GasOpticsSSM,
@@ -46,7 +57,7 @@ GasOpticsSSM_LW: GasOpticsSSM = GasOpticsSSM(
     pref=SSM_W26.pref,
 )
 
-def _test_get_fluxes_from_rte_example(
+def _test_fluxes_from_rte_example(
                 example: RTEExamplesFiles,
                 gas_optics: GasOpticsRRTMGP | GasOpticsSSM,
                 use_dask: bool = False) -> xr.Dataset:
@@ -73,7 +84,7 @@ def _test_get_fluxes_from_rte_example(
 #
 #### Tests start here
 #
-# Should add checks against reference answers
+# Check that fluxes can be computed
 #
 @pytest.mark.parametrize(
     "example, gas_optics",
@@ -84,12 +95,13 @@ def _test_get_fluxes_from_rte_example(
 )
 def test_rte_example(example, gas_optics) -> None:
     """ """
-    _test_get_fluxes_from_rte_example(
+    _test_fluxes_from_rte_example(
                 example,
                 gas_optics,
         )
 
 #
+# Check that fluxes can be computed with dask
 # SSM gas optics doesn't play well with dask
 #
 @pytest.mark.parametrize(
@@ -101,8 +113,34 @@ def test_rte_example(example, gas_optics) -> None:
 )
 def test_rte_example_with_dask(example, gas_optics) -> None:
     """ """
-    _test_get_fluxes_from_rte_example(
+    _test_fluxes_from_rte_example(
                 example,
                 gas_optics,
                 use_dask = True,
         )
+
+
+#
+# Compare fluxes to reference values
+#   These tolerances are relative and looser than Fortran - Fortran comparisons
+#
+@pytest.mark.parametrize(
+    "example, gas_optics, reference",
+    [   (state + "_STATES",
+         GasOpticsGP_SW, \
+         load_example_results_rrtmgp(RTE_EXAMPLES_RRTMGP["REF_" + state + "_SW"]) \
+         ) \
+         for state in ["RCE", "RFMIP", "CKDMIP"]
+    ],
+)
+def test_rte_example_values(example, gas_optics, reference) -> None:
+    """ """
+    fluxes = _test_fluxes_from_rte_example(
+                example,
+                gas_optics,
+    )
+    xr.testing.assert_allclose(fluxes. \
+        transpose("variant", "level", "col"). \
+        rename_vars({"sw_flux_down":"sw_flux_dn"}).drop_vars({"col", "variant"}),
+        reference,
+        rtol = 5e-4)
